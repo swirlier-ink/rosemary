@@ -161,19 +161,24 @@ public static partial class ElkShimmerItemSets
 
                     center -= Main.waterTarget.Position;
 
-                    var prog = 1f - MathF.Pow(data.SubSurfaceProgress, 9f);
+                    var prog = 1f - MathF.Pow(data.SubSurfaceProgress, 8f);
 
                     var size = prog * dist;
-                    size *= 5.6f;
+                    size *= 12f;
 
                     var rotation = Main.GlobalTimeWrappedHourly * 0.35f;
 
-                    var color = circleColor * (1f - MathF.Pow(prog, 3f)) * dist;
+                    prog = 1f - MathF.Pow(data.SubSurfaceProgress, 16f);
+
+                    var color = circleColor;
+                    color.A = (byte)(color.A * (1f - MathF.Pow(prog, 2.4f)) * dist);
 
                     sb.Draw(circleTexture, center, null, color, rotation, Origin.Center, size, SpriteEffects.None, 0f);
                     sb.Draw(circleTexture, center, null, color, -rotation * 0.33f, Origin.Center, size * 0.93f, SpriteEffects.None, 0f);
 
-                    sb.Draw(bloomTexture, center, null, color * 0.35f, 0f, Origin.Center, size * 4.5f, SpriteEffects.None, 0f);
+                    color.A = (byte)(color.A * 0.3f);
+
+                    sb.Draw(bloomTexture, center, null, color, 0f, Origin.Center, size * 4.5f, SpriteEffects.None, 0f);
                 }
             }
             sb.End();
