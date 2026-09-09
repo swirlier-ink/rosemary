@@ -7,7 +7,7 @@ TEXTURE_SIZE(TextureSize, 1)
 
 float4 GlowBlendShaderFragment(float2 uv : TEXCOORD0, float2 svPos : SV_POSITION0, float4 baseColor : COLOR0) : COLOR0
 {
-    float4 color = tex2D(Source, uv) * baseColor;
+    float4 color = tex2D(Source, uv).aaaa * baseColor;
     float4 base = tex2D(Destination, svPos / TextureSize);
     
     float3 src = color.rgb;

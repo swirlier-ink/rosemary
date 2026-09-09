@@ -133,7 +133,9 @@ public static partial class ElkShimmerItemSets
 
             var circleTexture = Assets.Elk.Particles.NoughtFormation.Asset.Value;
 
-            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise, glowBlendShader.Shader, Matrix.Identity);
+            var bloomTexture = Assets.Elk.Particles.Bloom.Asset.Value;
+
+            sb.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise, glowBlendShader.Shader, Matrix.Identity);
             {
                 foreach (var item in Main.ActiveItems)
                 {
@@ -144,6 +146,12 @@ public static partial class ElkShimmerItemSets
                         continue;
                     }
 
+                    var curPosition = FindShimmerSurface(item, 16);
+
+                    var dist = curPosition == item.Bottom
+                        ? 1f
+                        : (1f - MathF.Pow(1f - MathF.Saturate(MathF.Abs(item.Center.Y - curPosition.Y) / 32f), 2f));
+
                     Main.instance.DrawItem_GetBasics(item.inner, item.whoAmI, out _, out var frame, out _);
 
                     var itemOrigin = frame.Size() * 0.5f;
@@ -153,14 +161,19 @@ public static partial class ElkShimmerItemSets
 
                     center -= Main.waterTarget.Position;
 
-                    var size = 1f - MathF.Pow(data.SubSurfaceProgress, 13f);
-                    size *= 5f;
+                    var prog = 1f - MathF.Pow(data.SubSurfaceProgress, 9f);
 
-                    var color = circleColor * (1f - MathF.Pow(1f - MathF.Pow(data.SubSurfaceProgress, 13f), 3f));
+                    var size = prog * dist;
+                    size *= 5.6f;
 
-                    sb.Draw(circleTexture, center, null, color * 0.5f, 0f, Origin.Center, size * 0.4f, SpriteEffects.None, 0f);
-                    sb.Draw(circleTexture, center, null, color, 0f, Origin.Center, size, SpriteEffects.None, 0f);
-                    sb.Draw(circleTexture, center, null, color * 0.1f, 0f, Origin.Center, size * 3f, SpriteEffects.None, 0f);
+                    var rotation = Main.GlobalTimeWrappedHourly * 0.35f;
+
+                    var color = circleColor * (1f - MathF.Pow(prog, 3f)) * dist;
+
+                    sb.Draw(circleTexture, center, null, color, rotation, Origin.Center, size, SpriteEffects.None, 0f);
+                    sb.Draw(circleTexture, center, null, color, -rotation * 0.33f, Origin.Center, size * 0.93f, SpriteEffects.None, 0f);
+
+                    sb.Draw(bloomTexture, center, null, color * 0.35f, 0f, Origin.Center, size * 4.5f, SpriteEffects.None, 0f);
                 }
             }
             sb.End();
@@ -547,6 +560,28 @@ public static partial class ElkShimmerItemSets
                 self.Center,
                 SoundCallback
             );
+
+            var modifier = new FadeInPunchCameraModifier(
+                self.Center,
+                new Vector2(0f, 1f),
+                24f,
+                8f,
+                (int)framesLeft,
+                m =>
+                {
+                    if (!ItemID.Sets.ViolentShimmerReaction[self.type] || !self.shimmerWet)
+                    {
+                        return false;
+                    }
+
+                    m._startPosition = self.Center;
+
+                    return true;
+                },
+                1300f,
+                $"{nameof(Rosemary)}: SHIMMER_NOUGHT_FORMATION"
+            );
+            Main.instance.CameraModifiers.Add(modifier);
         }
 
         PassiveEffects();

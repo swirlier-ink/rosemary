@@ -17,11 +17,13 @@ public class CallbackPunchCameraModifier(
 ) : PunchCameraModifier(startPosition, direction, strength, vibrationCyclesPerSecond, frames, distanceFalloff, uniqueIdentity),
     ICameraModifier
 {
+    protected readonly PunchCameraCallback Callback = callback;
+
     void ICameraModifier.Update(ref CameraInfo cameraInfo)
     {
         base.Update(ref cameraInfo);
 
-        if (callback(this))
+        if (Callback(this))
         {
             Finished = false;
         }
