@@ -5,6 +5,7 @@ using Rosemary.Common;
 using Rosemary.Content.Misc;
 using Rosemary.Core;
 using System;
+using System.Linq;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
@@ -28,7 +29,7 @@ public static partial class ElkShimmerItemSets
         On_Player.KillMe += KillMe_DisableDrops_ViolentShimmerReaction;
         On_Player.DropTombstone += DropTombstone_DisableDrops_ViolentShimmerReaction;
 
-        On_LiquidRenderer.DrawShimmer += DrawShimmer_Mesmerizers;
+        On_LiquidRenderer.DrawShimmer += DrawShimmer_CrystallizationVisuals;
     }
 
     private static readonly string[] death_keys_violent_shimmer_reaction =
@@ -39,11 +40,13 @@ public static partial class ElkShimmerItemSets
 
     private static bool skipPlayerDrops;
 
-    private static void DrawShimmer_Mesmerizers(On_LiquidRenderer.orig_DrawShimmer orig, LiquidRenderer self, SpriteBatch sb, Vector2 drawOffset, bool isBackgroundDraw)
+    private static void DrawShimmer_CrystallizationVisuals(On_LiquidRenderer.orig_DrawShimmer orig, LiquidRenderer self, SpriteBatch sb, Vector2 drawOffset, bool isBackgroundDraw)
     {
         orig(self, sb, drawOffset, isBackgroundDraw);
 
-        if (isBackgroundDraw)
+        if (isBackgroundDraw
+         || !Main.item.Any(i => i.active
+                             && i.ShimmerData is { SubSurfaceProgress: > 0f }))
         {
             return;
         }
@@ -53,7 +56,7 @@ public static partial class ElkShimmerItemSets
         var texture = Assets.Elk.Particles.ExpandingCircle.Asset.Value;
         var origin = texture.Size() * 0.5f;
 
-        using var _ = sb.Scope();
+        using var __ = sb.Scope();
 
         var mesmerShaderizer = Assets.Elk.Shimmer.Mesmerizer.CreateMesmerizerShader();
 
@@ -110,6 +113,65 @@ public static partial class ElkShimmerItemSets
         }
         sb.End();
 
+        // Recreates the paint.net blending mode 'Glow'
+        // (src * src) / (1 - dst)
+        // Sadly not replicable with a BlendState, as they do not support division. 
+        using (lease.Scope(clearColor: Color.Transparent))
+        {
+            var glowBlendShader = Assets.Elk.Shimmer.GlowBlend.CreateGlowBlendShader();
+
+            // Maybe use GetRenderTargets here?
+            glowBlendShader.Parameters.Destination = new HlslSampler2D
+            {
+                Texture = Main.waterTarget.Texture,
+                Sampler = SamplerState.PointClamp,
+            };
+
+            glowBlendShader.Apply();
+
+            var circleColor = new Color(31, 18, 45, 255);
+
+            var circleTexture = Assets.Elk.Particles.NoughtFormation.Asset.Value;
+
+            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise, glowBlendShader.Shader, Matrix.Identity);
+            {
+                foreach (var item in Main.ActiveItems)
+                {
+                    if (!item.shimmerWet
+                     || !MesmerizerInfo(item, out _, out _)
+                     || item.ShimmerData is not { } data)
+                    {
+                        continue;
+                    }
+
+                    Main.instance.DrawItem_GetBasics(item.inner, item.whoAmI, out _, out var frame, out _);
+
+                    var itemOrigin = frame.Size() * 0.5f;
+
+                    var topLeft = new Vector2((item.width * 0.5f) - itemOrigin.X, item.height - frame.Height);
+                    var center = item.position + itemOrigin + topLeft;
+
+                    center -= Main.waterTarget.Position;
+
+                    var size = 1f - MathF.Pow(data.SubSurfaceProgress, 13f);
+                    size *= 5f;
+
+                    var color = circleColor * (1f - MathF.Pow(1f - MathF.Pow(data.SubSurfaceProgress, 13f), 3f));
+
+                    sb.Draw(circleTexture, center, null, color * 0.5f, 0f, Origin.Center, size * 0.4f, SpriteEffects.None, 0f);
+                    sb.Draw(circleTexture, center, null, color, 0f, Origin.Center, size, SpriteEffects.None, 0f);
+                    sb.Draw(circleTexture, center, null, color * 0.1f, 0f, Origin.Center, size * 3f, SpriteEffects.None, 0f);
+                }
+            }
+            sb.End();
+        }
+
+        sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise, null, Matrix.Identity);
+        {
+            sb.Draw(lease.Target, Vector2.Zero, Color.White);
+        }
+        sb.End();
+
         return;
 
         void DrawMesmerizers()
@@ -128,7 +190,7 @@ public static partial class ElkShimmerItemSets
                     ? 1f
                     : (1f - MathF.Pow(1f - MathF.Saturate(MathF.Abs(item.Center.Y - curPosition.Y) / 32f), 2f));
 
-                Main.instance.DrawItem_GetBasics(item.inner, item.whoAmI, out var _, out var frame, out var _);
+                Main.instance.DrawItem_GetBasics(item.inner, item.whoAmI, out _, out var frame, out _);
 
                 var itemOrigin = frame.Size() * 0.5f;
 
@@ -152,8 +214,6 @@ public static partial class ElkShimmerItemSets
 
         static bool MesmerizerInfo(WorldItem item, out float scaleMultiplier, out float noiseMultiplier)
         {
-            var reactant = ItemID.Sets.ViolentShimmerReaction[item.type] && item.ShimmerData is { SubSurfaceProgress: > 0f };
-
             scaleMultiplier = noiseMultiplier = 0f;
 
             if (!ItemID.Sets.ViolentShimmerReaction[item.type] || item.ShimmerData is not { SubSurfaceProgress: > 0f } data)
@@ -170,7 +230,7 @@ public static partial class ElkShimmerItemSets
 
             scaleMultiplier *= Utils.Remap(1f - MathF.Pow(data.SubSurfaceProgress, 21f), 0f, 1f, low_noise, 1f);
 
-            return reactant;
+            return true;
         }
     }
 
@@ -482,6 +542,7 @@ public static partial class ElkShimmerItemSets
                 {
                     PauseBehavior = PauseBehavior.PauseWithGame,
                     MaxInstances = 5,
+                    Volume = 1.2f,
                 },
                 self.Center,
                 SoundCallback

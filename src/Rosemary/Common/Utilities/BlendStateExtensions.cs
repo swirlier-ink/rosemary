@@ -18,7 +18,6 @@ public static class BlendStateExtensions
     private static readonly BlendState alpha_mask = new BlendState
     {
         Name = $"{nameof(Rosemary)}.{nameof(alpha_mask)}",
-        AlphaBlendFunction = BlendFunction.Add,
         AlphaDestinationBlend = Blend.One,
         AlphaSourceBlend = Blend.DestinationAlpha,
         ColorDestinationBlend = Blend.One,
