@@ -146,7 +146,7 @@ public static partial class ElkShimmerItemSets
             return;
         }
 
-        color *= GetDarkeningInterpolator();
+        color *= MathF.Pow(GetDarkeningInterpolator(), 3f);
     }
 
     private static Color GetShimmerGlitterColor_DarkenSurface(On_LiquidRenderer.orig_GetShimmerGlitterColor orig, bool top, float worldPositionX, float worldPositionY)
