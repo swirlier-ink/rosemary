@@ -6,7 +6,9 @@ using Rosemary.Content.Misc;
 using Rosemary.Core;
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
+using ReLogic.Utilities;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
@@ -19,6 +21,7 @@ using Terraria.Graphics.Light;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
+using static Terraria.Testing.WindowsPerformanceDiagnostics;
 
 namespace Rosemary.Content.Elk;
 
@@ -86,6 +89,7 @@ public static partial class ElkShimmerItemSets
     {
         if (!Main.item.Any(
                 i => i.active
+                  && i.shimmerWet
                   && ItemID.Sets.ViolentShimmerReaction[i.type]
                   && i.ShimmerData is { SubSurfaceProgress: > 0f }
             ))
@@ -153,8 +157,10 @@ public static partial class ElkShimmerItemSets
     {
         var color = orig(top, worldPositionX, worldPositionY);
 
+        var shimmerColor = new Color(123, 96, 255, 255);
+
         return top && shimmerDarknessInterpolator > 0f
-            ? Color.OklabLerp(color, new Color(123, 96, 255, color.A), 1f - MathF.Pow(GetDarkeningInterpolator(), 5f))
+            ? Color.OklabLerp(color, shimmerColor with { A = color.A }, 1f - MathF.Pow(GetDarkeningInterpolator(), 5f))
             : color;
     }
 
@@ -177,6 +183,7 @@ public static partial class ElkShimmerItemSets
 
         if (isBackgroundDraw
          || !Main.item.Any(i => i.active
+                             && i.shimmerWet
                              && ItemID.Sets.ViolentShimmerReaction[i.type]
                              && i.ShimmerData is { SubSurfaceProgress: > 0f }))
         {
@@ -220,6 +227,11 @@ public static partial class ElkShimmerItemSets
 
             shimmerMesmerizer.Parameters.Time = (float)Main.timeForVisualEffects;
             shimmerMesmerizer.Parameters.TargetPosition = Main.waterTarget.Position;
+
+            var shimmerColor = new Color(123, 96, 255, 255);
+
+            shimmerMesmerizer.Parameters.DarkColor = shimmerColor.ToVector4();
+            shimmerMesmerizer.Parameters.DarkInterpolator = 1f - MathF.Pow(GetDarkeningInterpolator(), 5f);
 
             shimmerMesmerizer.Apply();
 
@@ -282,7 +294,7 @@ public static partial class ElkShimmerItemSets
 
                     var dist = curPosition == item.Bottom
                         ? 1f
-                        : (1f - MathF.Pow(1f - MathF.Saturate(MathF.Abs(item.Center.Y - curPosition.Y) / 32f), 2f));
+                        : (1f - MathF.Pow(1f - MathF.Saturate(MathF.Abs(item.Center.Y - curPosition.Y) / 16f), 2f));
 
                     Main.instance.DrawItem_GetBasics(item.inner, item.whoAmI, out _, out var frame, out _);
 
@@ -293,9 +305,9 @@ public static partial class ElkShimmerItemSets
 
                     center -= Main.waterTarget.Position;
 
-                    var prog = 1f - MathF.Pow(data.SubSurfaceProgress, 8f);
+                    var prog = 1f - MathF.Pow(data.SubSurfaceProgress * dist, 8f);
 
-                    var size = prog * dist;
+                    var size = prog;
                     size *= 12f;
 
                     var rotation = Main.GlobalTimeWrappedHourly * 0.35f;
@@ -555,6 +567,11 @@ public static partial class ElkShimmerItemSets
         }
     }
 
+    private static bool InSubSurfaceReaction(WorldItem item)
+    {
+        return item.ExtendoGripData?.InClaw is true || item.ShimmerData is { SubSurfaceProgress: > 0.5f };
+    }
+
     private static void Shimmering_ViolentShimmerReaction(On_WorldItem.orig_Shimmering orig, WorldItem self)
     {
         if (!ItemID.Sets.ViolentShimmerReaction[self.type])
@@ -578,28 +595,31 @@ public static partial class ElkShimmerItemSets
 
         var data = self.ShimmerData;
 
-        if (data.WaveProgress < 0f)
-        {
-            return;
-        }
+        var subSurface = false;
 
-        if (!data.LoopingSound)
-        {
-            SoundEngine.PlaySound(
-                Assets.Elk.Shimmer.BurnLoop.Asset with
-                {
-                    PauseBehavior = PauseBehavior.PauseWithGame,
-                    MaxInstances = 3,
-                    IsLooped = true,
-                    Volume = 0.5f,
-                },
-                self.Center,
-                SoundCallback
-            );
-            data.LoopingSound = true;
-        }
+        var inSubSurfaceReaction = InSubSurfaceReaction(self);
 
         var curPosition = FindShimmerSurface(self, 32);
+
+        var above = self.Center.ToTileCoordinates();
+        above.Y -= 1;
+        if (Main.tile[above].HasShimmer)
+        {
+            var dist = curPosition == self.Bottom
+                ? 1f
+                : MathF.Saturate(MathF.Abs(self.Center.Y - curPosition.Y) / 80f);
+
+            if (!inSubSurfaceReaction)
+            {
+                self.velocity.Y = -22f * dist;
+            }
+
+            subSurface = true;
+        }
+        else
+        {
+            self.velocity *= 0.5f;
+        }
 
         // Find the bounds of the current pool
         var minRange = -16f;
@@ -629,171 +649,32 @@ public static partial class ElkShimmerItemSets
             }
         }
 
-        var reactant = self.inner.ModItem as IViolentShimmerReactant;
-
-        var progress = data.WaveProgress;
-
-        var subSurface = false;
-
-        var above = self.Center.ToTileCoordinates();
-        above.Y -= 1;
-        if (Main.tile[above].HasShimmer)
+        if (inSubSurfaceReaction)
         {
-            var dist = curPosition == self.Bottom
-              ? 1f
-              : MathF.Saturate(MathF.Abs(self.Center.Y - curPosition.Y) / 80f);
-
-            self.velocity.Y = -22f * dist;
-            subSurface = true;
+            ViolentShimmerReaction_SubSurface(self);
         }
         else
         {
-            self.velocity *= 0.5f;
+            ViolentShimmerReaction_Surface(self, subSurface, curPosition, (minRange, maxRange));
         }
 
-        var rippleOffset = new Vector2((1f - progress) * 700f, Rand.Next(-8f, 8f));
-
-        if (data.SubSurfaceProgress > 1f)
+        if (!data.LoopingSound)
         {
-            if (reactant?.Ejection(self, subSurface) is true)
-            {
-                self.ClearOut();
-            }
-            else
-            {
-                data.SubSurfaceProgress = Rand.Next(0.5f, 0.8f);
-            }
-        }
-
-        const float increment_smoke_result_shimmer_reaction = 0.001f;
-
-        if (self.ExtendoGripData?.InClaw is not true)
-        {
-            data.WaveProgress += increment_violent_shimmer_reaction;
-
-            if (data.SubSurfaceProgress > 0)
-            {
-                data.SubSurfaceProgress -= 0.005f;
-            }
-
-            data.SubSurfaceProgress = MathF.Min(data.SubSurfaceProgress, 0.5f);
-        }
-
-        data.SubSurfaceProgress += increment_smoke_result_shimmer_reaction;
-
-        if (subSurface)
-        {
-            shimmerDarknessInterpolator = MathF.Max(shimmerDarknessInterpolator, data.SubSurfaceProgress);
-        }
-
-        var framesLeft = (1f - data.SubSurfaceProgress) / increment_smoke_result_shimmer_reaction;
-
-        if (subSurface
-         && !data.FormationSlot.IsValid
-         && Assets.Elk.Shimmer.Formation.Asset.FrameDuration >= framesLeft)
-        {
-            data.FormationSlot = SoundEngine.PlaySound(
-                Assets.Elk.Shimmer.Formation.Asset with
+            SoundEngine.PlaySound(
+                Assets.Elk.Shimmer.BurnLoop.Asset with
                 {
                     PauseBehavior = PauseBehavior.PauseWithGame,
-                    MaxInstances = 5,
-                    Volume = 1.2f,
+                    MaxInstances = 3,
+                    IsLooped = true,
+                    Volume = 0.5f,
                 },
                 self.Center,
                 SoundCallback
             );
-
-            var modifier = new FadeInPunchCameraModifier(
-                self.Center,
-                new Vector2(0f, 1f),
-                24f,
-                8f,
-                (int)framesLeft,
-                m =>
-                {
-                    if (!ItemID.Sets.ViolentShimmerReaction[self.type] || !self.shimmerWet)
-                    {
-                        return false;
-                    }
-
-                    m._startPosition = self.Center;
-
-                    return true;
-                },
-                1300f,
-                $"{nameof(Rosemary)}: SHIMMER_NOUGHT_FORMATION"
-            );
-            Main.instance.CameraModifiers.Add(modifier);
+            data.LoopingSound = true;
         }
 
         PassiveEffects();
-        InteractWithPlayers();
-
-        if (progress < 1f)
-        {
-            return;
-        }
-
-        var velocity = -self.velocity;
-        velocity.Y = -20f;
-
-        self.velocity = velocity;
-
-        data.WaveProgress = -1f;
-
-        EjectEffects();
-
-        SoundEngine.PlaySound(
-            Assets.Elk.Shimmer.Ejection.Asset with
-            {
-                PauseBehavior = PauseBehavior.PauseWithGame,
-                MaxInstances = 3,
-            },
-            curPosition,
-            attenuationDistance: 5500f
-        );
-
-        if (!subSurface
-         && curPosition.Distance(Main.screenPosition + new Vector2(Main.screenWidth, Main.screenHeight) * 0.5f) > 3300f)
-        {
-            SoundEngine.PlaySound(
-                Assets.Elk.Shimmer.EjectionFar.Asset with
-                {
-                    PauseBehavior = PauseBehavior.PauseWithGame,
-                    MaxInstances = 3,
-                },
-                curPosition,
-                attenuationDistance: 150000f
-            );
-        }
-
-        if (reactant?.Ejection(self, subSurface) is true)
-        {
-            self.ClearOut();
-        }
-
-        if (subSurface)
-        {
-            return;
-        }
-
-        const int center_width = 80;
-        const int center_height = 120;
-
-        var centerHitbox = new Rectangle(
-            (int)self.Center.X - center_width,
-            (int)curPosition.Y - center_height,
-            center_width * 2,
-            center_height + 32
-        );
-
-        foreach (var player in Main.ActivePlayers)
-        {
-            if (centerHitbox.Intersects(player.Hitbox))
-            {
-                KillPlayer(player);
-            }
-        }
 
         return;
 
@@ -813,6 +694,244 @@ public static partial class ElkShimmerItemSets
 
             return self.shimmerWet;
         }
+
+        void PassiveEffects()
+        {
+            if (Main.netMode == NetmodeID.Server)
+            {
+                return;
+            }
+
+            // Acid bubbles
+            ElkShimmerParticles.Bubbles +=
+                new ElkShimmerParticles.ShimmerBubble(
+                    Rand.Next(self.Hitbox),
+                    GetShimmerSplashColor(),
+                    Rand.Next(-1f, 1f),
+                    Rand.Next((byte)1, (byte)4),
+                    0
+                );
+
+            var rippleStrength = inSubSurfaceReaction ? Rand.Next(0.25f, 2.1f) : Rand.Next(0.15f, 0.85f);
+            var rippleShape = inSubSurfaceReaction ? RippleShape.Circle : RippleShape.Square;
+
+            WaterShaderData.Instance.QueueRipple(Rand.Next(self.Hitbox), rippleStrength, rippleShape, MathF.PiOver4);
+
+            var side = Rand.NextDirection();
+
+            var dustOffX = MathF.Pow(1f - Rand.Next(0f, 1f), 3f);
+
+            // Surface droplets
+            var dustOffset = new Vector2(
+                (dustOffX * (side >= 0 ? minRange : maxRange)),
+                0f
+            );
+
+            var dust = Dust.NewDustPerfect(
+                curPosition + dustOffset,
+                DustID.ShimmerSplash,
+                new Vector2(Rand.Next(-1f, 1f), Rand.Next(-13f, -5f)),
+                0,
+                GetShimmerSplashColor(),
+                1.2f
+            );
+
+            dust.noGravity = true;
+        }
+
+        static Color GetShimmerSplashColor()
+        {
+            return Rand.Next(6) switch
+            {
+                0 => new Color(255, 255, 210),
+                1 => new Color(190, 245, 255),
+                2 => new Color(255, 150, 255),
+                _ => new Color(190, 175, 255),
+            };
+        }
+    }
+
+    private static void ViolentShimmerReaction_SubSurface(WorldItem item)
+    {
+        var data = item.ShimmerData!;
+
+        // TODO: Support GlobalItems?
+        var reactant = item.inner.ModItem as IViolentShimmerReactant;
+
+        const float increment_smoke_result_shimmer_reaction = 0.001f;
+
+        data.SubSurfaceProgress += increment_smoke_result_shimmer_reaction;
+
+        var distance = item.Center.Distance(Main.screenPosition + new Vector2(Main.screenWidth, Main.screenHeight) * 0.5f);
+        distance /= 1500f;
+        distance = MathF.Saturate(1f - distance);
+
+        distance = 1f - MathF.Pow(1f - distance, 2.3f);
+
+        shimmerDarknessInterpolator = MathF.Max(shimmerDarknessInterpolator, data.SubSurfaceProgress * distance);
+        
+        var framesLeft = (1f - data.SubSurfaceProgress) / increment_smoke_result_shimmer_reaction;
+
+        var style = Assets.Elk.Shimmer.Formation.Asset with
+        {
+            PauseBehavior = PauseBehavior.PauseWithGame,
+            MaxInstances = 5,
+            Volume = 1.2f,
+        };
+
+        if ((!data.FormationSlot.IsValid
+          || (SoundEngine.TryGetActiveSound(data.FormationSlot, out var s) && s.Style != style))
+         && Assets.Elk.Shimmer.Formation.Asset.FrameDuration >= framesLeft)
+        {
+            data.FormationSlot = SoundEngine.PlaySound(
+                style,
+                item.Center,
+                SoundCallback
+            );
+
+            var modifier = new FadeInPunchCameraModifier(
+                item.Center,
+                new Vector2(0f, 1f),
+                24f,
+                8f,
+                (int)framesLeft,
+                m =>
+                {
+                    if (!ItemID.Sets.ViolentShimmerReaction[item.type]
+                     || !item.shimmerWet
+                     || item.IsAir
+                     || !item.active
+                     || !InSubSurfaceReaction(item))
+                    {
+                        data.FormationSlot = SlotId.Invalid;
+                        return false;
+                    }
+
+                    m._startPosition = item.Center;
+
+                    return true;
+                },
+                1300f,
+                $"{nameof(Rosemary)}: SHIMMER_NOUGHT_FORMATION"
+            );
+            Main.instance.CameraModifiers.Add(modifier);
+        }
+
+        if (data.SubSurfaceProgress < 1f)
+        {
+            return;
+        }
+
+        if (reactant?.Ejection(item, true) is true)
+        {
+            item.ClearOut();
+        }
+
+        return;
+
+        bool SoundCallback(ActiveSound sound)
+        {
+            if (!ItemID.Sets.ViolentShimmerReaction[item.type]
+             || !item.shimmerWet
+             || item.IsAir
+             || !item.active
+             || !InSubSurfaceReaction(item))
+            {
+                return false;
+            }
+
+            sound.Position = item.Center;
+
+            return item.shimmerWet;
+        }
+    }
+
+    private static void ViolentShimmerReaction_Surface(WorldItem item, bool subSurface, Vector2 curPosition, (float min, float max) range)
+    {
+        var data = item.ShimmerData!;
+
+        if (data.WaveProgress < 0f)
+        {
+            return;
+        }
+
+        var reactant = item.inner.ModItem as IViolentShimmerReactant;
+
+        var progress = data.WaveProgress;
+
+        var rippleOffset = new Vector2((1f - progress) * 700f, Rand.Next(-8f, 8f));
+
+        PassiveEffects();
+        InteractWithPlayers();
+
+        data.WaveProgress += increment_violent_shimmer_reaction;
+
+        if (data.SubSurfaceProgress > 0f)
+        {
+            data.SubSurfaceProgress -= 0.02f;
+        }
+
+        if (progress < 1f)
+        {
+            return;
+        }
+
+        var velocity = -item.velocity;
+        velocity.Y = -20f;
+
+        item.velocity = velocity;
+
+        data.WaveProgress = -1f;
+
+        EjectEffects();
+
+        SoundEngine.PlaySound(
+            Assets.Elk.Shimmer.Ejection.Asset with
+            {
+                PauseBehavior = PauseBehavior.PauseWithGame,
+                MaxInstances = 3,
+            },
+            curPosition,
+            attenuationDistance: 5500f
+        );
+
+        if (curPosition.Distance(Main.screenPosition + new Vector2(Main.screenWidth, Main.screenHeight) * 0.5f) > 3300f)
+        {
+            SoundEngine.PlaySound(
+                Assets.Elk.Shimmer.EjectionFar.Asset with
+                {
+                    PauseBehavior = PauseBehavior.PauseWithGame,
+                    MaxInstances = 3,
+                },
+                curPosition,
+                attenuationDistance: 150000f
+            );
+        }
+
+        if (reactant?.Ejection(item, false) is true)
+        {
+            item.ClearOut();
+        }
+
+        const int center_width = 80;
+        const int center_height = 120;
+
+        var centerHitbox = new Rectangle(
+            (int)item.Center.X - center_width,
+            (int)curPosition.Y - center_height,
+            center_width * 2,
+            center_height + 32
+        );
+
+        foreach (var player in Main.ActivePlayers)
+        {
+            if (centerHitbox.Intersects(player.Hitbox))
+            {
+                KillPlayer(player);
+            }
+        }
+
+        return;
 
         static void KillPlayer(Player player)
         {
@@ -841,7 +960,7 @@ public static partial class ElkShimmerItemSets
             const int height = 64;
 
             Rectangle? leftHitbox = null;
-            if (-rippleOffset.X > minRange)
+            if (-rippleOffset.X > range.min)
             {
                 leftHitbox = new Rectangle(
                     (int)(curPosition.X - rippleOffset.X) - 8 - offset,
@@ -852,7 +971,7 @@ public static partial class ElkShimmerItemSets
             }
 
             Rectangle? rightHitbox = null;
-            if (rippleOffset.X < maxRange)
+            if (rippleOffset.X < range.max)
             {
                 rightHitbox = new Rectangle(
                     (int)(curPosition.X + rippleOffset.X) - 8 + offset,
@@ -897,58 +1016,17 @@ public static partial class ElkShimmerItemSets
 
         void PassiveEffects()
         {
-            if (Main.netMode == NetmodeID.Server)
-            {
-                return;
-            }
-
-            // Acid bubbles
-            ElkShimmerParticles.Bubbles +=
-                new ElkShimmerParticles.ShimmerBubble(
-                    Rand.Next(self.Hitbox),
-                    GetShimmerSplashColor(),
-                    Rand.Next(-1f, 1f),
-                    Rand.Next((byte)1, (byte)4),
-                    0
-                );
-
-            var rippleStrength = self.ExtendoGripData?.InClaw is true ? Rand.Next(0.25f, 2.1f) : Rand.Next(0.15f, 0.85f);
-            var rippleShape = self.ExtendoGripData?.InClaw is true ? RippleShape.Circle : RippleShape.Square;
-
-            WaterShaderData.Instance.QueueRipple(Rand.Next(self.Hitbox), rippleStrength, rippleShape, MathF.PiOver4);
-
-            var side = Rand.NextDirection();
-
-            var dustOffX = MathF.Pow(1f - Rand.Next(0f, 1f), 3f);
-
-            // Surface droplets
-            var dustOffset = new Vector2(
-                (dustOffX * (side >= 0 ? minRange : maxRange)),
-                0f
-            );
-
-            var dust = Dust.NewDustPerfect(
-                curPosition + dustOffset,
-                DustID.ShimmerSplash,
-                new Vector2(Rand.Next(-1f, 1f), Rand.Next(-13f, -5f)),
-                0,
-                GetShimmerSplashColor(),
-                1.2f
-            );
-
-            dust.noGravity = true;
-
-            if (subSurface
-             || self.ExtendoGripData?.InClaw is true)
+            if (Main.netMode == NetmodeID.Server
+             || subSurface)
             {
                 return;
             }
 
             // Dust moving inward
-            dustOffset = Rand.NextUnitVector(Rand.Next(400f));
+            var dustOffset = Rand.NextUnitVector(Rand.Next(400f));
             dustOffset.Y = -MathF.Abs(dustOffset.Y);
 
-            dust = Dust.NewDustPerfect(
+            var dust = Dust.NewDustPerfect(
                 curPosition + dustOffset,
                 DustID.ShimmerSplash,
                 dustOffset.Normalized * -8f,
@@ -984,7 +1062,7 @@ public static partial class ElkShimmerItemSets
                 return;
             }
 
-            ElkShimmerParticles.Rings += new ElkShimmerParticles.ExpandingRing(self.Center, 0.1f, 0.02f, 0f, 0.04f);
+            ElkShimmerParticles.Rings += new ElkShimmerParticles.ExpandingRing(item.Center, 0.1f, 0.02f, 0f, 0.04f);
 
             // Camera shake with lingering effect
             var strong = new PunchCameraModifier(curPosition, new Vector2(0f, -1f), 35f, 8f, 45, 4500f, $"{nameof(Rosemary)}: SHIMMER_VIOLENT_WRONG");

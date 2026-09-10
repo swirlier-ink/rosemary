@@ -6,6 +6,9 @@ sampler2D Texture : register(s0);
 float Time;
 float2 TargetPosition;
 
+float4 DarkColor;
+float DarkInterpolator;
+
 TEXTURE_SIZE(TextureSize, 0)
 
 float3 ShimmerColor(float2 uv)
@@ -29,6 +32,9 @@ float4 MesmerizerShimmerColorsShaderFragment(float2 uv : TEXCOORD0, float4 baseC
     
     float4 color = tex2D(Texture, uv);
     color.rgb *= ShimmerColor(uv);
+    
+    color = OklabLerp(color, DarkColor.rgbb, DarkInterpolator) * color.a;
+    
     color.a = 0;
 
     return color;
