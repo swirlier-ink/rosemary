@@ -6,14 +6,19 @@ using Rosemary.Content.Misc;
 using Rosemary.Core;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
+using Terraria.GameContent.Drawing;
 using Terraria.GameContent.Liquid;
 using Terraria.GameContent.Shaders;
+using Terraria.Graphics;
 using Terraria.Graphics.CameraModifiers;
+using Terraria.Graphics.Light;
 using Terraria.ID;
 using Terraria.Localization;
+using Terraria.ModLoader;
 
 namespace Rosemary.Content.Elk;
 
@@ -30,6 +35,119 @@ public static partial class ElkShimmerItemSets
         On_Player.DropTombstone += DropTombstone_DisableDrops_ViolentShimmerReaction;
 
         On_LiquidRenderer.DrawShimmer += DrawShimmer_CrystallizationVisuals;
+
+        IL_TileLightScanner.ApplyLiquidLight += ApplyLiquidLight_DarkenShimmer;
+        IL_TileLightScanner.GetTileLight += _ => { };
+    }
+
+#pragma warning disable CA2255
+    [ModuleInitializer]
+    public static void Init()
+    {
+#if PROJECT_BUILD
+        try
+        {
+            Inner();
+        }
+        catch
+        { }
+
+        return;
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void Inner()
+        {
+#endif
+            On_LiquidRenderer.GetShimmerGlitterColor += GetShimmerGlitterColor_DarkenSurface;
+            {
+                IL_Main.oldDrawWater += _ => { };
+                IL_TileDrawing.DrawSingleTile += _ => { };
+                IL_WallDrawing.DrawWalls += _ => { };
+                IL_PlayerDrawLayers.DrawPlayer_10_BackAcc += _ => { };
+                IL_PlayerDrawLayers.DrawPlayer_32_FrontAcc_FrontPart += _ => { };
+                IL_PlayerDrawLayers.DrawPlayer_32_FrontAcc_BackPart += _ => { };
+            }
+            IL_LiquidRenderer.SetShimmerVertexColors_Sparkle += _ => { };
+            {
+                IL_WaterfallManager.DrawWaterfall_int_int_int_float_Vector2_Rectangle_Color_SpriteEffects += _ => { };
+                IL_LiquidRenderer.DrawShimmer += _ => { };
+                // IL_WallDrawing.DrawWalls += _ => { };
+            }
+#if PROJECT_BUILD
+        }
+#endif
+    }
+#pragma warning restore CA2255
+
+    private static float shimmerDarknessInterpolator;
+
+    [ModSystemHooks.PreUpdateDusts]
+    private static void UpdateShimmerDarkness()
+    {
+        shimmerDarknessInterpolator -= 0.1f;
+        shimmerDarknessInterpolator = MathF.Saturate(shimmerDarknessInterpolator);
+    }
+
+    private static void ApplyLiquidLight_DarkenShimmer(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        var skipColorDimmingTarget = c.DefineLabel();
+
+        var colorIndex = ParameterIndex.Invalid;
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchRet()
+        );
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchRet()
+        );
+
+        c.GotoNext(
+            MoveType.Before,
+            i => i.MatchRet()
+        );
+
+        c.MoveAfterLabels();
+
+        c.FindPrev(
+            out _,
+            i => i.MatchLdarg(out colorIndex)
+        );
+
+        c.EmitLdarg(colorIndex);
+        c.EmitDelegate(DarkenShimmerColor);
+
+        c.MarkLabel(skipColorDimmingTarget);
+
+        c.GotoPrev(
+            MoveType.After,
+            i => i.MatchCall<Tile>(nameof(Tile.shimmer))
+        );
+
+        c.Next?.Operand = skipColorDimmingTarget;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void DarkenShimmerColor(ref Vector3 color)
+    {
+        if (shimmerDarknessInterpolator <= 0f)
+        {
+            return;
+        }
+
+        color *= MathF.Max(1f - MathF.Pow(shimmerDarknessInterpolator + 0.06f, 4f), 0.05f);
+    }
+
+    private static Color GetShimmerGlitterColor_DarkenSurface(On_LiquidRenderer.orig_GetShimmerGlitterColor orig, bool top, float worldPositionX, float worldPositionY)
+    {
+        var color = orig(top, worldPositionX, worldPositionY);
+
+        return top && shimmerDarknessInterpolator > 0f
+            ? Color.OklabLerp(color, new Color(123, 96, 255, color.A), MathF.Pow(shimmerDarknessInterpolator + 0.05f, 5f) * 0.91f)
+            : color;
     }
 
     private static readonly string[] death_keys_violent_shimmer_reaction =
@@ -548,6 +666,11 @@ public static partial class ElkShimmerItemSets
         }
 
         data.SubSurfaceProgress += increment_smoke_result_shimmer_reaction;
+
+        if (subSurface)
+        {
+            shimmerDarknessInterpolator = MathF.Max(shimmerDarknessInterpolator, data.SubSurfaceProgress);
+        }
 
         var framesLeft = (1f - data.SubSurfaceProgress) / increment_smoke_result_shimmer_reaction;
 
