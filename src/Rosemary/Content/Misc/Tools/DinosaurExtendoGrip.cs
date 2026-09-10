@@ -970,7 +970,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
         if (ItemID.Sets.ViolentShimmerReaction[item.type]
          && item.shimmerWet
-         && item.ShimmerData is { } data)
+         && item.ShimmerData is { SubSurfaceProgress: < ElkShimmerItemSets.SUBSURFACE_POINT_OF_NO_RETURN } data)
         {
             data.WaveProgress = 0f;
 

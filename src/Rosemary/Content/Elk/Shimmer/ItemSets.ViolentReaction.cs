@@ -554,7 +554,7 @@ public static partial class ElkShimmerItemSets
         {
             if (!ItemID.Sets.ViolentShimmerReaction[item.type]
              || !item.shimmerWet
-             || item.ExtendoGripData?.InClaw is true
+             || InSubSurfaceReaction(item)
              || item.IsAir
              || !item.active)
             {
@@ -567,9 +567,11 @@ public static partial class ElkShimmerItemSets
         }
     }
 
+    public const float SUBSURFACE_POINT_OF_NO_RETURN = 0.65f;
+
     private static bool InSubSurfaceReaction(WorldItem item)
     {
-        return item.ExtendoGripData?.InClaw is true || item.ShimmerData is { SubSurfaceProgress: > 0.5f };
+        return item.ExtendoGripData?.InClaw is true || item.ShimmerData is { SubSurfaceProgress: > SUBSURFACE_POINT_OF_NO_RETURN };
     }
 
     private static void Shimmering_ViolentShimmerReaction(On_WorldItem.orig_Shimmering orig, WorldItem self)
@@ -612,6 +614,10 @@ public static partial class ElkShimmerItemSets
             if (!inSubSurfaceReaction)
             {
                 self.velocity.Y = -22f * dist;
+            }
+            else
+            {
+                self.velocity.Y = 0;
             }
 
             subSurface = true;
