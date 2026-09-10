@@ -6,7 +6,6 @@ using Rosemary.Content.Misc;
 using Rosemary.Core;
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using ReLogic.Utilities;
 using Terraria;
@@ -15,13 +14,10 @@ using Terraria.DataStructures;
 using Terraria.GameContent.Drawing;
 using Terraria.GameContent.Liquid;
 using Terraria.GameContent.Shaders;
-using Terraria.Graphics;
 using Terraria.Graphics.CameraModifiers;
 using Terraria.Graphics.Light;
 using Terraria.ID;
 using Terraria.Localization;
-using Terraria.ModLoader;
-using static Terraria.Testing.WindowsPerformanceDiagnostics;
 
 namespace Rosemary.Content.Elk;
 
