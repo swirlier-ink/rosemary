@@ -84,7 +84,15 @@ public static partial class ElkShimmerItemSets
     [ModSystemHooks.PreUpdateDusts]
     private static void UpdateShimmerDarkness()
     {
-        shimmerDarknessInterpolator -= 0.1f;
+        if (!Main.item.Any(
+                i => i.active
+                  && ItemID.Sets.ViolentShimmerReaction[i.type]
+                  && i.ShimmerData is { SubSurfaceProgress: > 0f }
+            ))
+        {
+            shimmerDarknessInterpolator = 0f;
+        }
+
         shimmerDarknessInterpolator = MathF.Saturate(shimmerDarknessInterpolator);
     }
 
@@ -138,7 +146,7 @@ public static partial class ElkShimmerItemSets
             return;
         }
 
-        color *= MathF.Max(1f - MathF.Pow(shimmerDarknessInterpolator + 0.06f, 4f), 0.05f);
+        color *= GetDarkeningInterpolator();
     }
 
     private static Color GetShimmerGlitterColor_DarkenSurface(On_LiquidRenderer.orig_GetShimmerGlitterColor orig, bool top, float worldPositionX, float worldPositionY)
@@ -146,8 +154,13 @@ public static partial class ElkShimmerItemSets
         var color = orig(top, worldPositionX, worldPositionY);
 
         return top && shimmerDarknessInterpolator > 0f
-            ? Color.OklabLerp(color, new Color(123, 96, 255, color.A), MathF.Pow(shimmerDarknessInterpolator + 0.05f, 5f) * 0.91f)
+            ? Color.OklabLerp(color, new Color(123, 96, 255, color.A), 1f - MathF.Pow(GetDarkeningInterpolator(), 5f))
             : color;
+    }
+
+    private static float GetDarkeningInterpolator()
+    {
+        return Utils.Remap(MathF.Max(1f - MathF.Pow(shimmerDarknessInterpolator, 16f), (shimmerDarknessInterpolator * 2) - 1), 0.8f, 1f, 0.03f, 1f);
     }
 
     private static readonly string[] death_keys_violent_shimmer_reaction =
@@ -164,6 +177,7 @@ public static partial class ElkShimmerItemSets
 
         if (isBackgroundDraw
          || !Main.item.Any(i => i.active
+                             && ItemID.Sets.ViolentShimmerReaction[i.type]
                              && i.ShimmerData is { SubSurfaceProgress: > 0f }))
         {
             return;
