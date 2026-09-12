@@ -15,6 +15,26 @@ public sealed class CrystallizedNought : ModItem
     {
         On_Main.DrawStar += DrawStar_Offset;
         On_Star.UpdateStars += UpdateStars_UpdateFlicker;
+
+        On_Main.DrawStarsInBackground += DrawStarsInBackground_Batch;
+    }
+
+    private void DrawStarsInBackground_Batch(On_Main.orig_DrawStarsInBackground orig, Main self, Main.SceneArea sceneArea, bool artificial)
+    {
+        if (!artificial)
+        {
+            orig(self, sceneArea, artificial);
+            return;
+        }
+
+        var sb = Main.spriteBatch;
+
+        sb.End(out var ss);
+        sb.Begin(ss with { SortMode = SpriteSortMode.Texture });
+        {
+            orig(self, sceneArea, artificial);
+        }
+        sb.Restart(ss);
     }
 
     private static readonly Vector2 star_bounds = new Vector2(1920, 1200);
@@ -32,7 +52,7 @@ public sealed class CrystallizedNought : ModItem
 
         flickerTimer += 0.01f;
 
-        if (flickerTimer >= 2f)
+        if (flickerTimer >= 3f)
         {
             flickerTimer = 0f;
         }
@@ -67,7 +87,7 @@ public sealed class CrystallizedNought : ModItem
         var difference = starPosition - focus;
         var distance = 1f - MathF.Saturate(difference.Length() / 2200f);
 
-        var endDist = (1f - distance * 0.4f) + 1f;
+        var endDist = (1f - distance * 0.4f) + 2f;
 
         var inRange = flickerTimer > distance && endDist > flickerTimer;
 
@@ -75,23 +95,31 @@ public sealed class CrystallizedNought : ModItem
 
         offset.Magnitude =
             inRange
-          ? Utils.Remap(flickerTimer, distance, distance + 0.01f, 0f, 25f)
+          ? Utils.Remap(flickerTimer, distance, distance + 0.01f, 0f, 13f * star.scale)
           : 0f;
 
         var scale = MathF.Max(1f - MathF.Abs(flickerTimer - distance), 1f - MathF.Abs(flickerTimer - endDist));
-        scale = Utils.Remap(scale, 0.96f, 1f, 1f, 0f);
+        scale = Utils.Remap(scale, 0.95f, 1f, 1f, 0f);
 
         scale = MathF.Pow(scale, 3f);
 
-        scale *= star.scale;
+        var sb = Main.spriteBatch;
 
         if (inRange)
         {
-            scale = MathF.Max(1.1f, scale);
+            var texture = Assets.Elk.Particles.ExpandingCircle.Asset.Value;
+
+            var destSize = (new Vector2(28f * scale, 50f) * star.scale) / texture.Size();
+
+            var color = Color.White * Utils.Remap(scale, 0f, 1f, 1f, 0.07f * star.scale);
+            color.A = 0;
+
+            sb.Draw(texture, starPosition, null, color, offset.ToRotation() + MathF.PiOver2, Origin.Center, destSize, SpriteEffects.None, 0f);
         }
 
         using var _ = star.position.Override(star.position + offset);
-        using var __ = star.scale.Override(scale);
+        using var __ = star.scale.Override(star.scale * scale);
+        using var ___ = star.twinkle.Override(inRange ? 1f : star.twinkle);
 
         orig(self, ref sceneArea, starOpacity, bgColorForStars, i, star, artificial);
     }
