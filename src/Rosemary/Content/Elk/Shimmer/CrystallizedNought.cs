@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
+using System;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
@@ -10,6 +11,91 @@ namespace Rosemary.Content.Elk;
 
 public sealed class CrystallizedNought : ModItem
 {
+    public override void Load()
+    {
+        On_Main.DrawStar += DrawStar_Offset;
+        On_Star.UpdateStars += UpdateStars_UpdateFlicker;
+    }
+
+    private static readonly Vector2 star_bounds = new Vector2(1920, 1200);
+
+    private static float flickerTimer;
+
+    private void UpdateStars_UpdateFlicker(On_Star.orig_UpdateStars orig)
+    {
+        orig();
+
+        if (flickerTimer <= 0f)
+        {
+            return;
+        }
+
+        flickerTimer += 0.01f;
+
+        if (flickerTimer >= 2f)
+        {
+            flickerTimer = 0f;
+        }
+    }
+
+    private void DrawStar_Offset(On_Main.orig_DrawStar orig, Main self, ref Main.SceneArea sceneArea, float starOpacity, Color bgColorForStars, int i, Star star, bool artificial)
+    {
+        if (!artificial
+         || flickerTimer <= 0f
+         || star.falling
+         || star.hidden)
+        {
+            orig(self, ref sceneArea, starOpacity, bgColorForStars, i, star, artificial);
+            return;
+        }
+
+        var topY = sceneArea.bgTopY;
+
+        if (Main.worldSurface <= 30f)
+        {
+            topY = 0;
+        }
+
+        var bounds = new Vector2(sceneArea.totalWidth, sceneArea.totalHeight);
+
+        var focus = Main.LocalPlayer.Center - Main.screenPosition;
+
+        var starPosition = star.position / star_bounds;
+        starPosition *= bounds;
+        starPosition.Y += topY;
+
+        var difference = starPosition - focus;
+        var distance = 1f - MathF.Saturate(difference.Length() / 2200f);
+
+        var endDist = (1f - distance * 0.4f) + 1f;
+
+        var inRange = flickerTimer > distance && endDist > flickerTimer;
+
+        var offset = -difference.Normalized;
+
+        offset.Magnitude =
+            inRange
+          ? Utils.Remap(flickerTimer, distance, distance + 0.01f, 0f, 25f)
+          : 0f;
+
+        var scale = MathF.Max(1f - MathF.Abs(flickerTimer - distance), 1f - MathF.Abs(flickerTimer - endDist));
+        scale = Utils.Remap(scale, 0.96f, 1f, 1f, 0f);
+
+        scale = MathF.Pow(scale, 3f);
+
+        scale *= star.scale;
+
+        if (inRange)
+        {
+            scale = MathF.Max(1.1f, scale);
+        }
+
+        using var _ = star.position.Override(star.position + offset);
+        using var __ = star.scale.Override(scale);
+
+        orig(self, ref sceneArea, starOpacity, bgColorForStars, i, star, artificial);
+    }
+
     public override string Texture => Assets.Elk.Shimmer.CrystallizedNought.KEY;
 
     public override string LocalizationCategory => "Content.Elk";
@@ -75,6 +161,13 @@ public sealed class CrystallizedNought : ModItem
         {
             return vector.X + vector.Y + vector.Z;
         }
+    }
+
+    public override bool OnPickup(WorldItem item, Player player)
+    {
+        flickerTimer += 0.05f;
+
+        return base.OnPickup(item, player);
     }
 
     public override bool PreDrawInInventory(SpriteBatch sb, Vector2 position, Rectangle frame, Color drawColor, Color itemColor, Vector2 origin, float scale)
