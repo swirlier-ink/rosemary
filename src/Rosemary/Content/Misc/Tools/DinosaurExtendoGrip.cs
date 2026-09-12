@@ -782,7 +782,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
                     hitbox.Inflate(8, 8);
 
-                    if (!hitbox.Intersects(Projectile.Hitbox))
+                    if (!hitbox.Intersects(Projectile.Hitbox) || item.ExtendoGripData?.InClaw is true)
                     {
                         continue;
                     }
