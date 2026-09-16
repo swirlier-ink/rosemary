@@ -19,7 +19,7 @@ public sealed class CrystallizedNought : ModItem
         On_Main.DrawStarsInBackground += DrawStarsInBackground_Batch;
     }
 
-    private void DrawStarsInBackground_Batch(On_Main.orig_DrawStarsInBackground orig, Main self, Main.SceneArea sceneArea, bool artificial)
+    private static void DrawStarsInBackground_Batch(On_Main.orig_DrawStarsInBackground orig, Main self, Main.SceneArea sceneArea, bool artificial)
     {
         if (!artificial)
         {
@@ -41,7 +41,7 @@ public sealed class CrystallizedNought : ModItem
 
     private static float flickerTimer;
 
-    private void UpdateStars_UpdateFlicker(On_Star.orig_UpdateStars orig)
+    private static void UpdateStars_UpdateFlicker(On_Star.orig_UpdateStars orig)
     {
         orig();
 
@@ -58,7 +58,7 @@ public sealed class CrystallizedNought : ModItem
         }
     }
 
-    private void DrawStar_Offset(On_Main.orig_DrawStar orig, Main self, ref Main.SceneArea sceneArea, float starOpacity, Color bgColorForStars, int i, Star star, bool artificial)
+    private static void DrawStar_Offset(On_Main.orig_DrawStar orig, Main self, ref Main.SceneArea sceneArea, float starOpacity, Color bgColorForStars, int i, Star star, bool artificial)
     {
         if (!artificial
          || flickerTimer <= 0f
@@ -101,17 +101,17 @@ public sealed class CrystallizedNought : ModItem
         var scale = MathF.Max(1f - MathF.Abs(flickerTimer - distance), 1f - MathF.Abs(flickerTimer - endDist));
         scale = Utils.Remap(scale, 0.95f, 1f, 1f, 0f);
 
-        scale = MathF.Pow(scale, 3f);
-
         var sb = Main.spriteBatch;
 
         if (inRange)
         {
             var texture = Assets.Elk.Particles.ExpandingCircle.Asset.Value;
 
-            var destSize = (new Vector2(28f * scale, 50f) * star.scale) / texture.Size();
+            var fastScale = MathF.Pow(scale, 3f);
 
-            var color = Color.White * Utils.Remap(scale, 0f, 1f, 1f, 0.07f * star.scale);
+            var destSize = (new Vector2(28f * fastScale, 50f) * star.scale) / texture.Size();
+
+            var color = Color.White * Utils.Remap(fastScale, 0f, 1f, 1f, 0.07f * star.scale);
             color.A = 0;
 
             sb.Draw(texture, starPosition, null, color, offset.ToRotation() + MathF.PiOver2, Origin.Center, destSize, SpriteEffects.None, 0f);
@@ -135,6 +135,8 @@ public sealed class CrystallizedNought : ModItem
         ItemID.Sets.SolidShimmerReaction[Type] = true;
 
         Main.itemAnimations[Type] = new DrawAnimationStatic(1, 4);
+
+        UnnamedItems.Add(Type);
     }
 
     public override void SetDefaults()
