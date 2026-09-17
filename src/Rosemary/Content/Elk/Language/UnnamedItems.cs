@@ -1,4 +1,5 @@
-﻿using Rosemary.Common.IO;
+﻿using System;
+using Rosemary.Common.IO;
 using System.Collections.Generic;
 using System.IO;
 using Terraria;
@@ -62,6 +63,15 @@ public static class UnnamedItems
 
     private static void Load()
     {
+        try
+        {
+            Directory.CreateDirectory(RosemaryIO.SavePath);
+        }
+        catch
+        {
+            ModContent.GetInstance<ModImpl>().Logger.Warn($"Could not create directory at: \"{RosemaryIO.SavePath}\"!");
+        }
+
         if (!File.Exists(NamedItemsPath))
         {
             CreateEmpty();
