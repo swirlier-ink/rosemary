@@ -75,25 +75,24 @@ public sealed class DinosaurExtendoGrip : ModItem
 
         On_NPC.ReleaseNPC += ReleaseNPC_ApplyVelocity;
 
-        On_Item.NewItem_Inner += NewItem_Inner_RefreshData;
+        On_Item.NewItem_Inner += NewItem_Inner_RefreshData; ;
     }
 
-    private static int NewItem_Inner_RefreshData(
+    private int NewItem_Inner_RefreshData(
         On_Item.orig_NewItem_Inner orig,
         IEntitySource source,
-        int x,
-        int y,
-        int width,
-        int height,
+        Vector2 center,
         Item itemToClone,
         int type,
         int stack,
-        bool noBroadcast,
         int prefix,
-        bool noGrabDelay
+        NewItemOwnership ownership,
+        Vector2? velocity,
+        Item.NewItemModifier modifier,
+        bool noBroadcast
     )
     {
-        var index = orig(source, x, y, width, height, itemToClone, type, stack, noBroadcast, prefix, noGrabDelay);
+        var index = orig(source, center, itemToClone, type, stack, prefix, ownership, velocity, modifier, noBroadcast);
 
         if (index == -1)
         {
@@ -153,7 +152,6 @@ public sealed class DinosaurExtendoGrip : ModItem
         var c = new ILCursor(il);
 
         var whoIndex = ParameterIndex.Invalid;
-        var itemWhoAmIIndex = VariableIndex.Invalid;
 
         c.GotoNext(
             MoveType.After,
@@ -163,14 +161,13 @@ public sealed class DinosaurExtendoGrip : ModItem
 
         c.GotoNext(
             MoveType.After,
-            i => i.MatchCall<Item>(nameof(Item.NewItem)),
-            i => i.MatchStloc(out itemWhoAmIIndex)
+            i => i.MatchCall<Item>(nameof(Item.NewItem))
         );
 
+        c.EmitDup();
         c.EmitLdarg(whoIndex);
-        c.EmitLdloc(itemWhoAmIIndex);
         c.EmitDelegate(
-            static (int whoAmI, int itemIndex) =>
+            static (int itemIndex, int whoAmI) =>
             {
                 var player = Main.player[whoAmI];
 
@@ -258,10 +255,10 @@ public sealed class DinosaurExtendoGrip : ModItem
             i => i.MatchLdsfld<Main>(nameof(Main.item)),
             i => i.MatchLdloc(out worldItemIndexIndex),
             i => i.MatchLdelemRef(),
-            i => i.MatchCallvirt<WorldItem>($"get_{nameof(WorldItem.master)}")
+            i => i.MatchCallvirt<WorldItem>($"get_{nameof(WorldItem.inner)}")
         );
 
-        c.GotoPrev(
+        c.GotoNext(
             MoveType.After,
             i => i.MatchCall<Rectangle>(nameof(Rectangle.Intersects))
         );
@@ -866,7 +863,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
             Projectile.damage = item.damage;
 
-            item.noGrabDelay = 30;
+            item.grabDelayTime = 30;
 
             Main.instance.DrawItem_GetBasics(item.inner, item.whoAmI, out _, out var frame, out _);
 
@@ -986,7 +983,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
         var length = (Projectile.Center - center).Length();
         if (deposit && length <= pickup_distance)
         {
-            item.noGrabDelay = 0;
+            item.grabDelayTime = 0;
             player.PickupItem(item);
         }
 

@@ -55,7 +55,7 @@ public static partial class ElkLangItemSets
     private const float elk_name_tooltip_scale = 1f;
     private const float elk_name_popup_scale = 1f;
 
-    private static Item? nonTooltipHoverItem;
+    private static Item? worldHoverItem;
 
     private static Item?[] popupTextItems = new Item?[PopupText.popupText.Length];
 
@@ -760,7 +760,7 @@ public static partial class ElkLangItemSets
         c.EmitDelegate(
             static (Vector2 originalSize) =>
             {
-                var item = nonTooltipHoverItem;
+                var item = worldHoverItem;
 
                 if (item is null || usesElkName[item.type] is not { } phrase)
                 {
@@ -797,7 +797,7 @@ public static partial class ElkLangItemSets
         c.EmitDelegate(
             static (int x, int y) =>
             {
-                var item = nonTooltipHoverItem;
+                var item = worldHoverItem;
 
                 if (item is null || usesElkName[item.type] is not { } phrase)
                 {
@@ -817,7 +817,7 @@ public static partial class ElkLangItemSets
     {
         orig(self, info);
 
-        nonTooltipHoverItem = null;
+        worldHoverItem = null;
     }
 
     private static void DrawMouseOver_UsesElkName(ILContext il)
@@ -831,7 +831,7 @@ public static partial class ElkLangItemSets
             i => i.MatchLdsfld<Main>(nameof(Main.item)),
             i => i.MatchLdloc(out worldItemIndexIndex),
             i => i.MatchLdelemRef(),
-            i => i.MatchCallvirt<WorldItem>($"get_{nameof(WorldItem.master)}")
+            i => i.MatchCallvirt<WorldItem>($"get_{nameof(WorldItem.inner)}")
         );
 
         c.GotoNext(
@@ -846,7 +846,7 @@ public static partial class ElkLangItemSets
         c.EmitDelegate(
             static (int i) =>
             {
-                nonTooltipHoverItem = Main.item[i].inner;
+                worldHoverItem = Main.item[i].inner;
             }
         );
     }
@@ -955,7 +955,7 @@ public static partial class ElkLangItemSets
         c.EmitDelegate(
             static (int index) =>
             {
-                nonTooltipHoverItem = Main.LocalPlayer.inventory[index];
+                worldHoverItem = Main.LocalPlayer.inventory[index];
             }
         );
     }

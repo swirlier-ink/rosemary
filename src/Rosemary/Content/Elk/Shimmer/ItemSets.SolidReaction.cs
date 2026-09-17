@@ -17,7 +17,7 @@ public static partial class ElkShimmerItemSets
         IL_WorldItem.UpdateItem += _ => { };
         IL_WorldItem.MoveInWorld += _ => { };
 
-        On_WorldItem.Shimmering += Shimmering_SolidReaction;
+        On_WorldItem.UpdateShimmer += UpdateShimmer_SolidReaction;
 
         IL_WorldItem.UpdateItem += UpdateItem_ShimmerSlowdown;
     }
@@ -51,11 +51,11 @@ public static partial class ElkShimmerItemSets
         );
     }
 
-    private static void Shimmering_SolidReaction(On_WorldItem.orig_Shimmering orig, WorldItem self)
+    private static void UpdateShimmer_SolidReaction(On_WorldItem.orig_UpdateShimmer orig, WorldItem self, ref float gravity)
     {
         if (!ItemID.Sets.SolidShimmerReaction[self.type])
         {
-            orig(self);
+            orig(self, ref gravity);
 
             return;
         }
@@ -71,7 +71,7 @@ public static partial class ElkShimmerItemSets
             self.velocity.Y = -12f * dist;
         }
 
-        orig(self);
+        orig(self, ref gravity);
     }
 
     private static void ApplyMovement_ShimmerWalk(On_WorldItem.orig_ApplyMovement orig, WorldItem self, ref Vector2 wetVelocity)

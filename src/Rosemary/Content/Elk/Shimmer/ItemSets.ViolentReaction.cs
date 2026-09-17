@@ -26,7 +26,7 @@ public static partial class ElkShimmerItemSets
     [OnLoad]
     private static void Load_ViolentShimmerReaction()
     {
-        On_WorldItem.Shimmering += Shimmering_ViolentShimmerReaction;
+        On_WorldItem.UpdateShimmer += UpdateShimmer_ViolentShimmerReaction;
         IL_WorldItem.MoveInWorld += MoveInWorld_ViolentShimmerReaction;
 
         // TODO: Move to separate system if this becomes relevant elsewhere
@@ -570,11 +570,11 @@ public static partial class ElkShimmerItemSets
         return item.ExtendoGripData?.InClaw is true || item.ShimmerData is { SubSurfaceProgress: > SUBSURFACE_POINT_OF_NO_RETURN };
     }
 
-    private static void Shimmering_ViolentShimmerReaction(On_WorldItem.orig_Shimmering orig, WorldItem self)
+    private static void UpdateShimmer_ViolentShimmerReaction(On_WorldItem.orig_UpdateShimmer orig, WorldItem self, ref float gravity)
     {
         if (!ItemID.Sets.ViolentShimmerReaction[self.type])
         {
-            orig(self);
+            orig(self, ref gravity);
 
             return;
         }
@@ -589,7 +589,7 @@ public static partial class ElkShimmerItemSets
             LoopingSound = false,
         };
 
-        self.noGrabDelay = 90;
+        self.grabDelayTime = 90;
 
         var data = self.ShimmerData;
 
@@ -826,7 +826,7 @@ public static partial class ElkShimmerItemSets
 
         if (reactant?.Ejection(item, true) is true)
         {
-            item.ClearOut();
+            item.TurnToAir();
         }
 
         return;
@@ -912,7 +912,7 @@ public static partial class ElkShimmerItemSets
 
         if (reactant?.Ejection(item, false) is true)
         {
-            item.ClearOut();
+            item.TurnToAir();
         }
 
         const int center_width = 80;

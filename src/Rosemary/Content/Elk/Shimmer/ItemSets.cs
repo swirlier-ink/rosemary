@@ -3,11 +3,9 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoMod.Cil;
 using Rosemary.Common;
-using Rosemary.Core;
 using System;
 using ReLogic.Utilities;
 using Terraria;
-using Terraria.GameContent.Liquid;
 using Terraria.ID;
 using Terraria.ModLoader;
 
@@ -88,8 +86,9 @@ public static partial class ElkShimmerItemSets
         c.GotoNext(
             MoveType.After,
             i => i.MatchLdarg(out itemIndex),
+            i => i.MatchCallvirt<WorldItem>($"get_{nameof(WorldItem.inner)}"),
             i => i.MatchLdloc(out int _),
-            i => i.MatchCallvirt<WorldItem>(nameof(WorldItem.GetAlpha)),
+            i => i.MatchCallvirt<Item>(nameof(Item.GetAlpha)),
             i => i.MatchStloc(out colorIndex)
         );
 

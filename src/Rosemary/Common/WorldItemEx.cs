@@ -31,22 +31,9 @@ file static class WorldItemDataBehavior
         On_Item.NewItem_Inner += NewItem_Inner_RefreshHidden;
     }
 
-    private static int NewItem_Inner_RefreshHidden(
-        On_Item.orig_NewItem_Inner orig,
-        IEntitySource source,
-        int x,
-        int y,
-        int width,
-        int height,
-        Item itemToClone,
-        int type,
-        int stack,
-        bool noBroadcast,
-        int prefix,
-        bool noGrabDelay
-    )
+    private static int NewItem_Inner_RefreshHidden(On_Item.orig_NewItem_Inner orig, IEntitySource source, Vector2 center, Item itemToClone, int type, int stack, int prefix, NewItemOwnership ownership, Vector2? velocity, Item.NewItemModifier modifier, bool noBroadcast)
     {
-        var index = orig(source, x,y,width,height, itemToClone,type,stack, noBroadcast, prefix, noGrabDelay);
+        var index = orig(source, center, itemToClone, type, stack, prefix, ownership, velocity, modifier, noBroadcast);
 
         if (index == -1)
         {
@@ -137,7 +124,7 @@ file static class WorldItemDataBehavior
     }
 }
 
-public static class WorldItemExtensions
+public static partial class WorldItemExtensions
 {
     extension(WorldItem item)
     {

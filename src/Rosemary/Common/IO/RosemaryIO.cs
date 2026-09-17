@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.Design;
-using System.IO;
+﻿using System.IO;
 using Terraria;
 
 namespace Rosemary.Common.IO;
