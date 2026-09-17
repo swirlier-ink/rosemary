@@ -7,6 +7,8 @@ namespace Rosemary.Content.Elk;
 /// </summary>
 public interface IViolentShimmerReactant
 {
+    // TODO: Declarative loot
+
     /// <summary>
     ///     Ran when the item is ejected from the shimmer surface.
     /// </summary>
