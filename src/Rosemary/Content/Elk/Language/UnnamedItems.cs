@@ -10,11 +10,12 @@ using Terraria.ModLoader.IO;
 
 namespace Rosemary.Content.Elk;
 
+// TODO: Revise? Should we use a more IDSet adjacent API?
 public static class UnnamedItems
 {
     public static string NamedItemsPath => Path.Combine(RosemaryIO.SavePath, "item_names.rsmry");
 
-    private record struct NameInfo(LocalizedText OriginalName, bool NameCreated);
+    private record struct NameInfo(LocalizedText OriginalName, bool Named);
 
     private static NameInfo?[] nameInfo = [];
 
@@ -40,8 +41,7 @@ public static class UnnamedItems
     /// <param name="type"></param>
     public static void Add(int type)
     {
-        nameInfo[type] = new NameInfo(Lang._itemNameCache[type], false);
-        Lang._itemNameCache[type] = LocalizedText.Empty;
+        nameInfo[type] = new NameInfo(LocalizedText.Empty, false);
     }
 
     public static void Name(int type)
@@ -51,7 +51,7 @@ public static class UnnamedItems
             return;
         }
 
-        info.NameCreated = true;
+        info.Named = true;
         Lang._itemNameCache[type] = info.OriginalName;
     }
 
@@ -60,6 +60,22 @@ public static class UnnamedItems
 
     [ModSystemHooks.OnWorldUnload]
     private static void OnWorldUnload() => Save();
+
+    // Ran after ItemLoader.FinishSetup, TODO: Move to a separate hook? Should this load order be relied on?
+    [ModSystemHooks.ModifyGameTipVisibility]
+    private static void ModifyGameTipVisibility(IReadOnlyList<GameTipData> gameTips)
+    {
+        for (var i = 0; i < nameInfo.Length; i++)
+        {
+            if (nameInfo[i] is not { Named: false } info)
+            {
+                continue;
+            }
+
+            info.OriginalName = Lang._itemNameCache[i];
+            Lang._itemNameCache[i] = LocalizedText.Empty;
+        }
+    }
 
     private static void Load()
     {
@@ -87,14 +103,14 @@ public static class UnnamedItems
         {
             if (ModContent.TryFind<ModItem>(name, out var item))
             {
-                Name(item.Type);
+                MarkNamed(item.Type);
 
                 continue;
             }
 
             var id = name.Split('/')[1];
 
-            Name(int.Parse(id));
+            MarkNamed(int.Parse(id));
         }
 
         return;
@@ -104,6 +120,16 @@ public static class UnnamedItems
             var tag = new TagCompound();
 
             TagIO.ToFile(tag, NamedItemsPath);
+        }
+
+        static void MarkNamed(int type)
+        {
+            if (nameInfo[type] is not { } info)
+            {
+                return;
+            }
+
+            info.Named = true;
         }
     }
 
