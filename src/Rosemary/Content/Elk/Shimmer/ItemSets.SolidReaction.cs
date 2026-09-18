@@ -53,7 +53,7 @@ public static partial class ElkShimmerItemSets
 
     private static void UpdateShimmer_SolidReaction(On_WorldItem.orig_UpdateShimmer orig, WorldItem self, ref float gravity)
     {
-        if (!ItemID.Sets.SolidShimmerReaction[self.type])
+        if (!ItemID.Sets.SolidShimmerReaction[self.type] || !self.shimmerWet)
         {
             orig(self, ref gravity);
 
