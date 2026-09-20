@@ -11,7 +11,7 @@ using Terraria.ModLoader;
 
 namespace Rosemary.Common;
 
-public enum ParticleLayers : int
+public enum ParticleLayers
 {
     OverCursor,
     OverInventory,

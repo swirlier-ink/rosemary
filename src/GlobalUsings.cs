@@ -11,5 +11,6 @@ global using Daybreak.Rendering.V1;
 global using Daybreak.Rendering.Buffers.V1;
 global using Daybreak.Rendering.Buffers.Entities.V1;
 global using Daybreak.Resources.V1;
+global using Daybreak.UI.V1;
 global using VariableIndex = Daybreak.MonoMod.V1.VariableIndex; // Mono.Cecil.Cil.VariableIndex
 global using Player = Terraria.Player; // Terraria.ModLoader.BackupIO+Player
