@@ -1,83 +1,63 @@
-﻿using System;
-using Rosemary.Common.IO;
+﻿using Rosemary.Common.IO;
 using System.Collections.Generic;
 using System.IO;
 using Terraria;
-using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 
 namespace Rosemary.Content.Elk;
 
-// TODO: Revise? Should we use a more IDSet adjacent API?
-public static class UnnamedItems
+// Should be noted that this will NOT work with elklang named items, as they've already been "named."
+public static partial class ElkLangItemSets
 {
     public static string NamedItemsPath => Path.Combine(RosemaryIO.SavePath, "item_names.rsmry");
 
-    private record struct NameInfo(LocalizedText OriginalName, bool Named);
+    private static readonly Dictionary<int, LocalizedText> unnamed_prior_names = [];
 
-    private static NameInfo?[] nameInfo = [];
-
-    private static Mod Mod => ModContent.GetInstance<ModImpl>();
-
-    [ModSystemHooks.ResizeArrays]
-    private static void ResizeArrays()
+    [OnLoad]
+    private static void Load_Unnamed()
     {
-        nameInfo = CreateSet<NameInfo?>(nameof(nameInfo), null);
 
-        return;
-
-        static T[] CreateSet<T>(string name, T defaultState)
-        {
-            return ItemID.Sets.Factory.CreateNamedSet(Mod, name)
-                         .RegisterCustomSet(defaultState);
-        }
-    }
-
-    /// <summary>
-    /// Marks the item as "unnamed," should be run once in <see cref="ModItem.SetStaticDefaults"/> or earlier during loading.
-    /// </summary>
-    /// <param name="type"></param>
-    public static void Add(int type)
-    {
-        nameInfo[type] = new NameInfo(LocalizedText.Empty, false);
     }
 
     public static void Name(int type)
     {
-        if (nameInfo[type] is not { } info)
+        if (!unnamed[type])
         {
             return;
         }
 
-        info.Named = true;
-        Lang._itemNameCache[type] = info.OriginalName;
+        unnamed[type] = false;
+        Lang._itemNameCache[type] = unnamed_prior_names[type];
     }
 
     [ModSystemHooks.PostSetupContent]
-    private static void PostSetupContent() => Load();
+    private static void PostSetupContent() => LoadNames();
+
+    [ModPlayerHooks.PostSavePlayer]
+    private static void PostSavePlayer() => SaveNames();
 
     [ModSystemHooks.OnWorldUnload]
-    private static void OnWorldUnload() => Save();
+    private static void OnWorldUnload() => SaveNames();
 
     // Ran after ItemLoader.FinishSetup, TODO: Move to a separate hook? Should this load order be relied on?
     [ModSystemHooks.ModifyGameTipVisibility]
     private static void ModifyGameTipVisibility(IReadOnlyList<GameTipData> gameTips)
     {
-        for (var i = 0; i < nameInfo.Length; i++)
+        for (var i = 0; i < unnamed.Length; i++)
         {
-            if (nameInfo[i] is not { Named: false } info)
+            if (!unnamed[i])
             {
                 continue;
             }
 
-            info.OriginalName = Lang._itemNameCache[i];
+            unnamed_prior_names[i] = Lang._itemNameCache[i];
             Lang._itemNameCache[i] = LocalizedText.Empty;
         }
     }
 
-    private static void Load()
+    private static void LoadNames()
     {
         try
         {
@@ -97,7 +77,7 @@ public static class UnnamedItems
 
         var tag = TagIO.FromFile(NamedItemsPath);
 
-        var namedItems = tag.Get<string[]>(nameof(nameInfo));
+        var namedItems = tag.Get<string[]>(nameof(unnamed));
 
         foreach (var name in namedItems)
         {
@@ -124,22 +104,17 @@ public static class UnnamedItems
 
         static void MarkNamed(int type)
         {
-            if (nameInfo[type] is not { } info)
-            {
-                return;
-            }
-
-            info.Named = true;
+            unnamed[type] = false;
         }
     }
 
-    private static void Save()
+    private static void SaveNames()
     {
         var tag = new TagCompound();
 
         var namedItems = new List<string>();
 
-        for (var i = 0; i < nameInfo.Length; i++)
+        for (var i = 0; i < unnamed.Length; i++)
         {
             if (ItemLoader.GetItem(i) is { } modItem)
             {
@@ -151,8 +126,24 @@ public static class UnnamedItems
             }
         }
 
-        tag[nameof(nameInfo)] = namedItems.ToArray();
+        tag[nameof(unnamed)] = namedItems.ToArray();
 
         TagIO.ToFile(tag, NamedItemsPath);
     }
+
+#if DEBUG
+    public sealed class ResetNamesCommand : ModCommand
+    {
+        public override string Command => "clrnames";
+
+        public override CommandType Type => CommandType.Chat;
+
+        public override void Action(CommandCaller caller, string input, string[] args)
+        {
+            var tag = new TagCompound();
+
+            TagIO.ToFile(tag, NamedItemsPath);
+        }
+    }
+#endif
 }

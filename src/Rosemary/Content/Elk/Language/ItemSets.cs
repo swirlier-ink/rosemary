@@ -7,12 +7,16 @@ public static partial class ElkLangItemSets
 {
     private static ElkPhrase?[] usesElkName = [];
 
+    private static bool[] unnamed = [];
+
     private static Mod Mod => ModContent.GetInstance<ModImpl>();
 
     [ModSystemHooks.ResizeArrays]
     private static void ResizeArrays()
     {
         usesElkName = CreateSet<ElkPhrase?>(nameof(usesElkName), null);
+
+        unnamed = CreateSet(nameof(unnamed), false);
 
         return;
 
@@ -31,5 +35,7 @@ public static partial class ElkLangItemSets
         ///     Additionally, reforging will be slower and have extra spark particles as to feel more foreign.
         /// </summary>
         public static ElkPhrase?[] UsesElkName => usesElkName;
+
+        public static bool[] Unnamed => unnamed;
     }
 }

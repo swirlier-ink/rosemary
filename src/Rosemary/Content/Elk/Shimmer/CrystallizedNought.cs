@@ -136,7 +136,7 @@ public sealed class CrystallizedNought : ModItem
 
         Main.itemAnimations[Type] = new DrawAnimationStatic(1, 4);
 
-        UnnamedItems.Add(Type);
+        ItemID.Sets.Unnamed[Type] = true;
     }
 
     public override void SetDefaults()
