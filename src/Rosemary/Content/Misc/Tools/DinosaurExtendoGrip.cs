@@ -785,7 +785,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                     {
                         continue;
                     }
-
+                    
                     index = item.whoAmI;
 
                     return true;
