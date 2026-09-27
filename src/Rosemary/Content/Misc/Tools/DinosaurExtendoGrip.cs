@@ -780,7 +780,8 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                     hitbox.Inflate(8, 8);
 
                     if (!hitbox.Intersects(Projectile.Hitbox)
-                     || item.ExtendoGripData?.InClaw is true)
+                     || item.ExtendoGripData?.InClaw is true
+                     || item.beingGrabbed)
                     {
                         continue;
                     }
@@ -880,6 +881,8 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
             {
                 position += Projectile.velocity;
             }
+
+            item.beingGrabbed = true;
 
             item.position = position - offset;
             item.velocity = Vector2.Zero;
