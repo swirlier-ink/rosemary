@@ -21,9 +21,10 @@ public static partial class ElkLangItemSets
 
     }
 
-    public static void Name(int type)
+    public static void Unnamed_Name(int type)
     {
-        if (!unnamed[type])
+        if (!unnamed[type]
+         && unnamed_prior_names.ContainsKey(type))
         {
             return;
         }
