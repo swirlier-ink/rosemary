@@ -18,6 +18,14 @@ namespace Rosemary.Content;
 
 internal sealed class ModPanel
 {
+    private static readonly ElkPhrase rosemary =
+        ElkLanguage.NewPhrase
+                   .CurlB       .UseHeight(6f).UseOffset(new Vector2(-16f, 0f))
+                   .Rosemary                  .UseOffset(new Vector2(-8f, 4f))
+                   .BranchRightB.UseHeight(5f).UseOffset(new Vector2(17f, 0f))
+                   .DotSmall    .UseHeight(0f).UseOffset(new Vector2(-20f, -8f))
+                   .FullStop;
+
     [OnLoad]
     private static void Load()
     {
@@ -176,7 +184,7 @@ internal sealed class ModPanel
                         depsIcon.Top.Sub(bottomOffset, 0f);
                     }
 
-                    var name = ElkLanguage.NewPhrase.FullStop;
+                    var name = rosemary;
 
                     element._modName.Remove();
                     element._modName = new ElkLangModName(name, $"v{element._mod.modFile.Version}");
