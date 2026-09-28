@@ -89,9 +89,10 @@ public static partial class ElkLangItemSets
                 continue;
             }
 
-            var id = name.Split('/')[1];
-
-            MarkNamed(int.Parse(id));
+            if (int.TryParse(name.Split('/')[1], out var id))
+            {
+                MarkNamed(id);
+            }
         }
 
         return;
@@ -117,6 +118,12 @@ public static partial class ElkLangItemSets
 
         for (var i = 0; i < unnamed.Length; i++)
         {
+            if (unnamed[i]
+             || !unnamed_prior_names.ContainsKey(i))
+            {
+                return;
+            }
+
             if (ItemLoader.GetItem(i) is { } modItem)
             {
                 namedItems.Add(modItem.FullName);
