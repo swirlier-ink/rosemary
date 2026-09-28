@@ -2,12 +2,17 @@
 using Microsoft.Xna.Framework.Graphics;
 using MonoMod.Cil;
 using Rosemary.Common;
+using Rosemary.Content.Elk;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Terraria;
 using Terraria.GameContent;
+using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
 using Terraria.ModLoader.UI;
 using Terraria.UI;
+using Terraria.UI.Chat;
 
 namespace Rosemary.Content;
 
@@ -171,7 +176,18 @@ internal sealed class ModPanel
                         depsIcon.Top.Sub(bottomOffset, 0f);
                     }
 
+                    var name = ElkLanguage.NewPhrase.FullStop;
+
                     element._modName.Remove();
+                    element._modName = new ElkLangModName(name, $"v{element._mod.modFile.Version}");
+                    {
+                        element._modName.HAlign = 0.5f;
+                        element._modName.Width.Set(80f, 0f);
+                        element._modName.Height.Set(name.Measure(1f).Y, 0f);
+                        element._modName.Top.Set(6f, 0f);
+                    }
+                    element.Append(element._modName);
+
                     element.Elements.RemoveAll(e => e is UIHoverImage);
                 }
                 container.Append(element);
@@ -211,5 +227,51 @@ internal sealed class ModPanel
                 }
             }
         );
+    }
+
+    private sealed class ElkLangModName(ElkPhrase name, string version) : UIText(string.Empty)
+    {
+        protected override void DrawSelf(SpriteBatch sb)
+        {
+            var position = this.Dimensions.Top();
+            const float scale = 1f;
+            const float version_scale = 0.9f;
+            var size = name.Measure(scale);
+            var origin = new Vector2(size.X * 0.5f, 0f);
+
+            sb.DrawPhraseWithOutline(name, position, Color.White, Color.Black, 1f, origin);
+
+            DrawVersionText();
+
+            return;
+
+            void DrawVersionText()
+            {
+                var font = FontAssets.MouseText.Value;
+
+                var lastCharacterHeight = name[^1].Height - name[^1].Position.Y;
+
+                var versionPosition = new Vector2(position.X + (10f * scale), position.Y + size.Y - (lastCharacterHeight * 0.5f * scale));
+                versionPosition -= origin * scale;
+
+                var versionRotation = -MathF.PiOver2;
+
+                var versionSize = font.MeasureString(version);
+
+                var versionOrigin = versionSize * new Vector2(0.5f, 1f);
+
+                ChatManager.DrawColorCodedStringWithShadow(
+                    sb,
+                    font,
+                    version,
+                    versionPosition,
+                    Color.White,
+                    Color.Black,
+                    versionRotation,
+                    versionOrigin,
+                    new Vector2(version_scale * scale)
+                );
+            }
+        }
     }
 }
