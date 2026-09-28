@@ -4,6 +4,7 @@ using MonoMod.Cil;
 using Rosemary.Common;
 using System.Collections.Generic;
 using System.Reflection;
+using Terraria.GameContent;
 using Terraria.ModLoader;
 using Terraria.ModLoader.UI;
 using Terraria.UI;
@@ -151,11 +152,11 @@ internal sealed class ModPanel
                         stateText.HAlign = 0f;
                         stateText.VAlign = 1f;
 
-                        stateText.Left.Set(0f, 0f);
+                        stateText.Left.Set(2f, 0f);
                         stateText.Top.Set(4f, 0f);
                         stateText.Top.Sub(bottomOffset, 0f);
 
-                        stateText.OnDraw += OnDraw_SetWidth;
+                        stateText.OnDrawExt += OnDraw_SetWidth;
 
                         bottomOffset += stateText.Height.Pixels + 4f;
                     }
@@ -165,12 +166,13 @@ internal sealed class ModPanel
                         depsIcon.HAlign = 0f;
                         depsIcon.VAlign = 1f;
 
-                        depsIcon.Left.Set(0f, 0f);
+                        depsIcon.Left.Set(2f, 0f);
                         depsIcon.Top.Set(4f, 0f);
                         depsIcon.Top.Sub(bottomOffset, 0f);
                     }
 
                     element._modName.Remove();
+                    element.Elements.RemoveAll(e => e is UIHoverImage);
                 }
                 container.Append(element);
 
@@ -200,9 +202,12 @@ internal sealed class ModPanel
 
                 return;
 
-                static void OnDraw_SetWidth(UIElement affectedElement, SpriteBatch sb)
+                static void OnDraw_SetWidth(UIModStateText element, SpriteBatch sb)
                 {
-                    affectedElement.Width.Pixels = affectedElement.Dimensions.Width;
+                    var textSize = FontAssets.MouseText.Value.MeasureString(element.DisplayText).X;
+
+                    element.Width.Pixels = element.Parent.InnerDimensions.Width - 4f;
+                    element.PaddingLeft = (int)(5 + (((element.Width.Pixels - 10) - textSize) * 0.5f));
                 }
             }
         );
