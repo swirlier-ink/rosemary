@@ -10,11 +10,17 @@ using Terraria;
 using Terraria.GameContent;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
+using Terraria.ModLoader.Config;
 using Terraria.ModLoader.UI;
 using Terraria.UI;
 using Terraria.UI.Chat;
 
 namespace Rosemary.Content;
+
+public sealed class TempConfig : ModConfig
+{
+    public override ConfigScope Mode => ConfigScope.ClientSide;
+}
 
 internal sealed class ModPanel
 {
