@@ -6,21 +6,24 @@ using Rosemary.Content.Elk;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using Terraria;
+using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.GameContent.UI.Elements;
+using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.ModLoader.Config;
 using Terraria.ModLoader.UI;
+using Terraria.Social.Steam;
 using Terraria.UI;
 using Terraria.UI.Chat;
 
 namespace Rosemary.Content;
 
-public sealed class TempConfig : ModConfig
-{
-    public override ConfigScope Mode => ConfigScope.ClientSide;
-}
+public sealed class TempConfig : ModConfig { public override ConfigScope Mode => ConfigScope.ClientSide; }
 
 internal sealed class ModPanel
 {
@@ -42,6 +45,38 @@ internal sealed class ModPanel
             ),
             Update_DisplaceList
         );
+
+        MonoModHooks.Modify(
+            typeof(UIModItem).GetMethod(
+                nameof(UIModItem.OnInitialize),
+                BindingFlags.Instance | BindingFlags.Public
+            ),
+            OnInitialize_TEMP_DisplayRatings
+        );
+    }
+
+    private static void OnInitialize_TEMP_DisplayRatings(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        var skipChecksLabel = c.DefineLabel();
+
+        c.GotoNext(
+            MoveType.Before,
+            i => i.MatchCall(typeof(SteamedWraps), $"get_{nameof(SteamedWraps.SteamClient)}")
+        );
+
+        c.MoveAfterLabels();
+
+        c.EmitBr(skipChecksLabel);
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchLdcI4(out _),
+            i => i.MatchBneUn(out _)
+        );
+
+        c.MarkLabel(skipChecksLabel);
     }
 
     private static void Update_DisplaceList(ILContext il)
@@ -142,25 +177,38 @@ internal sealed class ModPanel
 
                     if (element._configButton is { } config)
                     {
-                        config.Top.Set(-2f, 0f);
-                        config.Left.Set(2f, 0f);
                         config.HAlign = 0f;
                         config.VAlign = 1f;
-
-                        element._rateButton?.Left.Set(-2f, 0f);
-                        element._rateButton?.HAlign = 1f;
-                        element._rateButton?.Top.Set(-2f, 0f);
-                        element._rateButton?.Top.Sub(config.Height.Pixels + 4, 0f);
+                        config.Top.Set(-2f, 0f);
+                        config.Left.Set(2f, 0f);
 
                         if (element._rateButton is not null)
                         {
-                            bottomOffset += config.Height.Pixels + 4;
+                            element._rateButton.Remove();
+
+                            var rateButton = new HorizontalRateButton();
+                            {
+                                rateButton.HAlign = 0f;
+                                rateButton.VAlign = 0f;
+                                rateButton.Left.Set(2f, 0f);
+                                rateButton.Top.Set(-2f, 0f);
+                                rateButton.Top.Sub(config.Height.Pixels + 4, 0f);
+                                rateButton.Height.Set(20f, 0f);
+                                rateButton.Width.Set(76f, 0f);
+
+                                rateButton.OnLeftClickExt += OnLeftClick_Rate;
+                            }
+                            element._rateButton = rateButton;
+                            element.Append(element._rateButton);
+
+                            bottomOffset += rateButton.Height.Pixels + 4;
                         }
                     }
                     else
                     {
-                        element._rateButton?.Left.Set(2f, 0f);
                         element._rateButton?.HAlign = 0f;
+                        element._rateButton?.VAlign = 1f;
+                        element._rateButton?.Left.Set(2f, 0f);
                         element._rateButton?.Top.Set(-2f, 0f);
                     }
 
@@ -239,6 +287,44 @@ internal sealed class ModPanel
                     element.Width.Pixels = element.Parent.InnerDimensions.Width - 4f;
                     element.PaddingLeft = (int)(5 + (((element.Width.Pixels - 10) - textSize) * 0.5f));
                 }
+
+                static void OnLeftClick_Rate(UIMouseEvent evt, HorizontalRateButton element)
+                {
+                    var mouseX = evt.MousePosition.X;
+
+                    var buttonWidth = (element.Texture.Value.Width * 0.5f) - 2;
+
+                    var hoveringSides = (mouseX < element.Dimensions.X + buttonWidth
+                                      || mouseX > element.Dimensions.Right - buttonWidth);
+
+                    var hoveringUp = mouseX < element.Dimensions.X + buttonWidth;
+
+                    if (!hoveringSides
+                     || element.Parent is not UIModItem modItem
+                     || !modItem._gotRating)
+                    {
+                        return;
+                    }
+
+                    if (modItem._ratedUp is { } rating
+                      && hoveringUp == rating)
+                    {
+                        return;
+                    }
+
+                    SoundEngine.PlaySound(in SoundID.MenuTick);
+
+                    modItem._gotRating = false;
+                    modItem._ratingCts?.Cancel(throwOnFirstException: false);
+                    modItem._ratingCts?.Dispose();
+                    modItem._ratingCts = new CancellationTokenSource();
+
+                    Task.Run(async delegate
+                    {
+                        await SteamedWraps.SetUserRating(modItem._publishId, hoveringUp);
+                        await modItem.GetRating();
+                    }, modItem._ratingCts.Token);
+                }
             }
         );
     }
@@ -286,6 +372,89 @@ internal sealed class ModPanel
                     new Vector2(version_scale * scale)
                 );
             }
+        }
+    }
+
+    private sealed class HorizontalRateButton() : UIImage(Assets.ModPanel.Ratings.Asset)
+    {
+        private int frameCount;
+
+        protected override void DrawSelf(SpriteBatch sb)
+        {
+            if (Parent is not UIModItem parent)
+            {
+                return;
+            }
+
+            var yFrame = 0;
+
+            if (parent._gotRating)
+            {
+                if (parent._ratedUp is not { } rating)
+                {
+                    yFrame = 1;
+                }
+                else
+                {
+                    yFrame = rating ? 4 : 5;
+                }
+
+                var buttonWidth = (Texture.Value.Width * 0.5f) - 2;
+
+                var mouseX = UserInterface.ActiveInstance.MousePosition.X;
+
+                var hoveringSides = (mouseX < this.Dimensions.X + buttonWidth
+                                  || mouseX > this.Dimensions.Right - buttonWidth);
+
+                var hovering = IsMouseHovering && hoveringSides;
+
+                var hoveringUp = mouseX < this.Dimensions.X + buttonWidth;
+
+                if (IsMouseHovering && !hoveringSides)
+                {
+                    parent._tooltip = string.Empty;
+                }
+
+                if (hovering)
+                {
+                    if (parent._ratedUp is not { } rating2)
+                    {
+                        yFrame = hoveringUp ? 3 : 2;
+
+                        parent._tooltip = Language.GetTextValue(hoveringUp ? "tModLoader.ModsRateUp" : "tModLoader.ModsRateDown");
+                    }
+                    else if (hoveringUp != rating2)
+                    {
+                        yFrame = 6;
+
+                        parent._tooltip = Language.GetTextValue(hoveringUp ? "tModLoader.ModsRateUp" : "tModLoader.ModsRateDown");
+                    }
+                }
+            }
+
+            var frame = Texture.Value.Frame(1, 7, 0, yFrame);
+            frame.Height -= 2;
+
+            Frame = frame;
+
+            RemoveFloatingPointsFromDrawPosition = true;
+
+            base.DrawSelf(sb);
+
+            if (yFrame > 0)
+            {
+                frameCount = 0;
+                return;
+            }
+
+            frameCount++;
+
+            var buffer = Assets.ModPanel.Ratings_Loading.Asset.Value;
+
+            frame = buffer.Frame(1, 4, 0, (int)(frameCount * 0.14f) % 4);
+            frame.Height -= 2;
+
+            sb.Draw(buffer, this.Dimensions.TopLeft(), frame, Color.White);
         }
     }
 }
