@@ -38,6 +38,15 @@ internal sealed class ModPanel
             Update_DisplaceList
         );
 
+        // Irrelevant following DB's re-impl of ModPanels?
+        MonoModHooks.Modify(
+            typeof(UIModItem).GetMethod(
+                "DrawSelf",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            ),
+            DrawSelf_RemoveDivider
+        );
+
         MonoModHooks.Modify(
             typeof(UIModItem).GetMethod(
                 nameof(UIModItem.OnInitialize),
@@ -69,6 +78,44 @@ internal sealed class ModPanel
         );
 
         c.MarkLabel(skipChecksLabel);
+    }
+
+    private static void DrawSelf_RemoveDivider(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        var skipDrawLabel = c.DefineLabel();
+
+        var selfIndex = ParameterIndex.Invalid;
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchCallvirt<SpriteBatch>(nameof(SpriteBatch.Draw))
+        );
+
+        c.MarkLabel(skipDrawLabel);
+
+        c.GotoPrev(
+            MoveType.After,
+            i => i.MatchLdarg(out selfIndex),
+            i => i.MatchCall<UIElement>(nameof(UIElement.GetInnerDimensions)),
+            i => i.MatchStloc(out int _)
+        );
+
+        c.EmitLdarg(selfIndex);
+        c.EmitDelegate(
+            static (UIModItem modItem) =>
+            {
+                if (!ModLoader.TryGetMod(modItem._mod.Name, out var mod)
+                 || mod is not ModImpl)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+        );
+        c.EmitBrtrue(skipDrawLabel);
     }
 
     private static void Update_DisplaceList(ILContext il)
