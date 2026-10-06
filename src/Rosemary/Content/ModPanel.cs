@@ -27,15 +27,7 @@ public sealed class TempConfig : ModConfig { public override ConfigScope Mode =>
 
 internal sealed class ModPanel
 {
-    private static readonly ElkPhrase rosemary =
-        ElkLanguage.NewPhrase
-                   .CurlB       .UseHeight(6f).UseOffset(new Vector2(-16f, 0f))
-                   .Rosemary                  .UseOffset(new Vector2(-8f, 4f))
-                   .BranchRightB.UseHeight(5f).UseOffset(new Vector2(17f, 0f))
-                   .DotSmall    .UseHeight(0f).UseOffset(new Vector2(-20f, -8f))
-                   .FullStop;
-
-    [OnLoad]
+    [OnLoad(Side = ModSide.Client)]
     private static void Load()
     {
         MonoModHooks.Modify(
@@ -238,7 +230,7 @@ internal sealed class ModPanel
                         depsIcon.Top.Sub(bottomOffset, 0f);
                     }
 
-                    var name = rosemary;
+                    var name = ModImpl.ELK_NAME;
 
                     element._modName.Remove();
                     element._modName = new ElkLangModName(name, $"v{element._mod.modFile.Version}");

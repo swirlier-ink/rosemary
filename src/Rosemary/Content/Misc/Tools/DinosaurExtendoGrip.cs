@@ -699,10 +699,10 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
         var overExtended = !Projectile.tileCollide && player.channel;
 
         // beingGrabbed would only be true here if a modder has explicitly forced it,
-        // grabDelayTime being above zero while held prevents normal player interactions.
+        // grabDelayTime being above zero while held prevents normal player interactions
         var forceGrabbed = HeldItem != -1 && Main.item[HeldItem].beingGrabbed;
 
-        // We should drop the item if it's in a wall.
+        // We should drop the item if it's in a wall
         if (!player.AltChannel
          || !alive
          || overExtended

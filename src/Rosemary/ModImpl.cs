@@ -2,16 +2,26 @@
 using log4net.Appender;
 using log4net.Config;
 using log4net.Layout;
+using Rosemary.Content.Elk;
 using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using Microsoft.Xna.Framework;
 
 namespace Rosemary;
 
 partial class ModImpl
 {
+    public static readonly ElkPhrase ELK_NAME =
+        ElkLanguage.NewPhrase
+                   .CurlB.UseHeight(6f).UseOffset(new Vector2(-16f, 0f))
+                   .Rosemary.UseOffset(new Vector2(-8f, 4f))
+                   .BranchRightB.UseHeight(5f).UseOffset(new Vector2(17f, 0f))
+                   .DotSmall.UseHeight(0f).UseOffset(new Vector2(-20f, -8f))
+                   .FullStop;
+
     public ModImpl()
     {
         // Handled by the asset generator.
