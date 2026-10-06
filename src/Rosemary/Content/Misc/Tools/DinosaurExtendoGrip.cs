@@ -698,10 +698,15 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
         var overExtended = !Projectile.tileCollide && player.channel;
 
+        // beingGrabbed would only be true here if a modder has explicitly forced it,
+        // grabDelayTime being above zero while held prevents normal player interactions.
+        var forceGrabbed = HeldItem != -1 && Main.item[HeldItem].beingGrabbed;
+
         // We should drop the item if it's in a wall.
         if (!player.AltChannel
          || !alive
-         || overExtended)
+         || overExtended
+         || forceGrabbed)
         {
             if (HeldItem != -1)
             {
@@ -713,13 +718,13 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
             return;
         }
 
-        if (HeldItem == -1 && hitCooldown <= 0 && TryFindItem(out var index))
-        {
-            PickupItem(index, player);
-        }
-
         if (HeldItem == -1)
         {
+            if (hitCooldown <= 0 && TryFindItem(out var index))
+            {
+                PickupItem(index, player);
+            }
+
             return;
         }
 
@@ -881,8 +886,6 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
             {
                 position += Projectile.velocity;
             }
-
-            item.beingGrabbed = true;
 
             item.position = position - offset;
             item.velocity = Vector2.Zero;
