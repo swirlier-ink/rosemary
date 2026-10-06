@@ -214,6 +214,9 @@ internal static class ModInfo
 
         protected override void DrawSelf(SpriteBatch sb)
         {
+            using var _ = BackgroundColor.Override(BackgroundColor * opacity);
+            using var __ = BorderColor.Override(BorderColor * opacity);
+
             base.DrawSelf(sb);
 
             var position = this.Dimensions.Top();
@@ -221,7 +224,9 @@ internal static class ModInfo
             var size = name.Measure(scale);
             var origin = new Vector2(size.X * 0.5f, 0f);
 
-            sb.DrawPhraseWithOutline(name, position, Color.White, Color.Black, 1f, origin);
+            var alpha = MathF.Pow(textOpacity, 3f);
+
+            sb.DrawPhraseWithOutline(name, position, Color.White * alpha, Color.Black * alpha, 1f, origin);
         }
     }
 }
