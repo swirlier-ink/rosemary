@@ -5,6 +5,7 @@ using Rosemary.Common;
 using Rosemary.Content.Elk;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,13 +39,13 @@ internal sealed class ModPanel
             Update_DisplaceList
         );
 
-        // Irrelevant following DB's re-impl of ModPanels?
+        // Redo following DB's re-impl of ModPanels (keep this impl in the file for the aura factor tho)
         MonoModHooks.Modify(
             typeof(UIModItem).GetMethod(
                 "DrawSelf",
                 BindingFlags.Instance | BindingFlags.NonPublic
             ),
-            DrawSelf_RemoveDivider
+            DrawSelf_HideErroneousVisuals
         );
 
         MonoModHooks.Modify(
@@ -80,20 +81,23 @@ internal sealed class ModPanel
         c.MarkLabel(skipChecksLabel);
     }
 
-    private static void DrawSelf_RemoveDivider(ILContext il)
+    private static void DrawSelf_HideErroneousVisuals(ILContext il)
     {
         var c = new ILCursor(il);
 
-        var skipDrawLabel = c.DefineLabel();
+        var skipDrawDividerLabel = c.DefineLabel();
+        ILLabel? skipDrawReloadRequiredTextLabel = null;
 
         var selfIndex = ParameterIndex.Invalid;
+
+        var isRosemaryDefinition = c.AddVariable<bool>();
 
         c.GotoNext(
             MoveType.After,
             i => i.MatchCallvirt<SpriteBatch>(nameof(SpriteBatch.Draw))
         );
 
-        c.MarkLabel(skipDrawLabel);
+        c.MarkLabel(skipDrawDividerLabel);
 
         c.GotoPrev(
             MoveType.After,
@@ -115,7 +119,21 @@ internal sealed class ModPanel
                 return true;
             }
         );
-        c.EmitBrtrue(skipDrawLabel);
+        c.EmitStloc(isRosemaryDefinition);
+
+        c.EmitLdloc(isRosemaryDefinition);
+        c.EmitBrtrue(skipDrawDividerLabel);
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchLdcI4((int)ModSide.Server),
+            i => i.MatchBeq(out skipDrawReloadRequiredTextLabel)
+        );
+
+        Debug.Assert(skipDrawReloadRequiredTextLabel is not null);
+
+        c.EmitLdloc(isRosemaryDefinition);
+        c.EmitBrtrue(skipDrawReloadRequiredTextLabel);
     }
 
     private static void Update_DisplaceList(ILContext il)
@@ -203,6 +221,8 @@ internal sealed class ModPanel
                 self.modList._innerList.Append(container);
 
                 {
+                    element._modName.Remove();
+
                     element.Width.Set(panelSize, 0f);
                     element.Height.Set(0f, 1f);
 
@@ -264,6 +284,28 @@ internal sealed class ModPanel
 
                         stateText.OnDrawExt += OnDraw_SetWidth;
 
+                        // Should be safely only the asterisk as the mod name is already removed
+                        element.Elements.RemoveAll(e => e is UIText);
+                        var asterisk = new UIText(string.Empty);
+                        {
+                            asterisk.TextOriginX = 0f;
+                            
+                            asterisk.HAlign = 1f;
+                            asterisk.VAlign = 1f;
+
+                            asterisk.Top = stateText.Top;
+
+                            asterisk.Left.Set(0f, 0f);
+                            asterisk.Top.Set(-18f, 0f);
+                            asterisk.Top.Sub(bottomOffset, 0f);
+
+                            asterisk.OnUpdateExt += OnUpdate_UpdateAsterisk;
+                            asterisk.OnDrawExt += OnDraw_AsteriskTooltip;
+
+                            asterisk.IgnoresMouseInteraction = true;
+                        }
+                        element.Append(asterisk);
+
                         bottomOffset += stateText.Height.Pixels + 4f;
                     }
 
@@ -279,7 +321,6 @@ internal sealed class ModPanel
 
                     var name = ModImpl.ELK_NAME;
 
-                    element._modName.Remove();
                     element._modName = new ElkLangModName(name, $"v{element._mod.modFile.Version}");
                     {
                         element._modName.HAlign = 0.5f;
@@ -318,6 +359,40 @@ internal sealed class ModPanel
                 self.modList.Recalculate();
 
                 return;
+
+                static void OnUpdate_UpdateAsterisk(UIText asterisk)
+                {
+                    if (asterisk.Parent is not UIModItem modItem)
+                    {
+                        return;
+                    }
+
+                    var status = modItem._mod.Enabled != modItem._loaded || modItem._configChangesRequireReload;
+
+                    var text = status ? "*" : string.Empty;
+
+                    if (asterisk.Text != text)
+                    {
+                        asterisk.SetText(text);
+                    }
+                }
+
+                static void OnDraw_AsteriskTooltip(UIText asterisk, SpriteBatch sb)
+                {
+                    if (asterisk.Parent is not UIModItem modItem)
+                    {
+                        return;
+                    }
+
+                    var status = modItem._mod.Enabled != modItem._loaded || modItem._configChangesRequireReload;
+
+                    var hovering = asterisk.ContainsPoint(UserInterface.ActiveInstance.MousePosition);
+
+                    if (hovering && status)
+                    {
+                        modItem._tooltip = Language.GetTextValue(modItem._configChangesRequireReload ? "tModLoader.ModReloadForced" : "tModLoader.ModReloadRequired");
+                    }
+                }
 
                 static void OnDraw_SetWidth(UIModStateText element, SpriteBatch sb)
                 {

@@ -135,8 +135,8 @@ public sealed class ShakyTextTag : ChatTag
         return new Snippet(formatting, text, baseColor);
     }
 
-    public static string GenerateTag(float strength, string message)
+    public string GenerateTag(float strength, string message)
     {
-        return $"[{TAG_NAME}/{strength}:{message}]";
+        return $"[{TagName}/{strength}:{message}]";
     }
 }
