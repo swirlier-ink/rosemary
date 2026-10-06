@@ -1,9 +1,11 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using ReLogic.OS.Windows;
 using Rosemary.Content.Elk;
 using System;
 using System.Reflection;
 using System.Xml.Linq;
+using Rosemary.Common;
 using Terraria;
 using Terraria.GameContent.UI.Elements;
 using Terraria.ModLoader;
@@ -32,6 +34,24 @@ internal static class ModInfo
             ),
             OnActivate_Replace
         );
+
+        On_UIScrollbar.DrawBar += DrawBar_ModifyColor;
+        IL_UIScrollbar.DrawSelf += _ => { };
+    }
+
+    private static float opacity = 1f;
+    private static float textOpacity = 1f;
+
+    private static UIScrollbar? modInfoScrollbar;
+
+    private static void DrawBar_ModifyColor(On_UIScrollbar.orig_DrawBar orig, UIScrollbar self, SpriteBatch spriteBatch, Texture2D texture, Rectangle dimensions, Color color)
+    {
+        if (self == modInfoScrollbar)
+        {
+            color *= opacity;
+        }
+
+        orig(self, spriteBatch, texture, dimensions, color);
     }
 
     private static void OnActivate_Replace(Action<UIModInfo> orig, UIModInfo self)
@@ -47,17 +67,58 @@ internal static class ModInfo
 
         orig(self, gameTime);
 
+        FadePanel();
+
         if (!shouldModifyText)
         {
             return;
         }
 
         UpdateInfo(self);
+
+        return;
+
+        void FadePanel()
+        {
+            if (!ModLoader.TryGetMod(self._localMod.Name, out var mod)
+             || mod is not ModImpl)
+            {
+                return;
+            }
+
+            var message = self._modInfo;
+
+            opacity -= 0.005f;
+            opacity = MathF.Saturate(opacity);
+
+            textOpacity *= 0.9982f;
+
+            modInfoScrollbar = message._scrollbar;
+
+            if (opacity <= 0.7f)
+            {
+                message._scrollbar.IgnoresMouseInteraction = true;
+            }
+
+            message.BorderColor = Color.Black * opacity;
+            message.BackgroundColor = UICommon.DefaultUIBlueMouseOver * opacity;
+
+            if (message.Parent is UIPanel panel)
+            {
+                panel.BorderColor = Color.Black * opacity;
+                panel.BackgroundColor = UICommon.MainPanelBackground * opacity;
+            }
+
+            message._textElement?.TextColor = Color.White * textOpacity;
+        }
     }
 
     private static void UpdateInfo(UIModInfo modInfo)
     {
         var message = modInfo._modInfo;
+
+        opacity = 1f;
+        textOpacity = 1f;
 
         ResetInfo();
 
@@ -76,6 +137,17 @@ internal static class ModInfo
             message._textElement?.TextOriginX = 0f;
             message._textElement?.TextOriginY = 0f;
             message._textElement?.Height.Set(0f, 0f);
+
+            message.BorderColor = Color.Black;
+            message.BackgroundColor = UICommon.DefaultUIBlueMouseOver;
+
+            message._scrollbar.IgnoresMouseInteraction = false;
+
+            if (message.Parent is UIPanel panel)
+            {
+                panel.BorderColor = Color.Black;
+                panel.BackgroundColor = UICommon.MainPanelBackground;
+            }
 
             if (!modInfo._uIElement.HasChild(modInfo._uITextPanel))
             {
