@@ -3,6 +3,7 @@ using Terraria;
 using Terraria.Graphics.Capture;
 using Terraria.ID;
 using Terraria.ModLoader;
+using static Terraria.ModLoader.BackupIO;
 
 namespace Rosemary.Common;
 
@@ -17,6 +18,8 @@ file sealed class AltChannelPlayer : ModPlayer
         {
             writer.Write(WhoAmI);
             writer.Write(Main.player[WhoAmI].AltChannel);
+
+            Main.NewText($"AltChannel pck write {WhoAmI} {Main.player[WhoAmI].AltChannel}");
         }
 
         public static void Receive(BinaryReader reader, int sender)
@@ -31,6 +34,8 @@ file sealed class AltChannelPlayer : ModPlayer
             var player = Main.player[whoAmI];
 
             player.GetModPlayer<AltChannelPlayer>().AltChannel = reader.ReadBoolean();
+
+            Main.NewText($"AltChannel Pakcet Revcvie {whoAmI} {player.GetModPlayer<AltChannelPlayer>().AltChannel}");
         }
     }
 
@@ -53,7 +58,14 @@ file sealed class AltChannelPlayer : ModPlayer
                     && (!Main.mouseRightRelease || !Main.HoveringAnInteractable)
                     && !Main.LocalPlayerHasPendingInventoryActions();
 
+        var prior = self.GetModPlayer<AltChannelPlayer>().AltChannel;
+
         self.GetModPlayer<AltChannelPlayer>().AltChannel = clicking;
+
+        if (Main.netMode != NetmodeID.SinglePlayer && clicking != prior)
+        {
+            new Packet(self.whoAmI).Send(PacketDestination.Broadcast);
+        }
 
         orig(self);
     }

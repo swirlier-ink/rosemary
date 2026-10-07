@@ -153,7 +153,7 @@ file static class ChestParticles
 
         private Vector2 BezierHelper2 { get; }
 
-        private Terraria.Audio.SoundStyle? Sound { get; }
+        private SoundStyle? Sound { get; }
 
         public bool TransitionIn { get; }
 
@@ -227,13 +227,16 @@ file static class ChestParticles
 
     public static void BroadcastChestTransfer(ItemTransferData data)
     {
-        if (Main.netMode == NetmodeID.MultiplayerClient)
+        if (Main.netMode != NetmodeID.SinglePlayer)
         {
             new Packet(data).Send(PacketDestination.Broadcast);
             return;
         }
 
-        ItemTransfer += new ItemTransferParticle(data);
+        if (!Main.dedServ)
+        {
+            ItemTransfer += new ItemTransferParticle(data);
+        }
     }
 
     [ModSystemHooks.PostUpdateDusts]
@@ -469,7 +472,7 @@ public static class ChestExtensions
 
                 item.TurnToAir();
 
-                if (Main.netMode == NetmodeID.MultiplayerClient)
+                if (Main.netMode != NetmodeID.SinglePlayer && chest.index >= 0)
                 {
                     NetMessage.SendData(MessageID.SyncChestItem, -1, -1, null, whoAmI, index);
                 }
@@ -489,7 +492,7 @@ public static class ChestExtensions
 
                 item.TurnToAir();
 
-                if (Main.netMode == NetmodeID.MultiplayerClient)
+                if (Main.netMode != NetmodeID.SinglePlayer && chest.index >= 0)
                 {
                     NetMessage.SendData(MessageID.SyncChestItem, -1, -1, null, whoAmI, index);
                 }
@@ -679,7 +682,7 @@ public static class ChestExtensions
                 return false;
             }
 
-            if (Main.netMode == NetmodeID.MultiplayerClient)
+            if (Main.netMode != NetmodeID.SinglePlayer)
             {
                 NetMessage.SendData(MessageID.SyncItem, -1, -1, null, worldItemIndex);
             }
@@ -719,7 +722,7 @@ public static class ChestExtensions
                 return false;
             }
 
-            if (Main.netMode == NetmodeID.MultiplayerClient)
+            if (Main.netMode != NetmodeID.SinglePlayer)
             {
                 NetMessage.SendData(MessageID.SyncItem, -1, -1, null, worldItemIndex);
             }

@@ -1047,13 +1047,16 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                     false
                 ))
             {
-                Chest.VisualizeChestTransfer(
-                    type,
-                    Projectile.Center,
-                    targetPosition,
-                    Rand.Next(12, 18),
-                    randomizeEndPosition: true
-                );
+                if (!Main.dedServ)
+                {
+                    Chest.VisualizeChestTransfer(
+                        type,
+                        Projectile.Center,
+                        targetPosition,
+                        Rand.Next(12, 18),
+                        randomizeEndPosition: true
+                    );
+                }
 
                 return item.IsAir;
             }
@@ -1081,15 +1084,17 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                 var chestPosition = new Point(chest.x, chest.y);
 
                 var chestCenter = chestPosition.ToWorldCoordinates(0f, 0f) + (chestSize * 0.5f);
-
-                Chest.VisualizeChestTransfer(
-                    type,
-                    item.Center,
-                    chestCenter,
-                    Rand.Next(12, 18),
-                    randomizeEndPosition: true,
-                    animateChest: true
-                );
+                if (!Main.dedServ)
+                {
+                    Chest.VisualizeChestTransfer(
+                        type,
+                        item.Center,
+                        chestCenter,
+                        Rand.Next(12, 18),
+                        randomizeEndPosition: true,
+                        animateChest: true
+                    );
+                }
 
                 return item.IsAir;
             }
