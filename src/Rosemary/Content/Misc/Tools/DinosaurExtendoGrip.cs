@@ -6,6 +6,7 @@ using Rosemary.Common;
 using Rosemary.Content.Elk;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Reflection;
 using Terraria;
 using Terraria.Audio;
@@ -16,6 +17,57 @@ using Terraria.ModLoader;
 using Terraria.ObjectData;
 
 namespace Rosemary.Content.Misc;
+
+file record struct GrabItemPacket(int WhoAmI, int ItemWhoAmI) : IPacket<GrabItemPacket>
+{
+    public GrabItemPacket() : this(-1, -1)
+    { }
+
+    public void Write(BinaryWriter writer)
+    {
+        writer.Write(WhoAmI);
+        writer.Write(ItemWhoAmI);
+    }
+
+    public static void Receive(BinaryReader reader, int sender)
+    {
+        var whoAmI = reader.ReadInt32();
+        var itemWhoAmI = reader.ReadInt32();
+
+        if (Main.netMode == NetmodeID.Server)
+        {
+            whoAmI = sender;
+        }
+
+        var player = Main.player[whoAmI];
+
+        PickupItem();
+
+        if (Main.netMode == NetmodeID.Server)
+        {
+            new GrabItemPacket(whoAmI, itemWhoAmI).Send(PacketDestination.AllExcept(sender));
+        }
+
+        return;
+
+        void PickupItem()
+        {
+            if (player.heldProj == -1)
+            {
+                return;
+            }
+
+            var projectile = Main.projectile[player.heldProj];
+
+            if (projectile.ModProjectile is not DinosaurExtendoGripHoldout holdout)
+            {
+                return;
+            }
+
+            holdout.PickupItem(itemWhoAmI, player);
+        }
+    }
+}
 
 public sealed class DinosaurExtendoGrip : ModItem
 {
@@ -75,10 +127,10 @@ public sealed class DinosaurExtendoGrip : ModItem
 
         On_NPC.ReleaseNPC += ReleaseNPC_ApplyVelocity;
 
-        On_Item.NewItem_Inner += NewItem_Inner_RefreshData; ;
+        On_Item.NewItem_Inner += NewItem_Inner;
     }
 
-    private int NewItem_Inner_RefreshData(
+    private int NewItem_Inner(
         On_Item.orig_NewItem_Inner orig,
         IEntitySource source,
         Vector2 center,
@@ -102,6 +154,26 @@ public sealed class DinosaurExtendoGrip : ModItem
         var item = Main.item[index];
 
         item.ExtendoGripData = null;
+
+        // TODO: Inject custom context into `EntitySource_Caught`
+        if (Main.netMode == NetmodeID.Server
+         && source is EntitySource_Caught caughtSource
+         && caughtSource.Catcher is Player player)
+        {
+            if (player.heldProj == -1)
+            {
+                return index;
+            }
+
+            var projectile = Main.projectile[player.heldProj];
+
+            if (projectile.ModProjectile is not DinosaurExtendoGripHoldout)
+            {
+                return index;
+            }
+
+            new GrabItemPacket(player.whoAmI, index).Send(PacketDestination.Broadcast);
+        }
 
         return index;
     }
@@ -153,6 +225,8 @@ public sealed class DinosaurExtendoGrip : ModItem
 
         var whoIndex = ParameterIndex.Invalid;
 
+        var jumpLogicLabel = c.DefineLabel();
+
         c.GotoNext(
             MoveType.After,
             i => i.MatchLdsfld<Main>(nameof(Main.myPlayer)),
@@ -163,6 +237,9 @@ public sealed class DinosaurExtendoGrip : ModItem
             MoveType.After,
             i => i.MatchCall<Item>(nameof(Item.NewItem))
         );
+
+        c.EmitStaticDelegateUnsafe(static () => Main.netMode == NetmodeID.SinglePlayer);
+        c.EmitBrfalse(jumpLogicLabel);
 
         c.EmitDup();
         c.EmitLdarg(whoIndex);
@@ -186,6 +263,8 @@ public sealed class DinosaurExtendoGrip : ModItem
                 holdout.PickupItem(itemIndex, player);
             }
         );
+
+        c.MarkLabel(jumpLogicLabel);
     }
 
     private static int TryInteractingWith_HideProjectileIcons(Func<Projectile, int> orig, Projectile proj)
@@ -351,6 +430,8 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
         Projectile.manualDirectionChange = true;
     }
+
+    private int priorHeldItem = -1;
 
     /// <summary>
     ///     Index of the <see cref="WorldItem"/> in <see cref="Main.item"/> that the grabber is holding;<br/>
@@ -702,11 +783,25 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
         // grabDelayTime being above zero while held prevents normal player interactions
         var forceGrabbed = HeldItem != -1 && Main.item[HeldItem].beingGrabbed;
 
+        // Scuffed fix
+        var syncFix = false;
+
+        if (priorHeldItem != -1
+         && HeldItem == -1
+         && Main.item[priorHeldItem].ExtendoGripData is { InClaw: true })
+        {
+            HeldItem = priorHeldItem;
+            syncFix = true;
+        }
+
+        priorHeldItem = HeldItem;
+
         // We should drop the item if it's in a wall
         if (!player.AltChannel
          || !alive
          || overExtended
-         || forceGrabbed)
+         || forceGrabbed
+         || syncFix)
         {
             if (HeldItem != -1)
             {
@@ -1000,12 +1095,18 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
         {
             item.grabDelayTime = 0;
             player.PickupItem(item);
+
+            if (Main.netMode != NetmodeID.SinglePlayer)
+            {
+                NetMessage.SendData(MessageID.SyncItem, -1, -1, null, item.whoAmI);
+            }
         }
 
         if (deposit
          && player.whoAmI == Main.myPlayer
          && TryPlacingItemInContainers(Projectile.Center.ToTileCoordinates()))
         {
+            item.Hidden = false;
             return;
         }
 
@@ -1067,7 +1168,6 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                         randomizeEndPosition: true
                     );
                 }
-
                 return item.IsAir;
             }
 
@@ -1105,7 +1205,6 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                         animateChest: true
                     );
                 }
-
                 return item.IsAir;
             }
 
