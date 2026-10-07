@@ -540,7 +540,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
     {
         var player = Main.player[Projectile.owner];
 
-        var stillInUse = player is { channel: true, noItems: false, CCed: false, dead: false };
+        var stillInUse = player is { noItems: false, CCed: false, dead: false };
 
         if (hitCooldown > 0)
         {
@@ -710,7 +710,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
         {
             if (HeldItem != -1)
             {
-                LetGoOfItem(player);
+                LetGoOfItem(player, !forceGrabbed);
             }
 
             HeldItem = -1;
@@ -760,11 +760,16 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                     continue;
                 }
 
+                if (player.whoAmI != Main.myPlayer)
+                {
+                    return true;
+                }
+
                 index = Item.NewItem(Entity.GetSource_DropAsItem(), Projectile.Center, item);
                 Main.item[index].whoAmI = index;
                 item.TurnToAir();
 
-                if (Main.netMode == NetmodeID.MultiplayerClient)
+                if (Main.netMode == NetmodeID.MultiplayerClient && chestIndex >= 0)
                 {
                     NetMessage.SendData(MessageID.SyncChestItem, -1, -1, null, chestIndex, i);
                 }
@@ -846,7 +851,10 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
                     hitbox.Inflate(8, 8);
 
-                    if (checking ? hitbox.Intersects(npc.Hitbox) : NPC.CheckCatchNPC(npc, hitbox, player.HeldItem, player, true))
+                    if (hitbox.Intersects(npc.Hitbox)
+                     && (checking
+                      || player.whoAmI != Main.myPlayer
+                      || NPC.CheckCatchNPC(npc, hitbox, player.HeldItem, player, true)))
                     {
                         return true;
                     }
@@ -949,7 +957,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
         HeldItem = index;
 
-        InitialRotation = rotation - Main.item[HeldItem].Rotation;
+        InitialRotation = rotation - (HeldItem == -1 ? 0f : Main.item[HeldItem].Rotation);
 
         SoundEngine.PlaySound(
             SoundID.Item168 with
@@ -985,19 +993,18 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
             ElkShimmerItemSets.PlayScowl(item);
         }
 
-        if (player.whoAmI != Main.myPlayer)
-        {
-            return;
-        }
-
         var length = (Projectile.Center - center).Length();
-        if (deposit && length <= pickup_distance)
+        if (deposit
+         && length <= pickup_distance
+         && player.whoAmI == Main.myPlayer)
         {
             item.grabDelayTime = 0;
             player.PickupItem(item);
         }
 
-        if (deposit && TryPlacingItemInContainers(Projectile.Center.ToTileCoordinates()))
+        if (deposit
+         && player.whoAmI == Main.myPlayer
+         && TryPlacingItemInContainers(Projectile.Center.ToTileCoordinates()))
         {
             return;
         }
@@ -1012,7 +1019,10 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
             {
                 var position = Projectile.Center;
 
-                NPC.ReleaseNPC((int)position.X, (int)position.Y, item.makeNPC, item.placeStyle, player.whoAmI);
+                if (player.whoAmI == Main.myPlayer)
+                {
+                    NPC.ReleaseNPC((int)position.X, (int)position.Y, item.makeNPC, item.placeStyle, player.whoAmI);
+                }
 
                 item.TurnToAir();
                 item.Hidden = false;

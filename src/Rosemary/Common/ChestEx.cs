@@ -82,6 +82,9 @@ file static class ChestParticles
 
     private record struct Packet(ItemTransferData Data) : IPacket<Packet>
     {
+        public Packet() : this(new ItemTransferData())
+        { }
+
         public void Write(BinaryWriter writer)
         {
             writer.Write(Data.ItemType);
@@ -131,6 +134,11 @@ file static class ChestParticles
             if (Main.netMode != NetmodeID.Server)
             {
                 ItemTransfer += new ItemTransferParticle(data);
+            }
+
+            if (Main.netMode == NetmodeID.Server)
+            {
+                new Packet(data).Send(PacketDestination.AllExcept(sender));
             }
         }
     }
