@@ -173,6 +173,10 @@ file sealed class OutlineAfterImagesPlayer : ModPlayer
             {
                 using var _ = Main.GameViewMatrix._transformationMatrix.Override(Matrix.Identity);
 
+                var tempPosition = Main.screenPosition + device.Viewport.Bounds.Size() * 0.5f;
+                tempPosition -= Player.Size * 0.5f;
+                using var __ = Player.position.Override(tempPosition);
+
                 drawingAfterImage = true;
                 {
                     Main.PlayerRenderer.DrawPlayer(camera, Player, Player.position, 0f, Player.fullRotationOrigin, float.Epsilon);
@@ -198,8 +202,6 @@ file sealed class OutlineAfterImagesPlayer : ModPlayer
 
                 var position = image.Position - Main.screenPosition;
 
-                var origin = Player.Center - Main.screenPosition + image.Origin;
-
                 var interpolator = image.Scale / max_scale;
 
                 // Pass the scale in as a color to have everything batch nicely.
@@ -208,7 +210,7 @@ file sealed class OutlineAfterImagesPlayer : ModPlayer
                 var effects = image.Direction == Player.direction ? SpriteEffects.None : SpriteEffects.FlipHorizontally;
                 effects |= image.GravityDirection == (int)Player.gravDir ? SpriteEffects.None : SpriteEffects.FlipVertically;
 
-                sb.Draw(lease.Target, position, null, inputColor, image.Rotation, origin, image.Scale, effects, 0f);
+                sb.Draw(lease.Target, position, null, inputColor, image.Rotation, Origin.Center, image.Scale, effects, 0f);
             }
 
             sb.Draw(lease.Target, new Vector2(90, 2), null, Color.White);
@@ -389,7 +391,10 @@ public sealed class SiffrinHoverMount : ModMount
 
     public override void SetMount(Player player, ref bool skipDust)
     {
-        SiffrinParticles.TransformAnimation += new SiffrinParticles.TransformStar(player.Center, 0f, 0);
+        if (!Main.dedServ)
+        {
+            SiffrinParticles.TransformAnimation += new SiffrinParticles.TransformStar(player.Center, 0f, 0);
+        }
 
         player.velocity *= 0.1f;
 
@@ -398,14 +403,17 @@ public sealed class SiffrinHoverMount : ModMount
 
     public override void Dismount(Player player, ref bool skipDust)
     {
-        SiffrinParticles.TransformAnimation += new SiffrinParticles.TransformStar(player.Center, 0.6f, 0);
+        if (!Main.dedServ)
+        {
+            SiffrinParticles.TransformAnimation += new SiffrinParticles.TransformStar(player.Center, 0.6f, 0);
+        }
 
         skipDust = true;
     }
 
     public override void UpdateEffects(Player player)
     {
-        if (player.dead || player.CCed)
+        if (player.dead || player.CCed || Main.dedServ)
         {
             return;
         }

@@ -871,11 +871,15 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
             item.grabDelayTime = 30;
 
-            Main.instance.DrawItem_GetBasics(item.inner, item.whoAmI, out _, out var frame, out _);
+            var offset = item.Size * 0.5f;
 
-            var offset = frame.Size() * 0.5f;
+            if (!Main.dedServ)
+            {
+                Main.instance.DrawItem_GetBasics(item.inner, item.whoAmI, out _, out var frame, out _);
 
-            offset += new Vector2((item.width * 0.5f) - offset.X, item.height - frame.Height);
+                offset = frame.Size() * 0.5f;
+                offset += new Vector2((item.width * 0.5f) - offset.X, item.height - frame.Height);
+            }
 
             var position = Projectile.Center;
 

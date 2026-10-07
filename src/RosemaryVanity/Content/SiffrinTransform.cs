@@ -111,6 +111,11 @@ public sealed class SiffrinTransform : ModItem
 
     public override void SetStaticDefaults()
     {
+        if (Main.dedServ)
+        {
+            return;
+        }
+
         // var equipSlotBody = EquipLoader.GetEquipSlot(Mod, Name, EquipType.Body);
         var equipSlotLegs = EquipLoader.GetEquipSlot(Mod, Name, EquipType.Legs);
 

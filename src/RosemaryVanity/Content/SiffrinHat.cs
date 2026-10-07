@@ -141,6 +141,11 @@ public sealed class SiffrinHat : ModItem
 
     public override void SetStaticDefaults()
     {
+        if (Main.dedServ)
+        {
+            return;
+        }
+
         var equipSlotHead = EquipLoader.GetEquipSlot(Mod, Name, EquipType.Head);
 
         ArmorIDs.Head.Sets.DrawHatHair[equipSlotHead] = true;
