@@ -155,27 +155,33 @@ public sealed class DinosaurExtendoGrip : ModItem
 
         item.ExtendoGripData = null;
 
-        // TODO: Inject custom context into `EntitySource_Caught`
-        if (Main.netMode == NetmodeID.Server
-         && source is EntitySource_Caught caughtSource
-         && caughtSource.Catcher is Player player)
+        if (Main.netMode == NetmodeID.Server)
         {
-            if (player.heldProj == -1)
+            switch (source)
             {
-                return index;
+                case EntitySource_DropAsItem { Entity: Projectile { ModProjectile: DinosaurExtendoGripHoldout } proj, Context: nameof(DinosaurExtendoGrip) }:
+                {
+                    SendGrabPacket(proj.owner);
+                }
+                break;
+
+                // TODO: Inject custom context into `EntitySource_Caught`
+                case EntitySource_Caught { Catcher: Player player }
+                    when player.heldProj != -1
+                      && (Main.projectile[player.heldProj].ModProjectile is DinosaurExtendoGripHoldout):
+                {
+                    SendGrabPacket(player.whoAmI);
+                }
+                break;
             }
-
-            var projectile = Main.projectile[player.heldProj];
-
-            if (projectile.ModProjectile is not DinosaurExtendoGripHoldout)
-            {
-                return index;
-            }
-
-            new GrabItemPacket(player.whoAmI, index).Send(PacketDestination.Broadcast);
         }
 
         return index;
+
+        void SendGrabPacket(int whoAmI)
+        {
+            new GrabItemPacket(whoAmI, index).Send(PacketDestination.Broadcast);
+        }
     }
 
     private static int ReleaseNPC_ApplyVelocity(On_NPC.orig_ReleaseNPC orig, int x, int y, int type, int style, int who)
@@ -860,7 +866,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                     return true;
                 }
 
-                index = Item.NewItem(Entity.GetSource_DropAsItem(), Projectile.Center, item);
+                index = Item.NewItem(Entity.GetSource_DropAsItem(nameof(DinosaurExtendoGrip)), Projectile.Center, item);
                 Main.item[index].whoAmI = index;
                 item.TurnToAir();
 
@@ -886,7 +892,9 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
                     if (!hitbox.Intersects(Projectile.Hitbox)
                      || item.ExtendoGripData?.InClaw is true
-                     || item.beingGrabbed)
+                     || item.beingGrabbed
+                        // Should `instanced` items become non-instanced on being grabbed?
+                     || item.instanced)
                     {
                         continue;
                     }
@@ -1090,15 +1098,13 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
         var length = (Projectile.Center - center).Length();
         if (deposit
-         && length <= pickup_distance
-         && player.whoAmI == Main.myPlayer)
+         && length <= pickup_distance)
         {
             item.grabDelayTime = 0;
-            player.PickupItem(item);
 
-            if (Main.netMode != NetmodeID.SinglePlayer)
+            if (player.whoAmI == Main.myPlayer)
             {
-                NetMessage.SendData(MessageID.SyncItem, -1, -1, null, item.whoAmI);
+                player.PickupItem(item);
             }
         }
 

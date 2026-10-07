@@ -692,7 +692,7 @@ public static class ChestExtensions
 
             if (Main.netMode != NetmodeID.SinglePlayer)
             {
-                NetMessage.SendData(MessageID.SyncItem, -1, -1, null, worldItemIndex);
+                item.SyncItem();
             }
 
             if (sort)
@@ -732,7 +732,7 @@ public static class ChestExtensions
 
             if (Main.netMode != NetmodeID.SinglePlayer)
             {
-                NetMessage.SendData(MessageID.SyncItem, -1, -1, null, worldItemIndex);
+                item.SyncItem();
             }
 
             if (sort)
