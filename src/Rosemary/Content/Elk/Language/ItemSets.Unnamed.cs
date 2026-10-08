@@ -60,13 +60,10 @@ public static partial class ElkLangItemSets
 
     private static void LoadNames()
     {
-        try
+        if (!Directory.Exists(RosemaryIO.SavePath))
         {
-            Directory.CreateDirectory(RosemaryIO.SavePath);
-        }
-        catch
-        {
-            ModContent.GetInstance<ModImpl>().Logger.Warn($"Could not create directory at: \"{RosemaryIO.SavePath}\"!");
+            ModContent.GetInstance<ModImpl>().Logger.Warn($"Could not find directory at: \"{RosemaryIO.SavePath}\"!");
+            return;
         }
 
         if (!File.Exists(NamedItemsPath))
