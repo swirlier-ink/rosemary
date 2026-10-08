@@ -8,6 +8,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices.JavaScript;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
@@ -25,12 +26,16 @@ file record struct GrabItemPacket(int WhoAmI, int ItemWhoAmI) : IPacket<GrabItem
 
     public void Write(BinaryWriter writer)
     {
+        Main.NewText("Pick Up Item WRITE");
+
         writer.Write(WhoAmI);
         writer.Write(ItemWhoAmI);
     }
 
     public static void Receive(BinaryReader reader, int sender)
     {
+        Main.NewText("Pick Up Item READ");
+
         var whoAmI = reader.ReadInt32();
         var itemWhoAmI = reader.ReadInt32();
 
@@ -65,6 +70,36 @@ file record struct GrabItemPacket(int WhoAmI, int ItemWhoAmI) : IPacket<GrabItem
             }
 
             holdout.PickupItem(itemWhoAmI, player);
+        }
+    }
+}
+
+file static class DEBUG_Packets
+{
+    [OnLoad]
+    private static void Load()
+    {
+        On_NetMessage.SendData += SendData_Cry;
+        On_MessageBuffer.GetData += GetData_Yell;
+    }
+
+    private static void SendData_Cry(On_NetMessage.orig_SendData orig, int msgType, int remoteClient, int ignoreClient, Terraria.Localization.NetworkText text, int number, float number2, float number3, float number4, int number5, int number6, int number7)
+    {
+        if (msgType == MessageID.SyncItem || msgType == MessageID.SyncItemDespawn)
+        {
+            Main.NewText($"Send Item {(msgType == MessageID.SyncItem ? "Sync" : "Despawn")}");
+        }
+
+        orig(msgType, remoteClient, ignoreClient, text, number, number2, number3, number4, number5, number6, number7);
+    }
+
+    private static void GetData_Yell(On_MessageBuffer.orig_GetData orig, MessageBuffer self, int start, int length, out int messageType)
+    {
+        orig(self, start, length, out messageType);
+
+        if (messageType == MessageID.SyncItem || messageType == MessageID.SyncItemDespawn)
+        {
+            Main.NewText($"READ Item {(messageType == MessageID.SyncItem ? "Sync" : "Despawn")}");
         }
     }
 }
@@ -155,7 +190,7 @@ public sealed class DinosaurExtendoGrip : ModItem
 
         item.ExtendoGripData = null;
 
-        if (Main.netMode == NetmodeID.Server)
+        if (Main.netMode != NetmodeID.SinglePlayer)
         {
             switch (source)
             {
@@ -867,8 +902,8 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                 }
 
                 index = Item.NewItem(Entity.GetSource_DropAsItem(nameof(DinosaurExtendoGrip)), Projectile.Center, item);
-                Main.item[index].whoAmI = index;
                 item.TurnToAir();
+                Main.item[index].whoAmI = index;
 
                 if (Main.netMode == NetmodeID.MultiplayerClient && chestIndex >= 0)
                 {
@@ -1017,6 +1052,17 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
             };
 
             item.ExtendoGripData.InClaw = true;
+
+            if (player.whoAmI != Main.myPlayer)
+            {
+                return;
+            }
+
+            // Realistically should not be relied on
+            if (Main.GameUpdateCount % 40 == 0)
+            {
+                item.SyncItem();
+            }
         }
 
         void HoverInteractions()
@@ -1074,6 +1120,8 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
     private void LetGoOfItem(Player player, bool deposit = true)
     {
+        Main.timeItemSlotCannotBeReusedFor[HeldItem] = 0;
+
         const float pickup_distance = 90f;
 
         var center = player.RotatedRelativePoint(player.MountedCenter, true);
@@ -1112,11 +1160,19 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
          && player.whoAmI == Main.myPlayer
          && TryPlacingItemInContainers(Projectile.Center.ToTileCoordinates()))
         {
-            item.Hidden = false;
+            // Overkill
+            if (Main.netMode != NetmodeID.SinglePlayer)
+            {
+                item.SyncItem();
+            }
+
             return;
         }
 
-        DropItem();
+        if (!item.IsAir)
+        {
+            DropItem();
+        }
 
         return;
 
@@ -1129,11 +1185,16 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                 if (player.whoAmI == Main.myPlayer)
                 {
                     NPC.ReleaseNPC((int)position.X, (int)position.Y, item.makeNPC, item.placeStyle, player.whoAmI);
-                }
 
-                item.TurnToAir();
-                item.Hidden = false;
-                HeldItem = -1;
+                    item.TurnToAir();
+                    item.Hidden = false;
+                    HeldItem = -1;
+
+                    if (Main.netMode != NetmodeID.SinglePlayer)
+                    {
+                        item.SyncItem();
+                    }
+                }
 
                 return;
             }
@@ -1164,16 +1225,14 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                     false
                 ))
             {
-                if (!Main.dedServ)
-                {
-                    Chest.VisualizeChestTransfer(
-                        type,
-                        Projectile.Center,
-                        targetPosition,
-                        Rand.Next(12, 18),
-                        randomizeEndPosition: true
-                    );
-                }
+                Chest.VisualizeChestTransfer(
+                    type,
+                    Projectile.Center,
+                    targetPosition,
+                    Rand.Next(12, 18),
+                    randomizeEndPosition: true
+                );
+
                 return item.IsAir;
             }
 
@@ -1200,17 +1259,16 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                 var chestPosition = new Point(chest.x, chest.y);
 
                 var chestCenter = chestPosition.ToWorldCoordinates(0f, 0f) + (chestSize * 0.5f);
-                if (!Main.dedServ)
-                {
-                    Chest.VisualizeChestTransfer(
-                        type,
-                        item.Center,
-                        chestCenter,
-                        Rand.Next(12, 18),
-                        randomizeEndPosition: true,
-                        animateChest: true
-                    );
-                }
+
+                Chest.VisualizeChestTransfer(
+                    type,
+                    item.Center,
+                    chestCenter,
+                    Rand.Next(12, 18),
+                    randomizeEndPosition: true,
+                    animateChest: true
+                );
+
                 return item.IsAir;
             }
 
