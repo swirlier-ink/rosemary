@@ -26,7 +26,7 @@ file record struct GrabItemPacket(int WhoAmI, int ItemWhoAmI) : IPacket<GrabItem
 
     public void Write(BinaryWriter writer)
     {
-        Main.NewText("Pick Up Item WRITE");
+        // Main.NewText("Pick Up Item WRITE");
 
         writer.Write(WhoAmI);
         writer.Write(ItemWhoAmI);
@@ -34,7 +34,7 @@ file record struct GrabItemPacket(int WhoAmI, int ItemWhoAmI) : IPacket<GrabItem
 
     public static void Receive(BinaryReader reader, int sender)
     {
-        Main.NewText("Pick Up Item READ");
+        // Main.NewText("Pick Up Item READ");
 
         var whoAmI = reader.ReadInt32();
         var itemWhoAmI = reader.ReadInt32();
@@ -87,7 +87,7 @@ file static class DEBUG_Packets
     {
         if (msgType == MessageID.SyncItem || msgType == MessageID.SyncItemDespawn)
         {
-            Main.NewText($"Send Item {(msgType == MessageID.SyncItem ? "Sync" : "Despawn")}");
+            // Main.NewText($"Send Item {(msgType == MessageID.SyncItem ? "Sync" : "Despawn")}");
         }
 
         orig(msgType, remoteClient, ignoreClient, text, number, number2, number3, number4, number5, number6, number7);
@@ -99,7 +99,7 @@ file static class DEBUG_Packets
 
         if (messageType == MessageID.SyncItem || messageType == MessageID.SyncItemDespawn)
         {
-            Main.NewText($"READ Item {(messageType == MessageID.SyncItem ? "Sync" : "Despawn")}");
+            // Main.NewText($"READ Item {(messageType == MessageID.SyncItem ? "Sync" : "Despawn")}");
         }
     }
 }
