@@ -107,12 +107,12 @@ public static class ImageSyncing
 
         public void Write(BinaryWriter writer)
         {
-            if (!Directory.Exists(ImageSavesPath))
+            if (!Directory.Exists(ImageCapturing.ImageSavesPath))
             {
                 return;
             }
 
-            var path = Path.Combine(ImageSavesPath, Path.ChangeExtension(Identifier, IMAGE_EXTENSION));
+            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(Identifier, IMAGE_EXTENSION));
 
             var info = new FileInfo(path);
 
@@ -155,7 +155,7 @@ public static class ImageSyncing
                 bytes[i] = reader.ReadByte();
             }
 
-            var path = Path.Combine(ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
+            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
 
             if (File.Exists(path))
             {
@@ -189,7 +189,7 @@ public static class ImageSyncing
                 return;
             }
 
-            var path = Path.Combine(ImageSavesPath, Path.ChangeExtension(Identifier, IMAGE_EXTENSION));
+            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(Identifier, IMAGE_EXTENSION));
 
             var info = new FileInfo(path);
 
@@ -237,7 +237,7 @@ public static class ImageSyncing
                 bytes[i] = reader.ReadByte();
             }
 
-            var path = Path.Combine(ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
+            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
 
             if (File.Exists(path))
             {
@@ -251,8 +251,6 @@ public static class ImageSyncing
             File.WriteAllBytesAsync(path, bytes).ContinueWith(_ => { local_identifiers.Add(id); waiting_on_identifiers.Remove(id); });
         }
     }
-
-    private static string ImageSavesPath => Path.Combine(RosemaryIO.SavePath, "polaroids");
 
     private const string IMAGE_EXTENSION = ".jpg";
 
@@ -298,15 +296,15 @@ public static class ImageSyncing
     {
         try
         {
-            Directory.CreateDirectory(ImageSavesPath);
+            Directory.CreateDirectory(ImageCapturing.ImageSavesPath);
         }
         catch
         {
-            ModContent.GetInstance<ModImpl>().Logger.Warn($"Could not create directory at: \"{ImageSavesPath}\"!");
+            ModContent.GetInstance<ModImpl>().Logger.Warn($"Could not create directory at: \"{ImageCapturing.ImageSavesPath}\"!");
             return;
         }
 
-        var files = Directory.EnumerateFiles(ImageSavesPath);
+        var files = Directory.EnumerateFiles(ImageCapturing.ImageSavesPath);
 
         foreach (var file in files)
         {
@@ -331,9 +329,9 @@ public static class ImageSyncing
             return true;
         }
 
-        if (local_identifiers.Contains(id) && Directory.Exists(ImageSavesPath))
+        if (local_identifiers.Contains(id) && Directory.Exists(ImageCapturing.ImageSavesPath))
         {
-            var path = Path.Combine(ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
+            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
 
             using var stream = File.OpenRead(path);
 
