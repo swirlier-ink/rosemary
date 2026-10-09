@@ -11,7 +11,7 @@ namespace Rosemary.Content.Misc;
 
 public static partial class Images
 {
-    private const string IMAGE_EXTENSION = ".jpg";
+    private const string image_extension = ".jpg";
 
     public static string ImageSavesPath => Path.Combine(RosemaryIO.SavePath, "polaroids");
 
@@ -31,7 +31,7 @@ public static partial class Images
 
     private static string GetImagePath(string id)
     {
-        var path = Path.Combine(ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
+        var path = Path.Combine(ImageSavesPath, Path.ChangeExtension(id, image_extension));
 
         return path;
     }
