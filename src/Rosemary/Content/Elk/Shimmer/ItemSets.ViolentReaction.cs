@@ -404,7 +404,7 @@ public static partial class ElkShimmerItemSets
 
     private static void KillMe_DisableDrops_ViolentShimmerReaction(On_Player.orig_KillMe orig, Player self, PlayerDeathReason damageSource, double dmg, int hitDirection, bool pvp)
     {
-        using var _ = Item.newItemDisabled.Override(Item.newItemDisabled);
+        using var _ = Item.newItemDisabled.Cache();
 
         if (damageSource.CustomReason._mode == NetworkText.Mode.LocalizationKey
          && death_keys_violent_shimmer_reaction.Contains(damageSource.CustomReason._text))

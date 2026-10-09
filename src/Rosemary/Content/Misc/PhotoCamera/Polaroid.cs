@@ -1,13 +1,14 @@
-﻿using System.Collections.ObjectModel;
-using System.IO;
+﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Reflection;
+using Rosemary.Common;
 using Terraria;
-using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
-using Terraria.UI.Chat;
 
 namespace Rosemary.Content.Misc;
 
@@ -17,7 +18,37 @@ public sealed class PolaroidItem : ModItem
 
     public override string LocalizationCategory => "Content.Misc";
 
-    public override bool CanStack(Item source) => false;
+    public override bool CanStack(Item source) => ImageIdentifier == ((PolaroidItem)source.ModItem).ImageIdentifier;
+
+    public override bool CanResearch() => false;
+
+    public override void Load()
+    {
+        if (Main.dedServ)
+        {
+            return;
+        }
+
+        MonoModHooks.Add(
+            typeof(Main).GetMethod(
+                nameof(Main.MouseText_DrawItemTooltip),
+                BindingFlags.Instance | BindingFlags.NonPublic
+            ),
+            MouseText_DrawItemTooltip_HideTooltipBox
+        );
+    }
+
+    private static void MouseText_DrawItemTooltip_HideTooltipBox(Action<Main, Main.MouseTextCache, int, byte, int, int> orig, Main self, Main.MouseTextCache info, int rare, byte diff, int x, int y)
+    {
+        using var _ = Main.SettingsEnabled_OpaqueBoxBehindTooltips.Cache();
+
+        if (Main.HoverItem.type == ModContent.ItemType<PolaroidItem>())
+        {
+            Main.SettingsEnabled_OpaqueBoxBehindTooltips = false;
+        }
+
+        orig(self, info, rare, diff, x, y);
+    }
 
     public override void SetDefaults()
     {
@@ -26,6 +57,7 @@ public sealed class PolaroidItem : ModItem
 
         Item.value = Item.buyPrice(gold: 1);
 
+        // Purely to prevent burning
         Item.rare = ItemRarityID.Blue;
     }
 
@@ -57,15 +89,12 @@ public sealed class PolaroidItem : ModItem
     {
         var sb = Main.spriteBatch;
 
-        var color = Color.White;
-
         if (Images.TryRequestImage(ImageIdentifier, out var texture))
         {
-            color = Color.Green;
             DrawPolaroid(texture, new Vector2(x, y));
         }
 
-        ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, ImageIdentifier, new Vector2(x, y), color, 0f, Vector2.Zero, Vector2.One);
+        // ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, ImageIdentifier, new Vector2(x, y), color, 0f, Vector2.Zero, Vector2.One);
 
         return false;
 

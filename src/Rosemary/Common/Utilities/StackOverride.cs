@@ -31,5 +31,11 @@ public static class StackOverrideExtensions
         {
             return new StackOverride<T>(ref reference, value);
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public StackOverride<T> Cache()
+        {
+            return new StackOverride<T>(ref reference, reference);
+        }
     }
 }
