@@ -69,6 +69,7 @@ public static partial class Images
         if (!captureRequested
          || string.IsNullOrEmpty(identifierToCreate))
         {
+            captureRequested = false;
             return;
         }
 
