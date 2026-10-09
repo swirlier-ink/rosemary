@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
 using System;
 using System.IO;
+using ReLogic.Content;
+using Rosemary.Core;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.GameInput;
@@ -78,7 +80,20 @@ public static partial class Images
         
         using (lease.Scope(clearColor: Color.Transparent))
         {
-            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+            var noise = Assets.Noise.MulticoloredNoise.Asset.ImmediateValue;
+            var shader = Assets.Misc.PolaroidShader.CreatePolaroidShader();
+
+            shader.Parameters.Noise = new HlslSampler2D
+            {
+                Texture = noise,
+                Sampler = SamplerState.LinearWrap
+            };
+            shader.Parameters.Random = 0;
+            shader.Parameters.Size = noise.Size() * 4;
+                
+            shader.Apply();
+            
+            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullCounterClockwise, shader.Shader);
             {
                 sb.Draw(Main.finalScreenTarget, Vector2.Zero, frame, Color.White);
             }
@@ -88,9 +103,7 @@ public static partial class Images
         var id = identifierToCreate;
 
         using var stream = new FileStream(GetImagePath(id), FileMode.Create);
-
         lease.Target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
-
         local_identifiers.Add(id);
 
         captureRequested = false;
