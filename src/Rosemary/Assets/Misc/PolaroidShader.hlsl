@@ -16,7 +16,7 @@ float4 PolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : TEXCOORD0) 
     float2 bayeruv = frac(Size * uv / 4) * 4;
     
     float4 c = tex2D(Texture, uv);
-    c = floor(c * 16) / 16;
+    c = floor(c * 32) / 32.0;
     c = pow(c, CONTRAST);
     
     float4 n = tex2D(Noise, uv * NOISE_SCALE + float2(Random, Random));
