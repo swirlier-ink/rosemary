@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
@@ -12,9 +12,8 @@ using Terraria.ModLoader;
 
 namespace Rosemary.Content.Misc;
 
-public static class ImageCapturing
+public static partial class Images
 {
-    public static string ImageSavesPath => Path.Combine(RosemaryIO.SavePath, "polaroids");
     private static int ScaledResolution => (int)(resolution * Math.Clamp(Main.GameZoomTarget, 1f, 2f));
     
     private const int resolution = 256;
@@ -22,30 +21,20 @@ public static class ImageCapturing
     private static bool captureRequested;
     private static float captureVfx;
 
-    public static void Capture()
+    private static string identifierToCreate = string.Empty;
+
+    public static string Capture()
     {
         captureVfx = 1f;
         captureRequested = true;
+
+        identifierToCreate = CreateIdentifier();
+
+        return identifierToCreate;
     }
 
-    private static string GenerateImageId()
-    {
-        var id = "";
-
-        var playerName = Regex.Replace(Main.LocalPlayer.name, @"[<>:""/\\|?* ]", "").ToUpper();
-        var date = DateTime.Now.ToString("ddMMyyHHmmssfff");
-        var unique = Main.rand.Next(255).ToString("X");
-        
-        id = playerName + date + unique;
-
-        if (string.IsNullOrWhiteSpace(id))
-            id = "thisshouldprobablybenamedsomethingelse" + Main.rand.Next(255).ToString("X");
-        
-        return id;
-    }
-
-    [OnLoad]
-    private static void Load()
+    [OnLoad(Side = ModSide.Client)]
+    private static void Load_Capturing()
     {
         On_FilterManager.EndCapture_RenderTarget2D_RenderTarget2D_RenderTarget2D_Vector2_Vector2_Vector2 += HandleCapture;
     }
@@ -53,37 +42,41 @@ public static class ImageCapturing
     private static void HandleCapture(On_FilterManager.orig_EndCapture_RenderTarget2D_RenderTarget2D_RenderTarget2D_Vector2_Vector2_Vector2 orig, FilterManager self, RenderTarget2D finalTexture, RenderTarget2D screenTarget1, RenderTarget2D screenTarget2, Vector2 screenSize, Vector2 sceneSize, Vector2 sceneOffset)
     {
         orig(self, finalTexture, screenTarget1, screenTarget2, screenSize, sceneSize, sceneOffset);
-        
-        // TODO: account for world edges
+
+        var sb = Main.spriteBatch;
+
+        if (Main.gameMenu
+         || !captureRequested
+         || string.IsNullOrEmpty(identifierToCreate))
+        {
+            return;
+        }
+
+        // TODO: account for world/screen edges
         var position = ScaledMousePosition() - new Vector2(ScaledResolution) / 2f;
         var frame = new Rectangle((int)position.X, (int)position.Y, ScaledResolution, ScaledResolution);
 
-        DrawCameraOverlay(position);
+        DrawCameraOverlay(sb, position);
 
         captureVfx = MathF.Max(0, captureVfx - 0.1f);
         
-        if (Main.gameMenu || !captureRequested) 
-            return;
-        
-        using var lease = ScreenspaceTargetProvider.Shared.Create(Main.graphics.GraphicsDevice, (_, _, targetWidth, targetHeight) => (ScaledResolution, ScaledResolution));
+        using var lease = RenderTargetPool.Shared.Rent(Main.graphics.GraphicsDevice, ScaledResolution, ScaledResolution);
         
         using (lease.Scope(clearColor: Color.Transparent))
         {
-            Main.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
             {
-                Main.spriteBatch.Draw(Main.finalScreenTarget, Vector2.Zero, frame, Color.White);
+                sb.Draw(Main.finalScreenTarget, Vector2.Zero, frame, Color.White);
             }
-            Main.spriteBatch.End();
+            sb.End();
         }
 
-        var id = GenerateImageId();
-        const string format = ".jpg";
+        var id = CreateIdentifier();
+
+        using var stream = new FileStream(GetImagePath(id), FileMode.Create);
+
+        lease.Target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
         
-        using (var stream = new FileStream(Path.Combine(ImageSavesPath, id + format), FileMode.Create)) 
-        {
-            lease.Target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
-        }
-
         captureRequested = false;
 
         return;
@@ -98,18 +91,20 @@ public static class ImageCapturing
         } 
     }
     
-    private static void DrawCameraOverlay(Vector2 position)
+    private static void DrawCameraOverlay(SpriteBatch sb, Vector2 position)
     {
-        Main.spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
+        sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
         {
             var texture = TextureAssets.MagicPixel.Value;
             var frame = new Rectangle((int)position.X, (int)position.Y, ScaledResolution, ScaledResolution);
 
             if (Main.LocalPlayer.HeldItem.type == ModContent.ItemType<PolaroidCamera>())
-                Main.spriteBatch.Draw(texture, frame, Color.White * 0.1f);
-            
-            Main.spriteBatch.Draw(texture, frame, Color.White * captureVfx);
+            {
+                sb.Draw(texture, frame, Color.White * 0.1f);
+            }
+
+            sb.Draw(texture, frame, Color.White * captureVfx);
         }
-        Main.spriteBatch.End();
+        sb.End();
     }
 }

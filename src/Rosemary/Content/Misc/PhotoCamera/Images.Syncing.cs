@@ -10,7 +10,7 @@ using Terraria.ModLoader;
 
 namespace Rosemary.Content.Misc;
 
-public static class ImageSyncing
+public static partial class Images
 {
     /*
      * Client Joining:
@@ -107,12 +107,12 @@ public static class ImageSyncing
 
         public void Write(BinaryWriter writer)
         {
-            if (!Directory.Exists(ImageCapturing.ImageSavesPath))
+            if (!Directory.Exists(ImageSavesPath))
             {
                 return;
             }
 
-            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(Identifier, IMAGE_EXTENSION));
+            var path = GetImagePath(Identifier);
 
             var info = new FileInfo(path);
 
@@ -155,7 +155,7 @@ public static class ImageSyncing
                 bytes[i] = reader.ReadByte();
             }
 
-            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
+            var path = GetImagePath(id);
 
             if (File.Exists(path))
             {
@@ -189,7 +189,14 @@ public static class ImageSyncing
                 return;
             }
 
-            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(Identifier, IMAGE_EXTENSION));
+            var path = GetImagePath(Identifier);
+
+            if (!File.Exists(path))
+            {
+                writer.Write(false);
+
+                return;
+            }
 
             var info = new FileInfo(path);
 
@@ -237,7 +244,7 @@ public static class ImageSyncing
                 bytes[i] = reader.ReadByte();
             }
 
-            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
+            var path = GetImagePath(id);
 
             if (File.Exists(path))
             {
@@ -252,10 +259,6 @@ public static class ImageSyncing
         }
     }
 
-    private const string IMAGE_EXTENSION = ".jpg";
-
-    private static readonly Dictionary<string, Texture2D> image_cache = [];
-
     // TODO: How should we handle images being deleted or otherwise removed past load-time?
     private static readonly HashSet<string> local_identifiers = [];
 
@@ -264,13 +267,13 @@ public static class ImageSyncing
     private static readonly HashSet<string> waiting_on_identifiers = [];
 
     [OnLoad]
-    private static void Load()
+    private static void Load_Syncing()
     {
         PopulateLocalIdentifiers();
     }
 
     [ModSystemHooks.OnWorldLoad]
-    private static void OnWorldLoad()
+    private static void OnWorldLoad_Syncing()
     {
         if (Main.netMode == NetmodeID.SinglePlayer)
         {
@@ -281,7 +284,7 @@ public static class ImageSyncing
     }
 
     [ModSystemHooks.OnWorldUnload]
-    private static void OnWorldUnload()
+    private static void OnWorldUnload_Syncing()
     {
         if (Main.netMode == NetmodeID.SinglePlayer)
         {
@@ -296,15 +299,15 @@ public static class ImageSyncing
     {
         try
         {
-            Directory.CreateDirectory(ImageCapturing.ImageSavesPath);
+            Directory.CreateDirectory(ImageSavesPath);
         }
         catch
         {
-            ModContent.GetInstance<ModImpl>().Logger.Warn($"Could not create directory at: \"{ImageCapturing.ImageSavesPath}\"!");
+            ModContent.GetInstance<ModImpl>().Logger.Warn($"Could not create directory at: \"{ImageSavesPath}\"!");
             return;
         }
 
-        var files = Directory.EnumerateFiles(ImageCapturing.ImageSavesPath);
+        var files = Directory.EnumerateFiles(ImageSavesPath);
 
         foreach (var file in files)
         {
@@ -313,42 +316,5 @@ public static class ImageSyncing
                 local_identifiers.Add(Path.GetFileNameWithoutExtension(file));
             }
         }
-    }
-
-    public static bool TryRequestImage(string id, [NotNullWhen(true)] out Texture2D? image)
-    {
-        image = null;
-
-        if (Main.dedServ)
-        {
-            return false;
-        }
-
-        if (image_cache.TryGetValue(id, out image))
-        {
-            return true;
-        }
-
-        if (local_identifiers.Contains(id) && Directory.Exists(ImageCapturing.ImageSavesPath))
-        {
-            var path = Path.Combine(ImageCapturing.ImageSavesPath, Path.ChangeExtension(id, IMAGE_EXTENSION));
-
-            using var stream = File.OpenRead(path);
-
-            image = Texture2D.FromStream(Main.graphics.GraphicsDevice, stream);
-
-            image_cache.Add(id, image);
-
-            return true;
-        }
-
-        if (Main.netMode == NetmodeID.MultiplayerClient
-         && multiplayer_host_identifiers.Contains(id)
-         && waiting_on_identifiers.Add(id))
-        {
-            new ImageFromHostPacket(Main.myPlayer, true, id).Send();
-        }
-
-        return false;
     }
 }
