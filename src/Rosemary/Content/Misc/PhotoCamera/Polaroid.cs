@@ -91,14 +91,14 @@ public sealed class PolaroidItem : ModItem
 
         if (Images.TryRequestImage(ImageIdentifier, out var texture))
         {
-            DrawPolaroid(texture, new Vector2(x, y));
+            DrawPolaroid(texture, new Vector2(x, y), ImageIdentifier);
         }
 
         // ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, ImageIdentifier, new Vector2(x, y), color, 0f, Vector2.Zero, Vector2.One);
 
         return false;
 
-        static void DrawPolaroid(Texture2D texture, Vector2 position)
+        static void DrawPolaroid(Texture2D texture, Vector2 position, string identifier)
         {
             var sb = Main.spriteBatch;
 
@@ -115,9 +115,21 @@ public sealed class PolaroidItem : ModItem
             var bounds = new Rectangle((int)position.X + 18, (int)position.Y + 32, Images.BASE_RESOLUTION, Images.BASE_RESOLUTION);
 
             sb.Draw(polaroidBase, position, Color.White);
+            
+            sb.End(out var ss);
 
-            // TODO: Fade in effect if not immediately loaded?
-            sb.Draw(texture, bounds, Color.White);
+            var shader = Assets.Misc.Vignette.CreateVignetteShader();
+            shader.Parameters.Intensity = 3;
+            shader.Parameters.Power = 6;
+            shader.Apply();
+            sb.Begin(ss with { CustomEffect = shader.Shader });
+            {
+                sb.Draw(texture, bounds, Color.White);
+                
+                sb.Draw(texture, bounds, Color.Black * Images.BlackFade(identifier));
+            }
+            
+            sb.Restart(ss);
         }
     }
 }

@@ -30,6 +30,7 @@ public static partial class Images
         captureRequested = true;
 
         identifierToCreate = CreateIdentifier();
+        Lifetimes.Add(identifierToCreate, 0);
 
         return identifierToCreate;
     }
