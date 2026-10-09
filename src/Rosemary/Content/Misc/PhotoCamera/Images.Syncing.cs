@@ -1,8 +1,4 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using Rosemary.Common.IO;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Collections.Generic;
 using System.IO;
 using Terraria;
 using Terraria.ID;

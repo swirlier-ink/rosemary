@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Terraria;
 using Terraria.GameInput;
 
@@ -12,7 +10,7 @@ public enum ZoomScaleType
     World,
     MouseInWorld,
     UI,
-    Unscaled
+    Unscaled,
 }
 
 public readonly ref struct PlayerInputZoomScope : IDisposable
