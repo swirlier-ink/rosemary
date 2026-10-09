@@ -9,6 +9,8 @@ public class PolaroidCamera : ModItem
 {
     public override string Texture => Assets.Misc.PolaroidCamera.KEY;
 
+    public override string LocalizationCategory => "Content.Misc";
+
     public override void SetDefaults()
     {
         base.SetDefaults();

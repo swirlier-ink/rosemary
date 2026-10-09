@@ -11,3 +11,13 @@
 }
 
 DinosaurExtendoGripHoldout.DisplayName: Dino Grabber
+
+PolaroidItem: {
+	DisplayName: Polaroid
+	Tooltip: ""
+}
+
+PolaroidCamera: {
+	DisplayName: Printer Camera
+	Tooltip: ""
+}

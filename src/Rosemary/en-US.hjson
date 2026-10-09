@@ -1,1 +1,12 @@
-Mods.Rosemary.Configs.TempConfig.DisplayName: Temp Config
+Mods: {
+	Rosemary: {
+		Configs.TempConfig.DisplayName: Temp Config
+
+		Items: {
+			PolaroidCamera: {
+				DisplayName: Polaroid Camera
+				Tooltip: ""
+			}
+		}
+	}
+}

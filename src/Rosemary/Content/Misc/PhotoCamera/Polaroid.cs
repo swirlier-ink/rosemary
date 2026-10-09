@@ -3,9 +3,11 @@ using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Terraria;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
+using Terraria.UI.Chat;
 
 namespace Rosemary.Content.Misc;
 
@@ -15,6 +17,8 @@ public sealed class PolaroidItem : ModItem
 
     public override string LocalizationCategory => "Content.Misc";
 
+    public override bool CanStack(Item source) => false;
+
     public override void SetDefaults()
     {
         Item.width = 40;
@@ -22,7 +26,7 @@ public sealed class PolaroidItem : ModItem
 
         Item.value = Item.buyPrice(gold: 1);
 
-        Item.rare = ItemRarityID.White;
+        Item.rare = ItemRarityID.Blue;
     }
 
     public string ImageIdentifier = string.Empty;
@@ -53,10 +57,16 @@ public sealed class PolaroidItem : ModItem
     {
         var sb = Main.spriteBatch;
 
+        var color = Color.White;
+
         if (Images.TryRequestImage(ImageIdentifier, out var texture))
         {
+            color = Color.Green;
             DrawPolaroid(texture, new Vector2(x, y));
         }
+
+        ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, ImageIdentifier, new Vector2(x, y), color, 0f, Vector2.Zero, Vector2.One);
+
         return false;
 
         static void DrawPolaroid(Texture2D texture, Vector2 position)
