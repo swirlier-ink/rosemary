@@ -1,8 +1,8 @@
-﻿using System;
-using System.IO;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
+using System;
+using System.IO;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.GameInput;
@@ -48,6 +48,14 @@ public static partial class Images
     {
         orig(self, finalTexture, screenTarget1, screenTarget2, screenSize, sceneSize, sceneOffset);
 
+        var alive = Main.LocalPlayer is { noItems: false, CCed: false, dead: false };
+
+        if (Main.gameMenu
+         || !alive)
+        {
+            return;
+        }
+
         var sb = Main.spriteBatch;
 
         using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
@@ -58,8 +66,7 @@ public static partial class Images
 
         DrawCameraOverlay(sb, position);
 
-        if (Main.gameMenu
-         || !captureRequested
+        if (!captureRequested
          || string.IsNullOrEmpty(identifierToCreate))
         {
             return;
@@ -81,6 +88,8 @@ public static partial class Images
         using var stream = new FileStream(GetImagePath(id), FileMode.Create);
 
         lease.Target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
+
+        local_identifiers.Add(id);
 
         captureRequested = false;
     }
