@@ -1,9 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Text.RegularExpressions;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Rosemary.Common.IO;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.GameInput;
@@ -53,7 +51,7 @@ public static partial class Images
         }
 
         // TODO: account for world/screen edges
-        var position = ScaledMousePosition() - new Vector2(ScaledResolution) / 2f;
+        var position = ScaledMousePosition() - new Vector2(ScaledResolution) * 0.5f;
         var frame = new Rectangle((int)position.X, (int)position.Y, ScaledResolution, ScaledResolution);
 
         DrawCameraOverlay(sb, position);
@@ -71,12 +69,15 @@ public static partial class Images
             sb.End();
         }
 
-        var id = CreateIdentifier();
+        var id = identifierToCreate;
 
         using var stream = new FileStream(GetImagePath(id), FileMode.Create);
 
         lease.Target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
-        
+
+        // May differ in quality compared to the saved file?
+        image_cache[id] = lease.Target;
+
         captureRequested = false;
 
         return;

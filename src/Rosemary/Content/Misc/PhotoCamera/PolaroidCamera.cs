@@ -1,4 +1,4 @@
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Terraria.ModLoader;
 using Terraria;
 using Terraria.ID;
@@ -27,7 +27,17 @@ public class PolaroidCamera : ModItem
 
     public override bool? UseItem(Player player)
     {
-        ImageCapturing.Capture();
+        var id = Images.Capture();
+
+        var item = new Item(ModContent.ItemType<PolaroidItem>());
+
+        if (item.ModItem is PolaroidItem polaroid)
+        {
+            polaroid.ImageIdentifier = id;
+        }
+
+        player.QuickSpawnItem(player.GetSource_ItemUse(Item, nameof(PolaroidCamera)), item);
+
         return true;
     }
 }

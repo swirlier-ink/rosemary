@@ -311,7 +311,7 @@ public static partial class Images
 
         foreach (var file in files)
         {
-            if (Path.GetExtension(file) == IMAGE_EXTENSION)
+            if (Path.GetExtension(file) == image_extension)
             {
                 local_identifiers.Add(Path.GetFileNameWithoutExtension(file));
             }
