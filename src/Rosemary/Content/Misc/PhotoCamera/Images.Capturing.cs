@@ -60,8 +60,9 @@ public static partial class Images
 
         using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
 
-        // TODO: Account for world/screen edges
-        var position = Main.MouseScreen - new Vector2(ScaledResolution) * 0.5f;
+        // TODO: Account for world edges
+        var size = new Vector2(ScaledResolution) * 0.5f;
+        var position = Vector2.Clamp(Main.MouseScreen, size, new Vector2(Main.screenWidth, Main.screenHeight) - size) - size;
         var frame = new Rectangle((int)position.X, (int)position.Y, ScaledResolution, ScaledResolution);
 
         DrawCameraOverlay(sb, position);
