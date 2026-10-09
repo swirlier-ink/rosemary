@@ -53,7 +53,7 @@ public sealed class PolaroidItem : ModItem
     {
         var sb = Main.spriteBatch;
 
-        if (ImageSyncing.TryRequestImage(ImageIdentifier, out var texture))
+        if (Images.TryRequestImage(ImageIdentifier, out var texture))
         {
             DrawPolaroid(texture, new Vector2(x, y));
         }
