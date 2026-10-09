@@ -13,10 +13,10 @@ namespace Rosemary.Content.Misc;
 
 public static partial class Images
 {
-    private static int ScaledResolution => (int)(resolution * Math.Clamp(Main.GameZoomTarget, 1f, 2f));
-    
-    private const int resolution = 256;
+    public const int BASE_RESOLUTION = 256;
 
+    private static int ScaledResolution => (int)(BASE_RESOLUTION * Math.Clamp(Main.GameZoomTarget, 1f, 2f));
+    
     private static bool captureRequested;
     private static float captureVfx;
 

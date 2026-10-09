@@ -200,8 +200,8 @@ public static partial class Images
 
             var info = new FileInfo(path);
 
-            // 2mb limit, overkill?
-            if (info.Length >= 2 * 1024 * 1024)
+            // 1mb limit, overkill?
+            if (info.Length >= 1024 * 1024)
             {
                 writer.Write(false);
 

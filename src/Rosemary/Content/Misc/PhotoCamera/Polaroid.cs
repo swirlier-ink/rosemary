@@ -102,7 +102,22 @@ public sealed class PolaroidItem : ModItem
         {
             var sb = Main.spriteBatch;
 
-            sb.Draw(texture, position, Color.White);
+            position -= new Vector2(4f);
+
+            var screenSize = new Vector2(Main.screenWidth, Main.screenHeight);
+
+            var polaroidBase = Assets.Misc.Polaroid_Tooltip.Asset.Value;
+
+            var bottomRight = position + polaroidBase.Size();
+
+            position -= Vector2.Clamp(bottomRight - screenSize, Vector2.Zero, screenSize);
+
+            var bounds = new Rectangle((int)position.X + 18, (int)position.Y + 32, Images.BASE_RESOLUTION, Images.BASE_RESOLUTION);
+
+            sb.Draw(polaroidBase, position, Color.White);
+
+            // TODO: Fade in effect if not immediately loaded?
+            sb.Draw(texture, bounds, Color.White);
         }
     }
 }

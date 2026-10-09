@@ -17,6 +17,16 @@ public static partial class Images
 
     private static readonly Dictionary<string, Texture2D> image_cache = [];
 
+    [OnUnload]
+    private static void Unload()
+    {
+        foreach (var pair in image_cache)
+        {
+            pair.Value.Dispose();
+            image_cache.Remove(pair.Key);
+        }
+    }
+
     private static string CreateIdentifier()
     {
         var playerName = string.Join(string.Empty, Main.LocalPlayer.name.Split(Path.GetInvalidFileNameChars())).ToUpper();
