@@ -67,6 +67,11 @@ public class PolaroidCamera : ModItem
 
     public override bool? UseItem(Player player)
     {
+        if (player.whoAmI != Main.myPlayer)
+        {
+            return true;
+        }
+
         var id = Images.Capture();
 
         var item = new Item(ModContent.ItemType<PolaroidItem>());
