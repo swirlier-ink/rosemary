@@ -17,8 +17,9 @@ public sealed class GreenCameraFilter : ModItem, IPolaroidCameraFilter
         device.SetRenderTarget(swap);
         device.Clear(Color.Transparent);
 
-        var shader = Assets.Misc.PolaroidCameraFilters.GreenPolaroidShader.CreateGreenPolaroidShader();
+        var shader = Assets.Misc.PolaroidCameraFilters.MonochromePolaroidShader.CreateMonochromePolaroidShader();
 
+        shader.Parameters.Color = Color.LawnGreen.ToVector3();
         shader.Parameters.Power = .75f;
         
         shader.Apply();

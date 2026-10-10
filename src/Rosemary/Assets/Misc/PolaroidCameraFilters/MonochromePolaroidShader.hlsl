@@ -1,0 +1,21 @@
+#include "../../common.h"
+
+sampler2D Texture : register(s0);
+
+float3 Color;
+float Power;
+
+float4 MonochromePolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : TEXCOORD0) : COLOR0
+{
+    float4 c = tex2D(Texture, uv);
+    
+    float value = pow((c.r + c.g + c.b) / 3.0, Power);
+
+    return float4(Color * value, c.a);
+}
+
+BEGIN_TECHNIQUE(Technique1) 
+    BEGIN_PASS(MonochromePolaroidShader)  
+        PIXEL_SHADER(compile ps_3_0 MonochromePolaroidShaderFragment())   
+    END_PASS
+END_TECHNIQUE
