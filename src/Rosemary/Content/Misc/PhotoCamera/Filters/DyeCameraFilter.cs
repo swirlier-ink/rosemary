@@ -67,7 +67,14 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
 
         return ValidDye(Main.mouseItem);
     }
-    
+
+    public override bool CanStack(Item source)
+    {
+        var item = (DyeCameraFilter)source.ModItem;
+
+        return item.Dye is null && Dye is null;
+    }
+
     public override void RightClick(Player player)
     {
         Item.stack++;
@@ -90,9 +97,24 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
         var item = Main.mouseItem.Clone();
         item.stack = 1;
 
-        Dye = item;
-        Item.SetNameOverride(Mods.Rosemary.Content.Misc.CameraFilters.DyeCameraFilter.DisplayName.GetTextValue() + $" ({Dye!.Name})");
-        
+        if (Item.stack > 2)
+        {
+            Item.stack--;
+            var newFilter = new Item(Type);
+            {
+                newFilter.SetNameOverride(Mods.Rosemary.Content.Misc.CameraFilters.DyeCameraFilter.DisplayName.GetTextValue() + $" ({item.Name})");
+
+                var modItem = (DyeCameraFilter)newFilter.ModItem;
+                modItem.Dye = item;
+            }
+            player.QuickSpawnItem(player.GetItemSource_Item(Item), newFilter);
+        }
+        else
+        {
+            Dye = item;
+            Item.SetNameOverride(Mods.Rosemary.Content.Misc.CameraFilters.DyeCameraFilter.DisplayName.GetTextValue() + $" ({Dye!.Name})");
+        }
+
         Main.mouseItem.stack--;
     }
     
