@@ -141,7 +141,7 @@ public class PolaroidCamera : ModItem
             return;
         }
 
-        if (Filters.Count > MAX_FILTERS
+        if (Filters.Count >= MAX_FILTERS
          || Main.mouseItem.ModItem is not IPolaroidCameraFilter)
         {
             return;
