@@ -212,6 +212,39 @@ public class PolaroidCamera : ModItem
         return new Vector2(-6, 2 + off);
     }
 
+    public override void ModifyTooltips(List<TooltipLine> tooltips)
+    {
+        if (Filters.Count <= 0)
+        {
+            return;
+        }
+
+        var index = tooltips.FindIndex(l => l.FullName == "Terraria/ItemName");
+
+        if (index == -1)
+        {
+            return;
+        }
+
+        index++;
+
+        tooltips.Insert(index, new TooltipLine(Mod, "PolaroidCameraFiltersHeader", Mods.Rosemary.Content.Misc.PolaroidCamera.FiltersHeader.GetTextValue()));
+        index++;
+
+        var count = 0;
+
+        foreach (var item in Filters)
+        {
+            var line = new TooltipLine(Mod, $"PolaroidCameraFilters: {count}", $"- {item.Name}");
+            {
+                line.Color = (count % 2 == 0) ? new Color(255, 154, 86) : new Color(211, 98, 164);
+            }
+            tooltips.Insert(index + count, line);
+
+            count++;
+        }
+    }
+
     public override bool? UseItem(Player player)
     {
         if (player.whoAmI != Main.myPlayer)

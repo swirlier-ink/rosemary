@@ -20,11 +20,12 @@ PolaroidItem: {
 PolaroidCamera: {
 	DisplayName: Printer Camera
 	Tooltip: ""
+	FiltersHeader: Filters:
 }
 
 CameraFilters: {
 	PicMixWatermarkFilter: {
-		DisplayName: Pic Mix Watermark Filter
+		DisplayName: PicMix Filter
 		Tooltip: ""
 	}
 }
