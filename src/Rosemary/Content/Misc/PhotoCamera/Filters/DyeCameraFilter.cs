@@ -97,6 +97,8 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
         var item = Main.mouseItem.Clone();
         item.stack = 1;
 
+        Main.mouseItem.stack--;
+
         if (Item.stack > 2)
         {
             Item.stack--;
@@ -107,15 +109,16 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
                 var modItem = (DyeCameraFilter)newFilter.ModItem;
                 modItem.Dye = item;
             }
-            player.QuickSpawnItem(player.GetItemSource_Item(Item), newFilter);
+            if (Main.mouseItem.stack > 0)
+                player.QuickSpawnItem(player.GetItemSource_Item(Item), newFilter);
+            else
+                Main.mouseItem = newFilter;
         }
         else
         {
             Dye = item;
             Item.SetNameOverride(Mods.Rosemary.Content.Misc.CameraFilters.DyeCameraFilter.DisplayName.GetTextValue() + $" ({Dye!.Name})");
         }
-
-        Main.mouseItem.stack--;
     }
     
     public override ModItem Clone(Item newEntity)
