@@ -3,6 +3,7 @@
 sampler2D Texture : register(s0);
 
 float Power;
+float Preservation;
 
 float4 MonochromePolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : TEXCOORD0) : COLOR0
 {
@@ -10,7 +11,7 @@ float4 MonochromePolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : T
     
     float value = pow((c.r + c.g + c.b) / 3.0, Power);
 
-    return float4(baseColor.rgb * value, c.a);
+    return lerp(float4(baseColor.rgb * value, c.a), c, Preservation);
 }
 
 BEGIN_TECHNIQUE(Technique1) 
