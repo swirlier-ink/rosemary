@@ -123,7 +123,7 @@ public class PolaroidCamera : ModItem
             return Filters.Count > 0;
         }
 
-        return Filters.Count <= MAX_FILTERS
+        return Filters.Count < MAX_FILTERS
             && Main.mouseItem.ModItem is IPolaroidCameraFilter;
     }
 
