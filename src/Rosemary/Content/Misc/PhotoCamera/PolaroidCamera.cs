@@ -116,6 +116,13 @@ public class PolaroidCamera : ModItem
 
     public List<Item> Filters = [];
 
+    public override bool CanStack(Item source)
+    {
+        var item = (PolaroidCamera)source.ModItem;
+
+        return Filters.Count == 0 && item.Filters.Count == 0;
+    }
+
     public override bool CanRightClick()
     {
         if (Main.mouseItem.IsAir)
@@ -150,10 +157,27 @@ public class PolaroidCamera : ModItem
         var item = Main.mouseItem.Clone();
         item.stack = 1;
 
-        Filters.Add(item);
-
         Main.mouseItem.stack--;
-
+        
+        if (Item.stack > 2)
+        {
+            Item.stack--;
+            
+            var newCamera = new Item(Type);
+            {
+                var modItem = (PolaroidCamera)newCamera.ModItem;
+                modItem.Filters.Add(item);
+            }
+            if (Main.mouseItem.stack > 0)
+                player.QuickSpawnItem(player.GetItemSource_Item(Item), newCamera);
+            else
+                Main.mouseItem = newCamera;
+        }
+        else 
+        {
+            Filters.Add(item);
+        }
+        
         // play some other sound
     }
 
