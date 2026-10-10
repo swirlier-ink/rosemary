@@ -19,14 +19,13 @@ public sealed class GreenCameraFilter : ModItem, IPolaroidCameraFilter
 
         var shader = Assets.Misc.PolaroidCameraFilters.MonochromePolaroidShader.CreateMonochromePolaroidShader();
 
-        shader.Parameters.Color = Color.LawnGreen.ToVector3();
         shader.Parameters.Power = .75f;
         
         shader.Apply();
 
         sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, shader.Shader);
         {
-            sb.Draw(target, Vector2.Zero, Color.White);
+            sb.Draw(target, Vector2.Zero, Color.LawnGreen);
         }
         sb.End();
 
