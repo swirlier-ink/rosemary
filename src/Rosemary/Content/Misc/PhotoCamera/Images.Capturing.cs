@@ -26,7 +26,7 @@ public static partial class Images
 
     private static string identifierToCreate = string.Empty;
 
-    private static readonly List<IPolaroidCameraFilter> base_filters = [ new BaseFilter() ];
+    private static readonly List<IPolaroidCameraFilter> base_filters = [ new BaseCameraFilter() ];
 
     private static List<IPolaroidCameraFilter> filters = [];
 

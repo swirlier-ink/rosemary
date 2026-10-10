@@ -5,7 +5,7 @@ using Terraria;
 
 namespace Rosemary.Content.Misc;
 
-public sealed class BaseFilter : IPolaroidCameraFilter
+public sealed class BaseCameraFilter : IPolaroidCameraFilter
 {
     bool IPolaroidCameraFilter.ApplyFilter(SpriteBatch sb, GraphicsDevice device, RenderTarget2D target, RenderTarget2D swap)
     {

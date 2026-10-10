@@ -6,7 +6,7 @@ using Terraria.ModLoader;
 
 namespace Rosemary.Content.Misc;
 
-public sealed class PicMixWatermarkFilter : ModItem, IPolaroidCameraFilter
+public sealed class PicMixWatermarkCameraFilter : ModItem, IPolaroidCameraFilter
 {
     public override string Texture => Assets.Elk.TestItem.KEY;
 
