@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Reflection;
+using ReLogic.Content;
 using Rosemary.Common;
 using Terraria;
 using Terraria.ID;
@@ -59,46 +60,58 @@ public sealed class PolaroidItem : ModItem
 
         // Purely to prevent burning
         Item.rare = ItemRarityID.Blue;
+
+        Age = 0;
     }
 
     public string ImageIdentifier = string.Empty;
 
+    public uint Age;
+
     public override void SaveData(TagCompound tag)
     {
         tag[nameof(ImageIdentifier)] = ImageIdentifier;
+        tag[nameof(Age)] = Age;
     }
 
     public override void LoadData(TagCompound tag)
     {
         ImageIdentifier = tag.Get<string>(nameof(ImageIdentifier));
+        Age = tag.Get<uint>(nameof(Age));
     }
 
     public override void NetSend(BinaryWriter writer)
     {
         writer.Write(ImageIdentifier);
+        writer.Write(Age);
     }
 
     public override void NetReceive(BinaryReader reader)
     {
         ImageIdentifier = reader.ReadString();
+        Age = reader.ReadUInt32();
+
+        Images.TrackImageDevelopment(this);
     }
 
     // TODO:
     // - Also make the image ONLY be requested if hovered in the inventory, not in world/chat
     public override bool PreDrawTooltip(ReadOnlyCollection<TooltipLine> lines, ref int x, ref int y)
     {
-        var sb = Main.spriteBatch;
+        var position = new Vector2(x, y);
 
-        if (Images.TryRequestImage(ImageIdentifier, out var texture))
+        if (!Images.TryRequestImage(ImageIdentifier, out var texture))
         {
-            DrawPolaroid(texture, new Vector2(x, y), ImageIdentifier);
+            DrawPolaroid(Asset<Texture2D>.DefaultValue);
+
+            return false;
         }
 
-        // ChatManager.DrawColorCodedStringWithShadow(sb, FontAssets.MouseText.Value, ImageIdentifier, new Vector2(x, y), color, 0f, Vector2.Zero, Vector2.One);
+        DrawPolaroid(texture);
 
         return false;
 
-        static void DrawPolaroid(Texture2D texture, Vector2 position, string identifier)
+        void DrawPolaroid(Texture2D texture)
         {
             var sb = Main.spriteBatch;
 
@@ -125,8 +138,10 @@ public sealed class PolaroidItem : ModItem
             sb.Begin(ss with { CustomEffect = shader.Shader });
             {
                 sb.Draw(texture, bounds, Color.White);
-                
-                sb.Draw(texture, bounds, Color.Black * Images.BlackFade(identifier));
+
+                var blackFade = 1f - MathHelper.Clamp((Age - 120f) / 400f, 0, 1);
+
+                sb.Draw(texture, bounds, Color.Black * blackFade);
             }
             
             sb.Restart(ss);

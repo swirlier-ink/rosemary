@@ -79,6 +79,7 @@ public class PolaroidCamera : ModItem
         if (item.ModItem is PolaroidItem polaroid)
         {
             polaroid.ImageIdentifier = id;
+            Images.TrackImageDevelopment(polaroid);
         }
 
         // TODO: Delay until after some animation?
