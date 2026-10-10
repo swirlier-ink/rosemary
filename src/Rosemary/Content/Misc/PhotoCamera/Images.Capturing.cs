@@ -73,7 +73,7 @@ public static partial class Images
             return;
         }
 
-        using var lease = RenderTargetPool.Shared.Rent(Main.graphics.GraphicsDevice, ScaledResolution, ScaledResolution);
+        using var lease = RenderTargetPool.Shared.Rent(Main.graphics.GraphicsDevice, BASE_RESOLUTION, BASE_RESOLUTION);
         
         using (lease.Scope(clearColor: Color.Transparent))
         {
@@ -83,7 +83,7 @@ public static partial class Images
             shader.Parameters.Noise = new HlslSampler2D
             {
                 Texture = noise,
-                Sampler = SamplerState.LinearWrap
+                Sampler = SamplerState.LinearWrap,
             };
             shader.Parameters.Random = 0;
             shader.Parameters.Size = noise.Size() * 4;
@@ -92,7 +92,7 @@ public static partial class Images
             
             sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullCounterClockwise, shader.Shader);
             {
-                sb.Draw(Main.finalScreenTarget, Vector2.Zero, frame, Color.White);
+                sb.Draw(Main.finalScreenTarget, Main.graphics.GraphicsDevice.Viewport.Bounds, frame, Color.White);
             }
             sb.End();
         }
