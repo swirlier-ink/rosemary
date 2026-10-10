@@ -1,8 +1,11 @@
 ﻿using System;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Rosemary.Common;
 using Terraria.ModLoader;
 using Terraria;
 using Terraria.DataStructures;
+using Terraria.GameContent;
 using Terraria.ID;
 
 namespace Rosemary.Content.Misc;
@@ -38,13 +41,14 @@ public class PolaroidCamera : ModItem
 
         Item.value = Item.buyPrice(0, 10);
 
-        Item.useTime = 3 * 60;
-        Item.useAnimation = 3 * 60;
+        Item.useTime = 45;
+        Item.useAnimation = 45;
 
         Item.consumable = false;
 
         Item.useStyle = ItemUseStyleID.Shoot;
         Item.holdStyle = ItemHoldStyleID.HoldHeavy;
+        Item.useTurn = false;
 
         Item.rare = ItemRarityID.LightRed;
 
@@ -58,8 +62,8 @@ public class PolaroidCamera : ModItem
             return new Vector2(-6, 2);
         }
 
-        var off = currentPlayer.itemTime / (float)(3 * 60);
-        off = MathF.Pow(off, 2f);
+        var off = currentPlayer.itemAnimation / 45f;
+        off = MathF.Pow(off, 1.3f);
         off *= -4f;
 
         return new Vector2(-6, 2 + off);
@@ -86,5 +90,69 @@ public class PolaroidCamera : ModItem
         player.QuickSpawnItem(player.GetSource_ItemUse(Item, nameof(PolaroidCamera)), item);
 
         return true;
+    }
+
+    [GlobalItemHooks.PostModifyItemDraw]
+    private static void PostModifyItemDraw(Item item, ref PlayerDrawSet drawInfo, DrawData drawData, DrawData? coloredDrawData, [OriginalName("glowmaskDrawData")] DrawData? glowMaskDrawData)
+    {
+        if (item.type != ModContent.ItemType<PolaroidCamera>())
+        {
+            return;
+        }
+
+        var scales = new Vector2(
+            drawData.effect.HasFlag(SpriteEffects.FlipHorizontally) ? -1f : 1f,
+            drawData.effect.HasFlag(SpriteEffects.FlipVertically) ? -1f : 1f
+        );
+
+        var flashPosition = drawData.position - (drawData.origin * drawData.scale);
+
+        if (drawData.effect.HasFlag(SpriteEffects.FlipHorizontally))
+        {
+            flashPosition.X += (drawData.sourceRect?.Width ?? drawData.texture.Width);
+        }
+        if (drawData.effect.HasFlag(SpriteEffects.FlipVertically))
+        {
+            flashPosition.Y += (drawData.sourceRect?.Height ?? drawData.texture.Height);
+        }
+
+        flashPosition += new Vector2(24f, 4f) * scales;
+
+        var texture = TextureAssets.Extra[ExtrasID.NinetyEight].Value;
+
+        var scale = drawInfo.drawPlayer.itemAnimation / 45f;
+        scale = MathF.Pow(scale, 4f);
+
+        var color = Color.White * scale;
+        color.A = 0;
+
+        var size = new Vector2(24f, 75) / texture.Size();
+        size *= scale;
+
+        var data = new DrawData(
+            texture,
+            flashPosition,
+            null,
+            color,
+            0f,
+            texture.Size() * 0.5f,
+            size,
+            SpriteEffects.None
+        );
+        drawInfo.DrawDataCache.Add(data);
+
+        size *= 0.75f;
+
+        data = new DrawData(
+            texture,
+            flashPosition,
+            null,
+            color,
+            MathF.PiOver2,
+            texture.Size() * 0.5f,
+            size,
+            SpriteEffects.None
+        );
+        drawInfo.DrawDataCache.Add(data);
     }
 }
