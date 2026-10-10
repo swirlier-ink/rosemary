@@ -1,4 +1,4 @@
-﻿DinosaurExtendoGrip: {
+DinosaurExtendoGrip: {
 	DisplayName: Dino Grabber
 	Tooltip:
 		'''
@@ -20,4 +20,11 @@ PolaroidItem: {
 PolaroidCamera: {
 	DisplayName: Printer Camera
 	Tooltip: ""
+}
+
+CameraFilters: {
+	PicMixWatermarkFilter: {
+		DisplayName: Pic Mix Watermark Filter
+		Tooltip: ""
+	}
 }

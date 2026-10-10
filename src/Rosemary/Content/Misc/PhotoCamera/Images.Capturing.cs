@@ -2,7 +2,9 @@
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using ReLogic.Content;
 using Rosemary.Core;
 using Terraria;
@@ -24,12 +26,33 @@ public static partial class Images
 
     private static string identifierToCreate = string.Empty;
 
-    public static string Capture()
+    private static readonly List<IPolaroidCameraFilter> base_filters = [ new BaseFilter() ];
+
+    private static List<IPolaroidCameraFilter> filters = [];
+
+    public static string Capture(PolaroidCamera item)
+    {
+        var captureFilters = new List<IPolaroidCameraFilter>();
+
+        foreach (var filter in item.Filters)
+        {
+            if (filter.ModItem is IPolaroidCameraFilter f)
+            {
+                captureFilters.Add(f);
+            }
+        }
+
+        return Capture(captureFilters);
+    }
+
+    public static string Capture(List<IPolaroidCameraFilter> captureFilters)
     {
         captureVfx = 1f;
         captureRequested = true;
 
         identifierToCreate = CreateIdentifier();
+
+        filters = base_filters.Concat(captureFilters).ToList();
 
         return identifierToCreate;
     }
@@ -57,6 +80,8 @@ public static partial class Images
 
         var sb = Main.spriteBatch;
 
+        var device = Main.graphics.GraphicsDevice;
+
         using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
 
         // TODO: Account for world edges
@@ -73,37 +98,42 @@ public static partial class Images
             return;
         }
 
-        using var lease = RenderTargetPool.Shared.Rent(Main.graphics.GraphicsDevice, BASE_RESOLUTION, BASE_RESOLUTION);
-        
-        using (lease.Scope(clearColor: Color.Transparent))
-        {
-            var noise = Assets.Noise.MulticoloredNoise.Asset.ImmediateValue;
-            var shader = Assets.Misc.PolaroidShader.CreatePolaroidShader();
+        using var lease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
+        using var swapLease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
 
-            shader.Parameters.Noise = new HlslSampler2D
-            {
-                Texture = noise,
-                Sampler = SamplerState.LinearWrap,
-            };
-            shader.Parameters.Random = 0;
-            shader.Parameters.Size = noise.Size() * 4;
-                
-            shader.Apply();
-            
-            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullCounterClockwise, shader.Shader);
-            {
-                sb.Draw(Main.finalScreenTarget, Main.graphics.GraphicsDevice.Viewport.Bounds, frame, Color.White);
-            }
-            sb.End();
-        }
+        var target = lease.Target;
+        var swap = swapLease.Target;
+
+        DrawImage();
 
         var id = identifierToCreate;
 
         using var stream = new FileStream(GetImagePath(id), FileMode.Create);
-        lease.Target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
+        target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
         local_identifiers.Add(id);
 
         captureRequested = false;
+
+        return;
+
+        void DrawImage()
+        {
+            using var _ = target.Scope(clearColor: Color.Transparent);
+
+            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone);
+            {
+                sb.Draw(Main.finalScreenTarget, Main.graphics.GraphicsDevice.Viewport.Bounds, frame, Color.White);
+            }
+            sb.End();
+
+            foreach (var filter in filters)
+            {
+                if (filter.ApplyFilter(sb, device, target, swap))
+                {
+                    Utils.Swap(ref target, ref swap);
+                }
+            }
+        }
     }
     
     private static void DrawCameraOverlay(SpriteBatch sb, Vector2 position)

@@ -68,6 +68,16 @@ public sealed class PolaroidItem : ModItem
 
     public uint Age;
 
+    public override ModItem Clone(Item newEntity)
+    {
+        var clone = (PolaroidItem)base.Clone(newEntity);
+        {
+            clone.ImageIdentifier = ImageIdentifier;
+            clone.Age = Age;
+        }
+        return clone;
+    }
+
     public override void SaveData(TagCompound tag)
     {
         tag[nameof(ImageIdentifier)] = ImageIdentifier;

@@ -1,12 +1,20 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoMod.Cil;
 using Rosemary.Common;
-using Terraria.ModLoader;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using Terraria;
+using Terraria.Audio;
 using Terraria.DataStructures;
 using Terraria.GameContent;
 using Terraria.ID;
+using Terraria.ModLoader;
+using Terraria.ModLoader.IO;
+using Terraria.UI;
 
 namespace Rosemary.Content.Misc;
 
@@ -24,6 +32,16 @@ public class PolaroidCamera : ModItem
         }
 
         On_PlayerDrawLayers.DrawPlayer_27_HeldItem += DrawPlayer_27_HeldItem_CachePlayer;
+
+        MonoModHooks.Modify(
+            typeof(ItemLoader).GetMethod(
+                nameof(ItemLoader.RightClick),
+                BindingFlags.Public | BindingFlags.Static
+            ),
+            RightClick_DisableSound
+        );
+        IL_ItemSlot.RightClick += _ => { };
+        IL_ItemSlot.GetGamepadInstructions_ItemArray_int_int += _ => { };
     }
 
     private static Player? currentPlayer;
@@ -33,6 +51,45 @@ public class PolaroidCamera : ModItem
         currentPlayer = drawInfo.drawPlayer;
 
         orig(ref drawInfo);
+    }
+
+    private static void RightClick_DisableSound(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        var itemIndex = ParameterIndex.Invalid;
+
+        var jumpPlaySoundLabel = c.DefineLabel();
+
+        c.GotoNext(
+            i => i.MatchLdarg(out itemIndex),
+            i => i.MatchLdarg(out int _),
+            i => i.MatchCall(typeof(ItemLoader), nameof(ItemLoader.RightClickCallHooks))
+        );
+
+        c.GotoNext(
+            MoveType.Before,
+            i => i.MatchLdcI4(7)
+        );
+
+        c.MoveAfterLabels();
+
+        c.EmitLdarg(itemIndex);
+        c.EmitDelegate(
+            static (Item item) =>
+            {
+                return item.type == ModContent.ItemType<PolaroidCamera>();
+            }
+        );
+        c.EmitBrtrue(jumpPlaySoundLabel);
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchCall(typeof(SoundEngine), nameof(SoundEngine.PlaySound)),
+            i => i.MatchPop()
+        );
+
+        c.MarkLabel(jumpPlaySoundLabel);
     }
 
     public override void SetDefaults()
@@ -53,6 +110,92 @@ public class PolaroidCamera : ModItem
         Item.rare = ItemRarityID.LightRed;
 
         Item.UseSound = SoundID.MenuTick;
+    }
+
+    public const int MAX_FILTERS = 8;
+
+    public List<Item> Filters = [];
+
+    public override bool CanRightClick()
+    {
+        if (Main.mouseItem.IsAir)
+        {
+            return Filters.Count > 0;
+        }
+
+        return Filters.Count <= MAX_FILTERS
+            && Main.mouseItem.ModItem is IPolaroidCameraFilter;
+    }
+
+    public override void RightClick(Player player)
+    {
+        Item.stack++;
+
+        if (Main.mouseItem.IsAir && Filters.Count > 0)
+        {
+            Main.mouseItem = Filters[^1].Clone();
+            Filters.RemoveAt(Filters.Count - 1);
+
+            // play some sound
+
+            return;
+        }
+
+        if (Filters.Count > MAX_FILTERS
+         || Main.mouseItem.ModItem is not IPolaroidCameraFilter)
+        {
+            return;
+        }
+
+        var item = Main.mouseItem.Clone();
+        item.stack = 1;
+
+        Filters.Add(item);
+
+        Main.mouseItem.stack--;
+
+        // play some other sound
+    }
+
+    public override ModItem Clone(Item newEntity)
+    {
+        var clone = (PolaroidCamera)base.Clone(newEntity);
+        {
+            clone.Filters = Filters.ToList();
+        }
+        return clone;
+    }
+
+    public override void SaveData(TagCompound tag)
+    {
+        tag[nameof(Filters)] = Filters.Select(ItemIO.Save).ToArray();
+    }
+
+    public override void LoadData(TagCompound tag)
+    {
+        Filters = tag.GetList<TagCompound>(nameof(Filters)).Select(ItemIO.Load).ToList();
+    }
+
+    public override void NetSend(BinaryWriter writer)
+    {
+        writer.Write(Filters.Count);
+
+        foreach (var item in Filters)
+        {
+            ItemIO.Send(item, writer);
+        }
+    }
+
+    public override void NetReceive(BinaryReader reader)
+    {
+        var count = reader.ReadInt32();
+
+        Filters.Clear();
+
+        for (var i = 0; i < count; i++)
+        {
+            Filters.Add(ItemIO.Receive(reader));
+        }
     }
 
     public override Vector2? HoldoutOffset()
@@ -76,7 +219,7 @@ public class PolaroidCamera : ModItem
             return true;
         }
 
-        var id = Images.Capture();
+        var id = Images.Capture(this);
 
         var item = new Item(ModContent.ItemType<PolaroidItem>());
 

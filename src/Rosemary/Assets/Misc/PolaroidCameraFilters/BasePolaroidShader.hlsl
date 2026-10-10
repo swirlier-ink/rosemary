@@ -1,4 +1,4 @@
-#include "../common.h"
+﻿#include "../../common.h"
 
 sampler2D Texture : register(s0);
 sampler2D Noise : register(s1);
@@ -11,7 +11,7 @@ sampler2D Noise : register(s1);
 float Random;
 float2 Size;
 
-float4 PolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : TEXCOORD0) : COLOR0 
+float4 BasePolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : TEXCOORD0) : COLOR0
 {
     float2 bayeruv = frac(Size * uv / 4) * 4;
     
@@ -27,7 +27,7 @@ float4 PolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : TEXCOORD0) 
 }
 
 BEGIN_TECHNIQUE(Technique1) 
-    BEGIN_PASS(PolaroidShader) 
-        PIXEL_SHADER(compile ps_3_0 PolaroidShaderFragment())  
+    BEGIN_PASS(BasePolaroidShader)  
+        PIXEL_SHADER(compile ps_3_0 BasePolaroidShaderFragment())   
     END_PASS
 END_TECHNIQUE
