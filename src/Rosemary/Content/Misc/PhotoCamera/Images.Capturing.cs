@@ -50,10 +50,7 @@ public static partial class Images
     {
         orig(self, finalTexture, screenTarget1, screenTarget2, screenSize, sceneSize, sceneOffset);
 
-        var alive = Main.LocalPlayer is { noItems: false, CCed: false, dead: false };
-
-        if (Main.gameMenu
-         || !alive)
+        if (Main.gameMenu)
         {
             return;
         }
@@ -111,10 +108,14 @@ public static partial class Images
     
     private static void DrawCameraOverlay(SpriteBatch sb, Vector2 position)
     {
+        var alive = Main.LocalPlayer is { noItems: false, CCed: false, dead: false };
+
         var texture = TextureAssets.MagicPixel.Value;
         var frame = new Rectangle((int)position.X, (int)position.Y, ScaledResolution, ScaledResolution);
 
-        if (Main.LocalPlayer.HeldItem.type != ModContent.ItemType<PolaroidCamera>())
+        if (!alive
+         || Main.LocalPlayer.HeldItem.type != ModContent.ItemType<PolaroidCamera>()
+         || Main.LocalPlayer.lastMouseInterface)
         {
             return;
         }
