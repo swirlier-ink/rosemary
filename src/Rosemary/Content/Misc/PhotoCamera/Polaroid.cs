@@ -7,9 +7,11 @@ using System.Reflection;
 using ReLogic.Content;
 using Rosemary.Common;
 using Terraria;
+using Terraria.GameContent.UI.Chat;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
+using Terraria.UI.Chat;
 
 namespace Rosemary.Content.Misc;
 
@@ -37,13 +39,25 @@ public sealed class PolaroidItem : ModItem
             ),
             MouseText_DrawItemTooltip_HideTooltipBox
         );
+
+        On_ItemTagHandler.ItemSnippet.OnHover += OnHover_DisableTooltip;
+    }
+
+    private void OnHover_DisableTooltip(On_ItemTagHandler.ItemSnippet.orig_OnHover orig, TextSnippet self)
+    {
+        orig(self);
+
+        if (Main.HoverItem.ModItem is PolaroidItem polaroid)
+        {
+            polaroid.showTooltip = false;
+        }
     }
 
     private static void MouseText_DrawItemTooltip_HideTooltipBox(Action<Main, Main.MouseTextCache, int, byte, int, int> orig, Main self, Main.MouseTextCache info, int rare, byte diff, int x, int y)
     {
         using var _ = Main.SettingsEnabled_OpaqueBoxBehindTooltips.Cache();
 
-        if (Main.HoverItem.type == ModContent.ItemType<PolaroidItem>())
+        if (Main.HoverItem.ModItem is PolaroidItem { showTooltip: true })
         {
             Main.SettingsEnabled_OpaqueBoxBehindTooltips = false;
         }
@@ -63,6 +77,8 @@ public sealed class PolaroidItem : ModItem
 
         Age = 0;
     }
+
+    private bool showTooltip = true;
 
     public string ImageIdentifier = string.Empty;
 
@@ -108,6 +124,11 @@ public sealed class PolaroidItem : ModItem
     // - Also make the image ONLY be requested if hovered in the inventory, not in world/chat
     public override bool PreDrawTooltip(ReadOnlyCollection<TooltipLine> lines, ref int x, ref int y)
     {
+        if (!showTooltip)
+        {
+            return true;
+        }
+
         var position = new Vector2(x, y);
 
         if (!Images.TryRequestImage(ImageIdentifier, out var texture))
