@@ -161,7 +161,7 @@ public static partial class SiffrinParticles
         sb.End();
         sb.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullCounterClockwise, null, Main.GameViewMatrix.ZoomMatrix);
         {
-            var effect = Assets.Vanity.TransformStarOutline.CreateTransformStarOutlineShader();
+            var effect = Assets.Vanity.Siffrin.TransformStarOutline.CreateTransformStarOutlineShader();
 
             effect.Parameters.StepSize = 2f;
 
@@ -204,7 +204,7 @@ public static partial class SiffrinParticles
             return;
         }
 
-        var texture = Assets.Vanity.Star.Asset.Value;
+        var texture = Assets.Vanity.Siffrin.Star.Asset.Value;
 
         var origin = new Vector2(9f);
 

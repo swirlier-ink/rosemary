@@ -16,7 +16,7 @@ namespace Rosemary.Vanity.Content;
 
 public sealed class SiffrinHover : ModItem
 {
-    public override string Texture => Assets.Vanity.SiffrinHover.KEY;
+    public override string Texture => Assets.Vanity.Siffrin.SiffrinHover.KEY;
 
     public override string LocalizationCategory => "Content";
 
@@ -73,7 +73,7 @@ public sealed class SiffrinHover : ModItem
 
 public sealed class SiffrinHoverBuff : ModBuff
 {
-    public override string Texture => Assets.Vanity.SiffrinHover_Buff.KEY;
+    public override string Texture => Assets.Vanity.Siffrin.SiffrinHover_Buff.KEY;
 
     public override string LocalizationCategory => "Content";
 
@@ -161,7 +161,7 @@ file sealed class OutlineAfterImagesPlayer : ModPlayer
 
         var device = Main.graphics.GraphicsDevice;
 
-        var effect = Assets.Vanity.PlayerOutline.CreatePlayerOutlineShader();
+        var effect = Assets.Vanity.Siffrin.PlayerOutline.CreatePlayerOutlineShader();
 
         using var lease = RenderTargetPool.Shared.Rent(device, device.Viewport.Width, device.Viewport.Height);
 
@@ -272,7 +272,7 @@ public sealed class SiffrinHoverMount : ModMount
             return;
         }
 
-        var effect = Assets.Vanity.InvertPlayer.CreateInvertPlayerShader();
+        var effect = Assets.Vanity.Siffrin.InvertPlayer.CreateInvertPlayerShader();
 
         var sb = Main.spriteBatch;
 

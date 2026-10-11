@@ -14,7 +14,7 @@ namespace Rosemary.Vanity.Content;
 
 public sealed class SiffrinTransform : ModItem
 {
-    public override string Texture => Assets.Vanity.Hat.KEY;
+    public override string Texture => Assets.Vanity.Siffrin.Hat.KEY;
 
     public override string LocalizationCategory => "Content";
 
@@ -25,8 +25,8 @@ public sealed class SiffrinTransform : ModItem
             return;
         }
 
-        EquipLoader.AddEquipTexture(Mod, Assets.Vanity.Undershirt_Equip.KEY, EquipType.Body, this);
-        EquipLoader.AddEquipTexture(Mod, Assets.Vanity.Leggings_Equip.KEY, EquipType.Legs, this);
+        EquipLoader.AddEquipTexture(Mod, Assets.Vanity.Siffrin.Undershirt_Equip.KEY, EquipType.Body, this);
+        EquipLoader.AddEquipTexture(Mod, Assets.Vanity.Siffrin.Leggings_Equip.KEY, EquipType.Legs, this);
 
         On_PlayerDrawSet.BoringSetup_2 += BoringSetup_2_SkinColor;
         On_PlayerDrawSet.HeadOnlySetup += HeadOnlySetup_SkinColor;
@@ -374,7 +374,7 @@ public sealed class SiffrinTransform : ModItem
 
             var position = bodyPosition + new Vector2(0, (bodyOffset + 7) * dir.Y);
 
-            var texture = Assets.Vanity.Cloak_Equip.Asset.Value;
+            var texture = Assets.Vanity.Siffrin.Cloak_Equip.Asset.Value;
 
             var showsArms = ShowsArm(drawInfo);
 
@@ -509,7 +509,7 @@ public sealed class SiffrinTransform : ModItem
                 position.Y += player.height - player.headPosition.Y - 8;
             }
 
-            var texture = Assets.Vanity.EyePatch_Equip.Asset.Value;
+            var texture = Assets.Vanity.Siffrin.EyePatch_Equip.Asset.Value;
 
             var hatData = new DrawData(
                 texture,

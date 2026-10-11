@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.Xna.Framework;
 using Terraria;
 using Terraria.ID;
@@ -8,7 +8,7 @@ namespace Rosemary.Vanity.Content;
 
 public class FlyeFishAccessory : ModItem
 {
-    public override string Texture => Assets.FlyeFish.KEY;
+    public override string Texture => Assets.Vanity.FlyeFish.KEY;
 
     public override void SetDefaults()
     {

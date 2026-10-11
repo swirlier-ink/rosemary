@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
@@ -60,7 +60,7 @@ public static class FlyeParticles
             return;
         }
 
-        var texture = Assets.FlyeFish.Asset.Value;
+        var texture = Assets.Vanity.FlyeFish.Asset.Value;
 
         var origin = new Vector2(8f, 5f);
 
