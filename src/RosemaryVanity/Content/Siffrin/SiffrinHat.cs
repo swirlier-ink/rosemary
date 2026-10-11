@@ -16,7 +16,7 @@ namespace Rosemary.Vanity.Content;
 
 public sealed class SiffrinHat : ModItem
 {
-    public override string Texture => Assets.Vanity.Hat.KEY;
+    public override string Texture => Assets.Vanity.Siffrin.Hat.KEY;
 
     public override string LocalizationCategory => "Content";
 
@@ -38,7 +38,7 @@ public sealed class SiffrinHat : ModItem
     {
         var slotSize = TextureAssets.InventoryBack.Size() * Main.inventoryScale;
 
-        var offset = -Assets.Vanity.Hat_StyleToggle.Asset.Value.Size() * 0.75f;
+        var offset = -Assets.Vanity.Siffrin.Hat_StyleToggle.Asset.Value.Size() * 0.75f;
 
         return slotSize + offset;
     }
@@ -53,7 +53,7 @@ public sealed class SiffrinHat : ModItem
 
         const float slot_size = 56f;
 
-        var texture = Assets.Vanity.Hat_StyleToggle.Asset.Value;
+        var texture = Assets.Vanity.Siffrin.Hat_StyleToggle.Asset.Value;
 
         var index = (slot % 10);
 
@@ -99,7 +99,7 @@ public sealed class SiffrinHat : ModItem
 
         var sb = Main.spriteBatch;
 
-        var texture = Assets.Vanity.Hat_StyleToggle.Asset.Value;
+        var texture = Assets.Vanity.Siffrin.Hat_StyleToggle.Asset.Value;
 
         var buttonPosition = position;
         buttonPosition += GetHatStyleToggleOffset();
@@ -186,7 +186,7 @@ public sealed class SiffrinHat : ModItem
 
         protected override void Draw(ref PlayerDrawSet drawInfo)
         {
-            var texture = Assets.Vanity.Hat_Equip.Asset.Value;
+            var texture = Assets.Vanity.Siffrin.Hat_Equip.Asset.Value;
 
             var player = drawInfo.drawPlayer;
 
