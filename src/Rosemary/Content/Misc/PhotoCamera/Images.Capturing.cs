@@ -1,17 +1,18 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using ReLogic.Content;
 using Rosemary.Common;
+using Rosemary.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ReLogic.Content;
-using Rosemary.Core;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.GameInput;
 using Terraria.Graphics.Effects;
 using Terraria.ModLoader;
+using Terraria.WorldBuilding;
 
 namespace Rosemary.Content.Misc;
 
@@ -19,7 +20,7 @@ public static partial class Images
 {
     public const int BASE_RESOLUTION = 256;
 
-    private static int ScaledResolution => (int)(BASE_RESOLUTION * Math.Clamp(Main.GameZoomTarget, 1f, 2f));
+    private static int ScaledResolution => (int)(BASE_RESOLUTION * MathF.Clamp(Main.GameZoomTarget, 1f, 2f));
     
     private static bool captureRequested;
     private static float captureVfx;
@@ -69,6 +70,9 @@ public static partial class Images
         captureVfx = MathF.Max(0, captureVfx - 0.1f);
     }
 
+    [ModSystemHooks.RequiresScreenTarget]
+    private static bool RequiresScreenTarget() => captureRequested;
+
     private static void HandleCapture(On_FilterManager.orig_EndCapture_RenderTarget2D_RenderTarget2D_RenderTarget2D_Vector2_Vector2_Vector2 orig, FilterManager self, RenderTarget2D finalTexture, RenderTarget2D screenTarget1, RenderTarget2D screenTarget2, Vector2 screenSize, Vector2 sceneSize, Vector2 sceneOffset)
     {
         orig(self, finalTexture, screenTarget1, screenTarget2, screenSize, sceneSize, sceneOffset);
@@ -84,9 +88,7 @@ public static partial class Images
 
         using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
 
-        // TODO: Account for world edges
-        var size = new Vector2(ScaledResolution) * 0.5f;
-        var position = Vector2.Clamp(Main.MouseScreen, size, new Vector2(Main.screenWidth, Main.screenHeight) - size) - size;
+        var position = GetImagePosition();
         var frame = new Rectangle((int)position.X, (int)position.Y, ScaledResolution, ScaledResolution);
 
         DrawCameraOverlay(sb, position);
@@ -116,13 +118,63 @@ public static partial class Images
 
         return;
 
+        Vector2 GetImagePosition()
+        {
+            var worldPlayArea = WorldUtils.GetWorldPlayArea();
+
+            var size = new Vector2(ScaledResolution) * 0.5f;
+
+            var topLeft = size;
+            var bottomRight = new Vector2(Main.screenWidth, Main.screenHeight) - size;
+
+            if (Main.screenPosition.X <= worldPlayArea.X)
+            {
+                topLeft.X -= 999f;
+            }
+            if (Main.screenPosition.Y <= worldPlayArea.Y)
+            {
+                topLeft.Y -= 999f;
+            }
+            // TODO: Account for zoom nicely
+            if (Main.screenPosition.X + Main.screenWidth >= worldPlayArea.X + worldPlayArea.Width)
+            {
+                bottomRight.X += 999f;
+            }
+            if (Main.screenPosition.Y + Main.screenHeight >= worldPlayArea.Y + worldPlayArea.Height)
+            {
+                bottomRight.Y += 999f;
+            }
+
+            var position = Vector2.Clamp(Main.MouseScreen, topLeft, bottomRight) - size;
+
+            return position;
+        }
+
         void DrawImage()
         {
             using var _ = target.Scope(clearColor: Color.Transparent);
 
             sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone);
             {
-                sb.Draw(Main.finalScreenTarget, Main.graphics.GraphicsDevice.Viewport.Bounds, frame, Color.White);
+                var screen = Main.finalScreenTarget!;
+
+                var dest = Main.graphics.GraphicsDevice.Viewport.Bounds;
+
+                var zoomFactor = MathF.Clamp(Main.GameZoomTarget, 1f, 2f);
+
+                dest.X += Math.Max(-(int)(frame.X / zoomFactor), 0);
+                dest.Y += Math.Max(-(int)(frame.Y / zoomFactor), 0);
+
+                frame.X = Math.Max(frame.X, 0);
+                frame.Y = Math.Max(frame.Y, 0);
+
+                dest.Width -= (int)((frame.Right - screen.Width) / zoomFactor);
+                dest.Height -= (int)((frame.Bottom - screen.Height) / zoomFactor);
+
+                frame.Width -= frame.Right - screen.Width;
+                frame.Height -= frame.Bottom - screen.Height;
+
+                sb.Draw(screen, dest, frame, Color.White);
             }
             sb.End();
 
