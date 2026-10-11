@@ -73,52 +73,16 @@ public static partial class Images
     [ModSystemHooks.RequiresScreenTarget]
     private static bool RequiresScreenTarget() => captureRequested;
 
-    private static void HandleCapture(On_FilterManager.orig_EndCapture_RenderTarget2D_RenderTarget2D_RenderTarget2D_Vector2_Vector2_Vector2 orig, FilterManager self, RenderTarget2D finalTexture, RenderTarget2D screenTarget1, RenderTarget2D screenTarget2, Vector2 screenSize, Vector2 sceneSize, Vector2 sceneOffset)
+    public static Rectangle GetCaptureArea()
     {
-        orig(self, finalTexture, screenTarget1, screenTarget2, screenSize, sceneSize, sceneOffset);
-
-        if (Main.gameMenu)
-        {
-            return;
-        }
-
-        var sb = Main.spriteBatch;
-
-        var device = Main.graphics.GraphicsDevice;
-
         using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
 
         var position = GetImagePosition();
         var frame = new Rectangle((int)position.X, (int)position.Y, ScaledResolution, ScaledResolution);
 
-        DrawCameraOverlay(sb, position);
+        return frame;
 
-        if (!captureRequested
-         || string.IsNullOrEmpty(identifierToCreate))
-        {
-            captureRequested = false;
-            return;
-        }
-
-        using var lease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
-        using var swapLease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
-
-        var target = lease.Target;
-        var swap = swapLease.Target;
-
-        DrawImage();
-
-        var id = identifierToCreate;
-
-        using var stream = new FileStream(GetImagePath(id), FileMode.Create);
-        target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
-        local_identifiers.Add(id);
-
-        captureRequested = false;
-
-        return;
-
-        Vector2 GetImagePosition()
+        static Vector2 GetImagePosition()
         {
             var worldPlayArea = WorldUtils.GetWorldPlayArea();
 
@@ -149,6 +113,51 @@ public static partial class Images
 
             return position;
         }
+    }
+
+    private static void HandleCapture(On_FilterManager.orig_EndCapture_RenderTarget2D_RenderTarget2D_RenderTarget2D_Vector2_Vector2_Vector2 orig, FilterManager self, RenderTarget2D finalTexture, RenderTarget2D screenTarget1, RenderTarget2D screenTarget2, Vector2 screenSize, Vector2 sceneSize, Vector2 sceneOffset)
+    {
+        orig(self, finalTexture, screenTarget1, screenTarget2, screenSize, sceneSize, sceneOffset);
+
+        if (Main.gameMenu)
+        {
+            return;
+        }
+
+        var sb = Main.spriteBatch;
+
+        var device = Main.graphics.GraphicsDevice;
+
+        using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
+
+        var frame = GetCaptureArea();
+
+        DrawCameraOverlay(sb, frame);
+
+        if (!captureRequested
+         || string.IsNullOrEmpty(identifierToCreate))
+        {
+            captureRequested = false;
+            return;
+        }
+
+        using var lease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
+        using var swapLease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
+
+        var target = lease.Target;
+        var swap = swapLease.Target;
+
+        DrawImage();
+
+        var id = identifierToCreate;
+
+        using var stream = new FileStream(GetImagePath(id), FileMode.Create);
+        target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
+        local_identifiers.Add(id);
+
+        captureRequested = false;
+
+        return;
 
         void DrawImage()
         {
@@ -188,12 +197,11 @@ public static partial class Images
         }
     }
     
-    private static void DrawCameraOverlay(SpriteBatch sb, Vector2 position)
+    private static void DrawCameraOverlay(SpriteBatch sb, Rectangle frame)
     {
         var alive = Main.LocalPlayer is { noItems: false, CCed: false, dead: false };
 
         var texture = TextureAssets.MagicPixel.Value;
-        var frame = new Rectangle((int)position.X, (int)position.Y, ScaledResolution, ScaledResolution);
 
         if (!alive
          || Main.LocalPlayer.HeldItem.type != ModContent.ItemType<PolaroidCamera>()
