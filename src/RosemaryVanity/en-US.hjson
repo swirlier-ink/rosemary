@@ -1,0 +1,10 @@
+Mods: {
+	RosemaryVanity: {
+		Items: {
+			FlyeFishAccessory: {
+				DisplayName: Flye Fish Accessory
+				Tooltip: ""
+			}
+		}
+	}
+}
