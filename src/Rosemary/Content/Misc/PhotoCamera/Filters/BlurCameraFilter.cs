@@ -30,7 +30,7 @@ public sealed class BlurCameraFilter : ModItem, IPolaroidCameraFilter
             horizBlur.Parameters.BlurSize = blurSize;
             horizBlur.Apply();
 
-            sb.Draw(target, Vector2.Zero, Color.LawnGreen);
+            sb.Draw(target, Vector2.Zero, Color.White);
         }
         sb.End();
 
@@ -42,7 +42,7 @@ public sealed class BlurCameraFilter : ModItem, IPolaroidCameraFilter
             vertBlur.Parameters.BlurSize = blurSize;
             vertBlur.Apply();
 
-            sb.Draw(swap, Vector2.Zero, Color.LawnGreen);
+            sb.Draw(swap, Vector2.Zero, Color.White);
         }
         sb.End();
 
