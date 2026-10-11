@@ -48,4 +48,9 @@ CameraFilters: {
 		DisplayName: Sepia Camera Lens
 		Tooltip: ""
 	}
+
+	BlurCameraFilter: {
+		DisplayName: Blurry Camera Lens
+		Tooltip: ""
+	}
 }
