@@ -32,16 +32,6 @@ public class PolaroidCamera : ModItem
         }
 
         On_PlayerDrawLayers.DrawPlayer_27_HeldItem += DrawPlayer_27_HeldItem_CachePlayer;
-
-        MonoModHooks.Modify(
-            typeof(ItemLoader).GetMethod(
-                nameof(ItemLoader.RightClick),
-                BindingFlags.Public | BindingFlags.Static
-            ),
-            RightClick_DisableSound
-        );
-        IL_ItemSlot.RightClick += _ => { };
-        IL_ItemSlot.GetGamepadInstructions_ItemArray_int_int += _ => { };
     }
 
     private static Player? currentPlayer;
@@ -53,43 +43,9 @@ public class PolaroidCamera : ModItem
         orig(ref drawInfo);
     }
 
-    private static void RightClick_DisableSound(ILContext il)
+    public override void SetStaticDefaults()
     {
-        var c = new ILCursor(il);
-
-        var itemIndex = ParameterIndex.Invalid;
-
-        var jumpPlaySoundLabel = c.DefineLabel();
-
-        c.GotoNext(
-            i => i.MatchLdarg(out itemIndex),
-            i => i.MatchLdarg(out int _),
-            i => i.MatchCall(typeof(ItemLoader), nameof(ItemLoader.RightClickCallHooks))
-        );
-
-        c.GotoNext(
-            MoveType.Before,
-            i => i.MatchLdcI4(7)
-        );
-
-        c.MoveAfterLabels();
-
-        c.EmitLdarg(itemIndex);
-        c.EmitDelegate(
-            static (Item item) =>
-            {
-                return item.type == ModContent.ItemType<PolaroidCamera>();
-            }
-        );
-        c.EmitBrtrue(jumpPlaySoundLabel);
-
-        c.GotoNext(
-            MoveType.After,
-            i => i.MatchCall(typeof(SoundEngine), nameof(SoundEngine.PlaySound)),
-            i => i.MatchPop()
-        );
-
-        c.MarkLabel(jumpPlaySoundLabel);
+        ItemID.Sets.HasRightClickSound[Type] = false;
     }
 
     public override void SetDefaults()

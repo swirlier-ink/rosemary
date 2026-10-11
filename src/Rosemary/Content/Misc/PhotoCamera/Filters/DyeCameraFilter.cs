@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using System.IO;
 using Terraria;
+using Terraria.Audio;
 using Terraria.Graphics.Shaders;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -48,6 +49,11 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
         return true;
     }
 
+    public override void SetStaticDefaults()
+    {
+        ItemID.Sets.HasRightClickSound[Type] = false;
+    }
+
     public override void SetDefaults()
     {
         Item.width = 40;
@@ -89,7 +95,8 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
                 modItem.Dye = i;
 
                 modItem.SetName(i);
-                // TODO: sfx
+
+                SoundEngine.PlaySound(in SoundID.Mech);
             },
             removeAction: () =>
             {
@@ -97,7 +104,8 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
                 Dye = null;
 
                 SetName();
-                // TODO: sfx
+
+                SoundEngine.PlaySound(in SoundID.Mech);
             }
         );
     }
