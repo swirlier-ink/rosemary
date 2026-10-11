@@ -11,7 +11,7 @@ namespace Rosemary.Content.Misc;
 
 public sealed class BlurCameraFilter : ModItem, IPolaroidCameraFilter
 {
-    public override string Texture => Assets.Misc.PolaroidCameraFilters.GreenFilter.KEY;
+    public override string Texture => Assets.Misc.PolaroidCameraFilters.BlurFilter.KEY;
 
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 
