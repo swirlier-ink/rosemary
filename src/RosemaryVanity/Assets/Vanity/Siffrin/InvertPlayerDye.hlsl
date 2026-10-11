@@ -1,6 +1,6 @@
-﻿#include "../common.h"
-#include "../colors.h"
-#include "../ArmorShaderData.h"
+﻿#include "../../common.h"
+#include "../../colors.h"
+#include "../../ArmorShaderData.h"
 
 float Map(float value, float start1, float stop1, float start2, float stop2)
 {

@@ -1,4 +1,4 @@
-﻿#include "../common.h"
+﻿#include "../../common.h"
 
 sampler Texture : register(s0);
 
