@@ -1,9 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using Rosemary.Common;
 using Terraria;
 using Terraria.Audio;
+using Terraria.DataStructures;
 using Terraria.Graphics.Shaders;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -13,7 +16,7 @@ namespace Rosemary.Content.Misc;
 
 public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
 {
-    public override string Texture => Assets.Elk.TestItem.KEY;
+    public override string Texture => Assets.Misc.PolaroidCameraFilters.DyeFilter_Empty.KEY;
 
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 
@@ -23,26 +26,28 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
 
     bool IPolaroidCameraFilter.ApplyFilter(SpriteBatch sb, GraphicsDevice device, RenderTarget2D target, RenderTarget2D swap)
     {
-        if (!ValidDye(Dye))
+        if (Dye is null
+         || !ValidDye(Dye))
         {
             return false;
         }
-        
+
+        device.SetRenderTarget(swap);
+        device.Clear(Color.Transparent);
+
         sb.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, null);
         {
-            device.SetRenderTarget(swap);
-            device.Clear(Color.Transparent);
+            var dye = GameShaders.Armor.GetShaderFromItemId(Dye.type);
 
-            var dye = GameShaders.Armor.GetShaderFromItemId(Dye!.type);
-            dye.Apply(null);
-            dye.uTargetPosition.SetValue(Vector2.Zero);
-            dye.uSourceRect.SetValue(new Vector4(0, 0, target.Width, target.Height));
-            dye.uLegacyArmorSourceRect.SetValue(new Vector4(0, 0, target.Width, target.Height));
-            dye.uLegacyArmorSheetSize.SetValue(target.Size());;
-            dye.uImageSize0.SetValue(target.Size());
-            dye.Apply();
-            
-            sb.Draw(target, Vector2.Zero, Color.White);
+            var data = new DrawData(
+                target,
+                Vector2.Zero,
+                Color.White
+            );
+
+            dye.Apply(null, data);
+
+            data.Draw(sb);
         }
         sb.End();
 
@@ -96,7 +101,7 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
 
                 modItem.SetName(i);
 
-                SoundEngine.PlaySound(in SoundID.Mech);
+                SoundEngine.PlaySound(in SoundID.Unlock);
             },
             removeAction: () =>
             {
@@ -105,7 +110,7 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
 
                 SetName();
 
-                SoundEngine.PlaySound(in SoundID.Mech);
+                SoundEngine.PlaySound(in SoundID.Unlock);
             }
         );
     }
@@ -184,5 +189,114 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
             line.Color = Main.MouseText_DrawItemTooltip_GetItemNameColor(Dye.rare, (byte)(Dye.master ? 2 : Dye.expert ? 1 : 0));
         }
         tooltips.Insert(index + 1, line);
+    }
+
+    public override bool PreDrawInInventory(SpriteBatch sb, Vector2 position, Rectangle frame, Color drawColor, Color itemColor, Vector2 origin, float scale)
+    {
+        if (Dye is null)
+        {
+            return true;
+        }
+
+        var definition = ItemID.Sets.DyeDefinitions[Dye.type];
+
+        sb.End(out var ss);
+        sb.Begin(ss with { SortMode = SpriteSortMode.Immediate });
+        {
+            var outlineTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Outline.Asset.Value;
+
+            var outlineFrame = outlineTexture.Frame(11, 1, (int)(definition?.LidType ?? 0));
+            outlineFrame.Width -= 2;
+
+            sb.Draw(outlineTexture, position, outlineFrame, drawColor, 0f, origin, scale, SpriteEffects.None, 0f);
+
+            var lensTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Lens.Asset.Value;
+
+            var dye = GameShaders.Armor.GetShaderFromItemId(Dye.type);
+
+            var data = new DrawData(
+                lensTexture,
+                position,
+                null,
+                drawColor,
+                0f, origin,
+                scale,
+                SpriteEffects.None
+            );
+
+            dye.Apply(null, data);
+            {
+                data.Draw(sb);
+            }
+            sb.spriteEffect.CurrentTechnique.Passes[0].Apply();
+
+            if (definition?.Overlays.HasFlag(DyeOverlayType.Animated) is true)
+            {
+                var overlayTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Overlay.Asset.Value;
+
+                sb.Draw(overlayTexture, position, null, drawColor, 0f, origin, scale, SpriteEffects.None, 0f);
+            }
+        }
+        sb.Restart(in ss);
+
+        return false;
+    }
+
+    public override bool PreDrawInWorld(WorldItem item, SpriteBatch sb, Color lightColor, Color alphaColor, ref float rotation, ref float scale, int whoAmI)
+    {
+        if (Dye is null)
+        {
+            return true;
+        }
+
+        Main.instance.DrawItem_GetBasics(item.inner, whoAmI, out _, out var frame, out _);
+
+        var origin = frame.Size() * 0.5f;
+        var off = new Vector2((item.width * 0.5f) - origin.X, item.height - frame.Height);
+        var position = (item.position + origin + off);
+
+        var definition = ItemID.Sets.DyeDefinitions[Dye.type];
+
+        sb.End(out var ss);
+        sb.Begin(ss with { SortMode = SpriteSortMode.Immediate });
+        {
+            var outlineTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Outline.Asset.Value;
+
+            var outlineFrame = outlineTexture.Frame(11, 1, (int)(definition?.LidType ?? 0));
+            outlineFrame.Width -= 2;
+
+            sb.Draw(outlineTexture, position - Main.screenPosition, outlineFrame, alphaColor, rotation, origin, scale, SpriteEffects.None, 0f);
+
+            var lensTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Lens.Asset.Value;
+
+            var dye = GameShaders.Armor.GetShaderFromItemId(Dye.type);
+
+            var data = new DrawData(
+                lensTexture,
+                position - Main.screenPosition,
+                null,
+                alphaColor,
+                rotation,
+                origin,
+                scale,
+                SpriteEffects.None
+            );
+
+            dye.Apply(item, data);
+            {
+                data.Draw(sb);
+            }
+            sb.spriteEffect.CurrentTechnique.Passes[0].Apply();
+
+            if (definition?.Overlays.HasFlag(DyeOverlayType.Animated) is true)
+            {
+                var overlayTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Overlay.Asset.Value;
+
+                sb.Draw(overlayTexture, position - Main.screenPosition, null, alphaColor, rotation, origin, scale, SpriteEffects.None, 0f);
+            }
+        }
+        sb.Restart(in ss);
+
+        return false;
     }
 }

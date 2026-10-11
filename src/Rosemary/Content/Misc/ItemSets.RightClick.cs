@@ -50,7 +50,7 @@ public static partial class MiscItemSets
         c.EmitDelegate(
             static (Item item) =>
             {
-                return ItemID.Sets.HasRightClickSound[item.type];
+                return !ItemID.Sets.HasRightClickSound[item.type];
             }
         );
         c.EmitBrtrue(jumpPlaySoundLabel);

@@ -10,4 +10,6 @@ public sealed class EmptinessDye : AbstractDyeItem
     public override string LocalizationCategory => "Content";
 
     public override ShaderData Data => Assets.Vanity.InvertPlayerDye.CreateInvertPlayerDyeShader();
+
+    public override IDyeDefinition Definition => new SpecialDye(Type);
 }
