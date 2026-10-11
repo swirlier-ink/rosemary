@@ -3,11 +3,11 @@
 	Tooltip:
 		'''
 		Can be used to safely grab items from a distance
-		Grab items with {InputTrigger_InteractWithTile}
-		Deposit items by releasing {InputTrigger_InteractWithTile}
+		Grab items with {InputTrigger_ToggleOrOpen}
+		Deposit items by releasing {InputTrigger_ToggleOrOpen}
 		'''
-	GrabItems: Press {InputTrigger_InteractWithTile} to grab item
-	DepositItems: Release {InputTrigger_InteractWithTile} to deposit item
+	GrabItems: Press {InputTrigger_ToggleOrOpen} to grab item
+	DepositItems: Release {InputTrigger_ToggleOrOpen} to deposit item
 }
 
 DinosaurExtendoGripHoldout.DisplayName: Dino Grabber
@@ -19,19 +19,23 @@ PolaroidItem: {
 
 PolaroidCamera: {
 	DisplayName: Printer Camera
-	Tooltip: ""
+	Tooltip:
+		'''
+		Add filters with {InputTrigger_ToggleOrOpen}
+		''
+		'''
 	FiltersHeader: Filters:
 }
 
 CameraFilters: {
 	DyeCameraFilter: {
 		DisplayName: Dye Camera Lens
-		Tooltip: ""
+		Tooltip: Add dyes with {InputTrigger_ToggleOrOpen}
 	}
 
 	GreenCameraFilter: {
 		DisplayName: Green Camera Lens
-		Tooltip: ""
+		Tooltip: "'That one friend that's too green:'"
 	}
 
 	HighContrastCameraFilter: {
