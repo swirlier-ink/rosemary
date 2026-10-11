@@ -8,7 +8,7 @@ namespace Rosemary.Content.Misc;
 
 public sealed class HighContrastCameraFilter : ModItem, IPolaroidCameraFilter
 {
-    public override string Texture => Assets.Elk.TestItem.KEY;
+    public override string Texture => Assets.Misc.PolaroidCameraFilters.ContrastFilter.KEY;
 
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 

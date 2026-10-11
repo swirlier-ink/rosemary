@@ -8,7 +8,7 @@ namespace Rosemary.Content.Misc;
 
 public sealed class NoirCameraFilter : ModItem, IPolaroidCameraFilter
 {
-    public override string Texture => Assets.Elk.TestItem.KEY;
+    public override string Texture => Assets.Misc.PolaroidCameraFilters.NoirFilter.KEY;
 
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 
