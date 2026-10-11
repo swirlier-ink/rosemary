@@ -1,5 +1,5 @@
-﻿#include "../common.h"
-#include "../colors.h"
+﻿#include "../../common.h"
+#include "../../colors.h"
 
 sampler PlayerTexture : register(s0);
 
