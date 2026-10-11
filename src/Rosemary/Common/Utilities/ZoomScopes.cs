@@ -26,6 +26,13 @@ public readonly ref struct PlayerInputZoomScope : IDisposable
 
     public PlayerInputZoomScope(ZoomScaleType type)
     {
+        originalLastMouseX = Main.lastMouseX;
+        originalLastMouseY = Main.lastMouseY;
+        originalMouseX = Main.mouseX;
+        originalMouseY = Main.mouseY;
+        originalScreenWidth = Main.screenWidth;
+        originalScreenHeight = Main.screenHeight;
+
         switch (type)
         {
             case ZoomScaleType.Background:
@@ -63,6 +70,13 @@ public readonly ref struct PlayerInputZoomScope : IDisposable
 
     public PlayerInputZoomScope(float scale)
     {
+        originalLastMouseX = Main.lastMouseX;
+        originalLastMouseY = Main.lastMouseY;
+        originalMouseX = Main.mouseX;
+        originalMouseY = Main.mouseY;
+        originalScreenWidth = Main.screenWidth;
+        originalScreenHeight = Main.screenHeight;
+
         PlayerInput.SetZoom_Scaled(scale);
     }
 
