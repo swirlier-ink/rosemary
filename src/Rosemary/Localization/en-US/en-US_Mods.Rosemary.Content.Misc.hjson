@@ -1,4 +1,4 @@
-DinosaurExtendoGrip: {
+﻿DinosaurExtendoGrip: {
 	DisplayName: Dino Grabber
 	Tooltip:
 		'''
@@ -30,22 +30,22 @@ CameraFilters: {
 	}
 
 	GreenCameraFilter: {
-		DisplayName: Green Camera Filter
+		DisplayName: Green Camera Lens
 		Tooltip: ""
 	}
 
 	HighContrastCameraFilter: {
-		DisplayName: High Contrast Camera Filter
+		DisplayName: High Contrast Camera Lens
 		Tooltip: ""
 	}
 
 	NoirCameraFilter: {
-		DisplayName: Noir Camera Filter
+		DisplayName: Noir Camera Lens
 		Tooltip: ""
 	}
 
 	SepiaCameraFilter: {
-		DisplayName: Sepia Camera Filter
+		DisplayName: Sepia Camera Lens
 		Tooltip: ""
 	}
 }
