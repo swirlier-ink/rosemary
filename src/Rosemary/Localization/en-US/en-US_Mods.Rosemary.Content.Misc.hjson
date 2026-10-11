@@ -24,8 +24,28 @@ PolaroidCamera: {
 }
 
 CameraFilters: {
-	PicMixWatermarkFilter: {
-		DisplayName: PicMix Filter
+	DyeCameraFilter: {
+		DisplayName: Dye Camera Lens
+		Tooltip: ""
+	}
+
+	GreenCameraFilter: {
+		DisplayName: Green Camera Filter
+		Tooltip: ""
+	}
+
+	HighContrastCameraFilter: {
+		DisplayName: High Contrast Camera Filter
+		Tooltip: ""
+	}
+
+	NoirCameraFilter: {
+		DisplayName: Noir Camera Filter
+		Tooltip: ""
+	}
+
+	SepiaCameraFilter: {
+		DisplayName: Sepia Camera Filter
 		Tooltip: ""
 	}
 }

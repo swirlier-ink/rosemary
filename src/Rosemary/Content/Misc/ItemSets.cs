@@ -1,10 +1,11 @@
-﻿using Terraria;
+﻿using System;
+using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Rosemary.Content.Misc;
 
-public static class MiscItemSets
+public static partial class MiscItemSets
 {
     // Should be noted that this works above the encumbering stone and will disable pickups for hearts and mana.
     private static bool[] blocksItemPickupsWhenHeld = [];
@@ -28,21 +29,5 @@ public static class MiscItemSets
     extension(ItemID.Sets)
     {
         public static bool[] BlocksItemPickupsWhenHeld => blocksItemPickupsWhenHeld;
-    }
-
-    [OnLoad]
-    private static void Load()
-    {
-        On_Player.GrabItems += GrabItems_BlocksItemPickupsWhenHeld;
-    }
-
-    private static void GrabItems_BlocksItemPickupsWhenHeld(On_Player.orig_GrabItems orig, Player self, int i)
-    {
-        if (ItemID.Sets.BlocksItemPickupsWhenHeld[self.HeldItem.type])
-        {
-            return;
-        }
-
-        orig(self, i);
     }
 }

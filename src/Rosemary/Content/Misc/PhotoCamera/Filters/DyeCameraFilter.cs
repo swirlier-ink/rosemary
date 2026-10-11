@@ -1,10 +1,8 @@
-﻿using System.Collections.Generic;
-using System.IO;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework;
-using Rosemary.Common;
+using System.Collections.Generic;
+using System.IO;
 using Terraria;
-using Terraria.DataStructures;
 using Terraria.Graphics.Shaders;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -19,12 +17,15 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 
     public Item? Dye;
-    public bool ValidDye(Item? dye) => dye is not null && GameShaders.Armor.GetShaderIdFromItemId(dye.type) > 0;
+
+    public static bool ValidDye(Item? dye) => dye is not null && GameShaders.Armor.GetShaderIdFromItemId(dye.type) > 0;
 
     bool IPolaroidCameraFilter.ApplyFilter(SpriteBatch sb, GraphicsDevice device, RenderTarget2D target, RenderTarget2D swap)
     {
         if (!ValidDye(Dye))
+        {
             return false;
+        }
         
         sb.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, null);
         {
@@ -62,7 +63,7 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
     {
         if (Main.mouseItem.IsAir)
         {
-            return ValidDye(Dye);
+            return Dye is not null;
         }
 
         return ValidDye(Main.mouseItem);
@@ -77,48 +78,33 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
 
     public override void RightClick(Player player)
     {
-        Item.stack++;
-        
-        if (Main.mouseItem.IsAir && ValidDye(Dye))
-        {
-            Main.mouseItem = Dye!.Clone();
-            Dye = null;
-            
-            Item.SetNameOverride(Mods.Rosemary.Content.Misc.CameraFilters.DyeCameraFilter.DisplayName.GetTextValue());
-
-            return;
-        }
-
-        if (!ValidDye(Main.mouseItem))
-        {
-            return;
-        }
-        
-        var item = Main.mouseItem.Clone();
-        item.stack = 1;
-
-        Main.mouseItem.stack--;
-
-        if (Item.stack > 2)
-        {
-            Item.stack--;
-            var newFilter = new Item(Type);
+        ItemInsertion.HandleRightClick(
+            Item,
+            player,
+            // TODO: Is there perhaps a way to allow IPolaroidCameraFilter to apply to vanilla items?
+            canInsert: ValidDye,
+            insertAction: (self, i) =>
             {
-                newFilter.SetNameOverride(Mods.Rosemary.Content.Misc.CameraFilters.DyeCameraFilter.DisplayName.GetTextValue() + $" ({item.Name})");
+                var modItem = (DyeCameraFilter)self.ModItem;
+                modItem.Dye = i;
 
-                var modItem = (DyeCameraFilter)newFilter.ModItem;
-                modItem.Dye = item;
+                modItem.SetName(i);
+                // TODO: sfx
+            },
+            removeAction: () =>
+            {
+                Main.mouseItem = Dye!.Clone();
+                Dye = null;
+
+                SetName();
+                // TODO: sfx
             }
-            if (Main.mouseItem.stack > 0)
-                player.QuickSpawnItem(player.GetItemSource_Item(Item), newFilter);
-            else
-                Main.mouseItem = newFilter;
-        }
-        else
-        {
-            Dye = item;
-            Item.SetNameOverride(Mods.Rosemary.Content.Misc.CameraFilters.DyeCameraFilter.DisplayName.GetTextValue() + $" ({Dye!.Name})");
-        }
+        );
+    }
+
+    private void SetName(Item? item = null)
+    {
+        Item.SetNameOverride(Mods.Rosemary.Content.Misc.CameraFilters.DyeCameraFilter.DisplayName.GetTextValue() + (item is null ? string.Empty : $" ({item.Name})"));
     }
     
     public override ModItem Clone(Item newEntity)
@@ -154,7 +140,9 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
         writer.Write(Dye is null);
         
         if (Dye is not null)
+        {
             ItemIO.Send(Dye, writer);
+        }
     }
 
     public override void NetReceive(BinaryReader reader)
@@ -181,7 +169,9 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
         tooltips[index].Text = Mods.Rosemary.Content.Misc.CameraFilters.DyeCameraFilter.DisplayName.GetTextValue();
 
         index++;
-        var line = new TooltipLine(Mod, "DyeCameraFilter", $"- {Dye!.Name}");
+
+        // Potentially scary, but should allow modded rarities to apply correctly
+        var line = new TooltipLine("ItemName", $"- {Dye!.Name}");
         {
             line.Color = Main.MouseText_DrawItemTooltip_GetItemNameColor(Dye.rare, (byte)(Dye.master ? 2 : Dye.expert ? 1 : 0));
         }

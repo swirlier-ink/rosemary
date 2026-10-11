@@ -136,49 +136,23 @@ public class PolaroidCamera : ModItem
 
     public override void RightClick(Player player)
     {
-        Item.stack++;
-
-        if (Main.mouseItem.IsAir && Filters.Count > 0)
-        {
-            Main.mouseItem = Filters[^1].Clone();
-            Filters.RemoveAt(Filters.Count - 1);
-
-            // play some sound
-
-            return;
-        }
-
-        if (Filters.Count >= MAX_FILTERS
-         || Main.mouseItem.ModItem is not IPolaroidCameraFilter)
-        {
-            return;
-        }
-
-        var item = Main.mouseItem.Clone();
-        item.stack = 1;
-
-        Main.mouseItem.stack--;
-        
-        if (Item.stack > 2)
-        {
-            Item.stack--;
-            
-            var newCamera = new Item(Type);
+        ItemInsertion.HandleRightClick(
+            Item,
+            player,
+            // TODO: Is there perhaps a way to allow IPolaroidCameraFilter to apply to vanilla items?
+            canInsert: i => Filters.Count < MAX_FILTERS && i.ModItem is IPolaroidCameraFilter,
+            insertAction: (self, i) =>
             {
-                var modItem = (PolaroidCamera)newCamera.ModItem;
-                modItem.Filters.Add(item);
+                ((PolaroidCamera)self.ModItem).Filters.Add(i);
+                // TODO: sfx
+            },
+            removeAction: () =>
+            {
+                Main.mouseItem = Filters[^1].Clone();
+                Filters.RemoveAt(Filters.Count - 1);
+                // TODO: sfx
             }
-            if (Main.mouseItem.stack > 0)
-                player.QuickSpawnItem(player.GetItemSource_Item(Item), newCamera);
-            else
-                Main.mouseItem = newCamera;
-        }
-        else 
-        {
-            Filters.Add(item);
-        }
-        
-        // play some other sound
+        );
     }
 
     public override ModItem Clone(Item newEntity)
