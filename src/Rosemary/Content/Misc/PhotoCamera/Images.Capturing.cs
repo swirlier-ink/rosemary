@@ -199,29 +199,36 @@ public static partial class Images
         {
             using var _ = target.Scope(clearColor: Color.Transparent);
 
+            var screen = Main.finalScreenTarget!;
+
+            var viewport = Main.graphics.GraphicsDevice.Viewport.Bounds;
+
+            var dest = viewport;
+
+            var zoomFactor = MathF.Clamp(Main.GameZoomTarget, 1f, 2f);
+
+            dest.X += Math.Max(-(int)(frame.X / zoomFactor), 0);
+            dest.Y += Math.Max(-(int)(frame.Y / zoomFactor), 0);
+
+            frame.X = Math.Max(frame.X, 0);
+            frame.Y = Math.Max(frame.Y, 0);
+
+            dest.Width -= (int)Math.Max((frame.Right - screen.Width) / zoomFactor, 0);
+            dest.Height -= (int)Math.Max((frame.Bottom - screen.Height) / zoomFactor, 0);
+
+            frame.Width -= Math.Max(frame.Right - screen.Width, 0);
+            frame.Height -= Math.Max(frame.Bottom - screen.Height, 0);
+
             sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone);
             {
-                var screen = Main.finalScreenTarget!;
-
-                var dest = Main.graphics.GraphicsDevice.Viewport.Bounds;
-
-                var zoomFactor = MathF.Clamp(Main.GameZoomTarget, 1f, 2f);
-
-                dest.X += Math.Max(-(int)(frame.X / zoomFactor), 0);
-                dest.Y += Math.Max(-(int)(frame.Y / zoomFactor), 0);
-
-                frame.X = Math.Max(frame.X, 0);
-                frame.Y = Math.Max(frame.Y, 0);
-
-                dest.Width -= (int)((frame.Right - screen.Width) / zoomFactor);
-                dest.Height -= (int)((frame.Bottom - screen.Height) / zoomFactor);
-
-                frame.Width -= frame.Right - screen.Width;
-                frame.Height -= frame.Bottom - screen.Height;
-
                 sb.Draw(screen, dest, frame, Color.White);
             }
             sb.End();
+
+            if (dest != viewport)
+            {
+                DrawBarrier(sb, device, dest, frame, screen);
+            }
 
             foreach (var filter in filters)
             {

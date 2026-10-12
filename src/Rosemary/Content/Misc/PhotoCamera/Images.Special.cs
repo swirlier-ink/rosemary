@@ -1,5 +1,8 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Rosemary.Common;
+using Rosemary.Core;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -128,5 +131,48 @@ public static partial class Images
 
             sb.Begin(ss with { RasterizerState = state });
         }
+    }
+
+    private static void DrawBarrier(SpriteBatch sb, GraphicsDevice device, Rectangle bounds, Rectangle source, Texture2D screen)
+    {
+        const int res = BASE_RESOLUTION;
+
+        var areas = new[]
+        {
+            (new Rectangle(0, bounds.Y, bounds.X, bounds.Height), source with { Width = 1 }),
+            (new Rectangle(bounds.Right, bounds.Y, res - bounds.Right, bounds.Height), source with { X = source.Right - 1, Width = 1 }),
+
+            (new Rectangle(bounds.X, 0, bounds.Width, bounds.Y), source with { Height = 1 }),
+            (new Rectangle(bounds.X, bounds.Bottom, bounds.Width, res - bounds.Bottom), source with { Y = source.Bottom - 1, Height = 1 }),
+
+            // Corners
+            (new Rectangle(0, 0, bounds.X, bounds.Y), source with { Width = 1, Height = 1 }),
+            (new Rectangle(bounds.Right, 0, res - bounds.Right, bounds.Y), source with { X = source.Right - 1, Width = 1, Height = 1 }),
+            (new Rectangle(0, bounds.Bottom, bounds.X, res - bounds.Bottom), source with { Y = source.Bottom - 1, Width = 1, Height = 1 }),
+            (new Rectangle(bounds.Right, bounds.Bottom, res - bounds.Right, res - bounds.Bottom), source with { X = source.Right - 1, Y = source.Bottom - 1, Width = 1, Height = 1 }),
+        };
+
+        var noise = Assets.Noise.MulticoloredNoise.Asset.ImmediateValue;
+
+        var veil = Assets.Misc.Veil.CreateVeilShader();
+
+        veil.Parameters.Bounds = new Vector4(bounds.X, bounds.Y, MathF.Min(bounds.Right, BASE_RESOLUTION), MathF.Min(bounds.Bottom, BASE_RESOLUTION));
+        veil.Parameters.Time = Main.GlobalTimeWrappedHourly;
+
+        veil.Parameters.Noise = new HlslSampler2D
+        {
+            Texture = noise,
+            Sampler = SamplerState.LinearWrap,
+        };
+
+        veil.Apply();
+        sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone, veil.Shader);
+        {
+            foreach (var (dest, src) in areas)
+            {
+                sb.Draw(screen, dest, src, Color.White);
+            }
+        }
+        sb.End();
     }
 }
