@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -80,19 +81,51 @@ public static partial class Images
                 return;
             }
 
-            var limiter = 0;
+            ScanPlayer(Main.LocalPlayer);
 
-            foreach (var id in local_identifiers)
+            return;
+
+            static void ScanPlayer(Player player)
             {
-                if (multiplayer_host_identifiers.Contains(id) || limiter >= 50)
+                ScanItems_Development(player.armor);
+                ScanItems_Development(player.dye);
+
+                // Technically overkill as polaroids cant really be in these slots, but
+                foreach (var loadout in player.Loadouts)
                 {
-                    continue;
+                    ScanItems_Development(loadout.Armor);
+                    ScanItems_Development(loadout.Dye);
                 }
 
-                new SendImageToHostPacket(id).Send(PacketDestination.Broadcast);
-
-                limiter++;
+                ScanItems_Development(player.inventory);
+                ScanItems_Development(player.miscEquips);
+                ScanItems_Development(player.miscDyes);
+                ScanItems_Development(player.bank);
+                ScanItems_Development(player.bank2);
+                ScanItems_Development(player.bank3);
+                ScanItems_Development(player.bank4);
             }
+        }
+    }
+
+    private static void ScanItems_Syncing(Chest chest) => ScanItems_Syncing(chest.item);
+
+    private static void ScanItems_Syncing(Item[] items)
+    {
+        foreach (var item in items)
+        {
+            if (item.ModItem is not PolaroidItem polaroid)
+            {
+                continue;
+            }
+
+            if (multiplayer_host_identifiers.Contains(polaroid.ImageIdentifier))
+            {
+                continue;
+            }
+
+            new SendImageToHostPacket(polaroid.ImageIdentifier).Send(PacketDestination.Broadcast);
+
         }
     }
 
