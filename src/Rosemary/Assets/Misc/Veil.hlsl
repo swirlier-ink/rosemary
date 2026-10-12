@@ -2,9 +2,12 @@
 
 sampler2D Texture : register(s0);
 sampler2D Noise : register(s1);
+sampler2D SwirlierNoises : register(s2);
 
 float4 Bounds;
 float Time;
+
+float FadeDistance;
 
 VIEWPORT_SIZE(ScreenSize);
 
@@ -19,9 +22,7 @@ float4 VeilShaderFragment(float2 uv : TEXCOORD0, float2 svPos : SV_POSITION) : C
     float2 screenUv = svPos;
     screenUv /= ScreenSize;
     
-    screenUv.x *= 0.2;
-    
-    float2 offset = tex2D(Noise, screenUv).g;
+    float2 offset = tex2D(Noise, screenUv * float2(0.2, 1)).g;
     offset -= 0.5;
     offset.x = 0;
     
@@ -32,21 +33,21 @@ float4 VeilShaderFragment(float2 uv : TEXCOORD0, float2 svPos : SV_POSITION) : C
     const float fluff = 0.01;
     
     float gradient = 0;
-    gradient += Map(svPos.x, 0, Bounds.x + fluff, 1, 0);
-    gradient += Map(svPos.y, 0, Bounds.y + fluff, 1, 0);
+    gradient += Map(svPos.x, Bounds.x - FadeDistance, Bounds.x + fluff, 1, 0);
+    gradient += Map(svPos.y, Bounds.y - FadeDistance, Bounds.y + fluff, 1, 0);
     
-    gradient += Map(svPos.x, Bounds.z - fluff, ScreenSize.x, 0, 1);
-    gradient += Map(svPos.y, Bounds.w - fluff, ScreenSize.y, 0, 1);
+    gradient += Map(svPos.x, Bounds.z - fluff, Bounds.z + FadeDistance, 0, 1);
+    gradient += Map(svPos.y, Bounds.w - fluff, Bounds.w + FadeDistance, 0, 1);
     
     gradient = saturate(gradient);
     
-    gradient = pow(gradient, 3);
+    gradient += pow(tex2D(SwirlierNoises, (screenUv * 0.65) + Time), 2) * gradient;
+    
+    gradient = pow(gradient, 1.6);
     gradient = 1 - gradient;
     
-    float4 multiplier = float4(gradient, gradient, gradient, 1);
-    
     float4 color = tex2D(Texture, uv + offset);
-    color *= multiplier;
+    color *= gradient;
     
     return color;
 }

@@ -1,11 +1,14 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
 using Rosemary.Core;
+using System;
 using Terraria;
+using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
+using static Terraria.GameContent.Animations.Actions.Sprites;
+using static Terraria.GameContent.Skies.StardustSky;
 
 namespace Rosemary.Content.Misc;
 
@@ -152,27 +155,111 @@ public static partial class Images
             (new Rectangle(bounds.Right, bounds.Bottom, res - bounds.Right, res - bounds.Bottom), source with { X = source.Right - 1, Y = source.Bottom - 1, Width = 1, Height = 1 }),
         };
 
-        var noise = Assets.Noise.MulticoloredNoise.Asset.ImmediateValue;
+        var screenSize = new Vector2(Main.screenWidth, Main.screenHeight);
 
-        var veil = Assets.Misc.Veil.CreateVeilShader();
+        DrawSectors();
 
-        veil.Parameters.Bounds = new Vector4(bounds.X, bounds.Y, MathF.Min(bounds.Right, BASE_RESOLUTION), MathF.Min(bounds.Bottom, BASE_RESOLUTION));
-        veil.Parameters.Time = Main.GlobalTimeWrappedHourly;
+        DrawEyes();
 
-        veil.Parameters.Noise = new HlslSampler2D
+        return;
+
+        void DrawEyes()
         {
-            Texture = noise,
-            Sampler = SamplerState.LinearWrap,
-        };
-
-        veil.Apply();
-        sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone, veil.Shader);
-        {
-            foreach (var (dest, src) in areas)
+            sb.Begin(SpriteSortMode.Texture, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone, null);
             {
-                sb.Draw(screen, dest, src, Color.White);
+                var position = device.Viewport.Bounds.Center();
+                position += bounds.TopLeft();
+                position -= device.Viewport.Bounds.Size() - Vector2.Min(bounds.Size(), new Vector2(res));
+
+                var capturePosition = GetCapturePosition() + new Vector2(ScaledResolution * 0.5f);
+                capturePosition -= screenSize * 0.5f;
+                {
+                    capturePosition /= Main.GameZoomTarget;
+                }
+                capturePosition += screenSize * 0.5f;
+                capturePosition += Main.screenPosition;
+
+                for (var i = 0; i < Rand.Next(135, 200); i++)
+                {
+                    var off = RandomSquareEdge(Rand.Next(res * 0.8f, res * 1.1f));
+
+                    var inWorldPosition = capturePosition + off;
+
+                    var direction = inWorldPosition.DirectionTo(Main.LocalPlayer.Center);
+
+                    var starPosition = position + off;
+
+                    var eyeLid = Assets.Elk.Particles.ExpandingCircle.Asset.Value;
+
+                    var scale = Rand.Next(0.05f, 1.2f);
+
+                    var destSize = (new Vector2(16f, 36f) * scale) / eyeLid.Size();
+
+                    var color = Color.White * 0.165f;
+                    color.A = 0;
+
+                    sb.Draw(eyeLid, starPosition, null, color, direction.ToRotation() + MathF.PiOver2, Origin.Center, destSize, SpriteEffects.None, 0f);
+
+                    var starTexture = TextureAssets.Star[Rand.Next(TextureAssets.Star.Length)].Value;
+
+                    sb.Draw(starTexture, starPosition + (direction * scale * 7f), null, Color.White with { A = 0 }, direction.ToRotation() + MathF.PiOver2, Origin.Center, scale, SpriteEffects.None, 0f);
+                }
+            }
+            sb.End();
+
+            return;
+
+            static Vector2 RandomSquareEdge(float size)
+            {
+                var vector = Rand.NextSquare(-size, size);
+
+                if (Rand.NextBoolean())
+                {
+                    vector.X = size * Rand.NextDirection();
+                }
+                else
+                {
+                    vector.Y = size * Rand.NextDirection();
+                }
+
+                return vector;
             }
         }
-        sb.End();
+
+        void DrawSectors()
+        {
+            var veil = Assets.Misc.Veil.CreateVeilShader();
+
+            veil.Parameters.Bounds = new Vector4(bounds.X, bounds.Y, MathF.Min(bounds.Right, res), MathF.Min(bounds.Bottom, res));
+            veil.Parameters.FadeDistance = res * 0.5f;
+            veil.Parameters.Time = Main.GlobalTimeWrappedHourly;
+
+            veil.Parameters.Noise = new HlslSampler2D
+            {
+                Texture = Assets.Noise.MulticoloredNoise.Asset.ImmediateValue,
+                Sampler = SamplerState.LinearWrap,
+            };
+
+            veil.Parameters.SwirlierNoises = new HlslSampler2D
+            {
+                Texture = Assets.Noise.SwirlyNoise.Asset.ImmediateValue,
+                Sampler = SamplerState.LinearWrap,
+            };
+
+            veil.Apply();
+            sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.None, RasterizerState.CullNone, veil.Shader);
+            {
+                foreach (var (dest, src) in areas)
+                {
+                    if (dest.Width == 0 || dest.Height == 0)
+                    {
+                        continue;
+                    }
+
+                    sb.Draw(screen, dest, src, Color.White);
+                }
+            }
+            sb.End();
+        }
     }
 }
