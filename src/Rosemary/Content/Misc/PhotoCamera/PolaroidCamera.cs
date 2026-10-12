@@ -45,14 +45,16 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
         ItemID.Sets.HasRightClickSound[Type] = false;
     }
 
+    private const int use_time = 150;
+
     public override void SetDefaults()
     {
         Item.Size = new Vector2(32, 20);
 
         Item.value = Item.buyPrice(0, 10);
 
-        Item.useTime = 45;
-        Item.useAnimation = 45;
+        Item.useTime = use_time;
+        Item.useAnimation = use_time;
 
         Item.consumable = false;
 
@@ -156,11 +158,49 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
             return new Vector2(-6, 2);
         }
 
-        var off = currentPlayer.itemAnimation / 45f;
+        var time = use_time - currentPlayer.itemAnimation;
+        if (currentPlayer.itemAnimationMax == 0)
+        {
+            time = use_time;
+        }
+
+        var off = Utils.Remap(time, 0f, 45f, 1f, 0f);
         off = MathF.Pow(off, 1.3f);
         off *= -4f;
 
         return new Vector2(-6, 2 + off);
+    }
+
+    public override void UseStyle(Player player, Rectangle heldItemFrame)
+    {
+        if (use_time - player.itemAnimation == 55)
+        {
+            SoundEngine.PlaySound(
+                Assets.Misc.Camera.Print.Asset,
+                player.Center,
+                s =>
+                {
+                    s.Position = player.Center;
+                    return true;
+                }
+            );
+        }
+
+        if (player.whoAmI != Main.myPlayer)
+        {
+            return;
+        }
+
+        if (player.itemAnimation > 1
+         || queuedItem?.ModItem is not PolaroidItem polaroid)
+        {
+            return;
+        }
+
+        player.QuickSpawnItem(player.GetSource_ItemUse(Item, nameof(PolaroidCamera)), queuedItem);
+        Images.TrackImageDevelopment(polaroid);
+
+        queuedItem = null;
     }
 
     public override void ModifyTooltips(List<TooltipLine> tooltips)
@@ -203,6 +243,8 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
         }
     }
 
+    private Item? queuedItem;
+
     public override bool? UseItem(Player player)
     {
         if (player.whoAmI != Main.myPlayer)
@@ -217,11 +259,9 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
         if (item.ModItem is PolaroidItem polaroid)
         {
             polaroid.ImageIdentifier = id;
-            Images.TrackImageDevelopment(polaroid);
         }
 
-        // TODO: Delay until after some animation?
-        player.QuickSpawnItem(player.GetSource_ItemUse(Item, nameof(PolaroidCamera)), item);
+        queuedItem = item;
 
         return true;
     }
@@ -254,7 +294,13 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
         var texture = TextureAssets.Extra[ExtrasID.NinetyEight].Value;
 
-        var scale = drawInfo.drawPlayer.itemAnimation / 45f;
+        var time = use_time - drawInfo.drawPlayer.itemAnimation;
+        if (drawInfo.drawPlayer.itemAnimationMax == 0)
+        {
+            time = use_time;
+        }
+
+        var scale = Utils.Remap(time, 0f, 45f, 1f, 0f);
         scale = MathF.Pow(scale, 4f);
 
         var color = Color.White * scale;
@@ -262,6 +308,8 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
         var size = new Vector2(24f, 75) / texture.Size();
         size *= scale;
+
+        DrawPrintAnimation(ref drawInfo);
 
         var data = new DrawData(
             texture,
@@ -288,5 +336,32 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
             SpriteEffects.None
         );
         drawInfo.DrawDataCache.Add(data);
+
+        return;
+
+        void DrawPrintAnimation(ref PlayerDrawSet drawInfo)
+        {
+            if (drawInfo.drawPlayer.itemAnimationMax == 0)
+            {
+                return;
+            }
+
+            var print = Assets.Misc.Camera.PolaroidCamera_PrintAnimation.Asset.Value;
+
+            var frame = (int)Utils.Remap(time, 60, use_time, 0, 11);
+
+            var source = print.Frame(1, 12, 0, frame);
+
+            var origin = drawData.origin;
+            origin.X += 4;
+
+            var printData = drawData with
+            {
+                texture = print,
+                sourceRect = source,
+                origin = origin,
+            };
+            drawInfo.DrawDataCache.Add(printData);
+        }
     }
 }
