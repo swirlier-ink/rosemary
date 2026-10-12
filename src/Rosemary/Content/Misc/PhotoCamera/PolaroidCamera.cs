@@ -1,12 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MonoMod.Cil;
 using Rosemary.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
@@ -14,7 +12,6 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
-using Terraria.UI;
 
 namespace Rosemary.Content.Misc;
 
@@ -65,7 +62,7 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
         Item.rare = ItemRarityID.LightRed;
 
-        Item.UseSound = SoundID.MenuTick;
+        Item.UseSound = Assets.Misc.Camera.Shoot.Asset;
     }
 
     public const int MAX_FILTERS = 8;
@@ -100,13 +97,13 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
             insertAction: (self, i) =>
             {
                 ((PolaroidCamera)self.ModItem).Filters.Add(i);
-                // TODO: sfx
+                SoundEngine.PlaySound(Assets.Misc.Camera.InsertFilter.Asset);
             },
             removeAction: () =>
             {
                 Main.mouseItem = Filters[^1].Clone();
                 Filters.RemoveAt(Filters.Count - 1);
-                // TODO: sfx
+                SoundEngine.PlaySound(Assets.Misc.Camera.RemoveFilter.Asset);
             }
         );
     }
@@ -187,11 +184,18 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
         var count = 0;
 
+        var colors = new[]
+        {
+            new Color(245, 116, 198),
+            new Color(248, 244, 127),
+            new Color(115, 209, 245),
+        };
+
         foreach (var item in Filters)
         {
             var line = new TooltipLine(Mod, $"Camera.Filters: {count}", $"- {item.Name}");
             {
-                line.Color = (count % 2 == 0) ? new Color(255, 154, 86) : new Color(211, 98, 164);
+                line.Color = colors[count % 3];
             }
             tooltips.Insert(index + count, line);
 

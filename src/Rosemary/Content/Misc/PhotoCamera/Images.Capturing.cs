@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Terraria;
+using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.GameInput;
 using Terraria.Graphics.Effects;
@@ -175,6 +176,8 @@ public static partial class Images
             return;
         }
 
+        var capturingCryptid = false;
+
         using var lease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
         using var swapLease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
 
@@ -190,6 +193,11 @@ public static partial class Images
         local_identifiers.Add(id);
 
         captureRequested = false;
+
+        if (capturingCryptid)
+        {
+            // SoundEngine.PlaySound(Assets.Misc.Camera.Cryptid.Asset);
+        }
 
         return;
 
@@ -225,6 +233,7 @@ public static partial class Images
 
             if (dest != viewport)
             {
+                capturingCryptid = true;
                 DrawBarrier(sb, device, dest, frame, screen);
             }
 
