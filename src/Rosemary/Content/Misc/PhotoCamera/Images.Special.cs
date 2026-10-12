@@ -228,7 +228,7 @@ public static partial class Images
 
         void DrawSectors()
         {
-            var veil = Assets.Misc.Veil.CreateVeilShader();
+            var veil = Assets.Misc.Camera.Veil.CreateVeilShader();
 
             veil.Parameters.Bounds = new Vector4(bounds.X, bounds.Y, MathF.Min(bounds.Right, res), MathF.Min(bounds.Bottom, res));
             veil.Parameters.FadeDistance = res * 0.5f;

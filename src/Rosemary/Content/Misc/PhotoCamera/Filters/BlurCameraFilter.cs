@@ -11,14 +11,14 @@ namespace Rosemary.Content.Misc;
 
 public sealed class BlurCameraFilter : ModItem, IPolaroidCameraFilter
 {
-    public override string Texture => Assets.Misc.PolaroidCameraFilters.BlurFilter.KEY;
+    public override string Texture => Assets.Misc.Camera.Filters.BlurFilter.KEY;
 
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 
     bool IPolaroidCameraFilter.ApplyFilter(SpriteBatch sb, GraphicsDevice device, RenderTarget2D target, RenderTarget2D swap)
     {
-        var horizBlur = Assets.Misc.PolaroidCameraFilters.BlurPolaroidShader.CreateHorizontalShader();
-        var vertBlur = Assets.Misc.PolaroidCameraFilters.BlurPolaroidShader.CreateVerticalShader();
+        var horizBlur = Assets.Misc.Camera.Filters.BlurPolaroidShader.CreateHorizontalShader();
+        var vertBlur = Assets.Misc.Camera.Filters.BlurPolaroidShader.CreateVerticalShader();
 
         var blurSize = new Vector2(16f / Images.BASE_RESOLUTION);
 

@@ -20,7 +20,7 @@ namespace Rosemary.Content.Misc;
 
 public class PolaroidCamera : ModItem, IPolaroidCamera
 {
-    public override string Texture => Assets.Misc.PolaroidCamera.KEY;
+    public override string Texture => Assets.Misc.Camera.PolaroidCamera.KEY;
 
     public override string LocalizationCategory => "Content.Misc";
 
@@ -182,14 +182,14 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
         index++;
 
-        tooltips.Insert(index, new TooltipLine(Mod, "PolaroidCameraFiltersHeader", Mods.Rosemary.Content.Misc.PolaroidCamera.FiltersHeader.GetTextValue()));
+        tooltips.Insert(index, new TooltipLine(Mod, "Camera.FiltersHeader", Mods.Rosemary.Content.Misc.PolaroidCamera.FiltersHeader.GetTextValue()));
         index++;
 
         var count = 0;
 
         foreach (var item in Filters)
         {
-            var line = new TooltipLine(Mod, $"PolaroidCameraFilters: {count}", $"- {item.Name}");
+            var line = new TooltipLine(Mod, $"Camera.Filters: {count}", $"- {item.Name}");
             {
                 line.Color = (count % 2 == 0) ? new Color(255, 154, 86) : new Color(211, 98, 164);
             }

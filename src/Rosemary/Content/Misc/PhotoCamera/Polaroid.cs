@@ -17,7 +17,7 @@ namespace Rosemary.Content.Misc;
 
 public sealed class PolaroidItem : ModItem
 {
-    public override string Texture => Assets.Misc.Polaroid.KEY;
+    public override string Texture => Assets.Misc.Camera.Polaroid.KEY;
 
     public override string LocalizationCategory => "Content.Misc";
 
@@ -150,7 +150,7 @@ public sealed class PolaroidItem : ModItem
 
             var screenSize = new Vector2(Main.screenWidth, Main.screenHeight);
 
-            var polaroidBase = Assets.Misc.Polaroid_Tooltip.Asset.Value;
+            var polaroidBase = Assets.Misc.Camera.Polaroid_Tooltip.Asset.Value;
 
             var bottomRight = position + polaroidBase.Size();
 
@@ -162,7 +162,7 @@ public sealed class PolaroidItem : ModItem
             
             sb.End(out var ss);
 
-            var shader = Assets.Misc.Vignette.CreateVignetteShader();
+            var shader = Assets.Misc.Camera.Vignette.CreateVignetteShader();
             shader.Parameters.Intensity = 3;
             shader.Parameters.Power = 6;
             shader.Apply();

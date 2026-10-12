@@ -263,7 +263,7 @@ public static partial class Images
 
         sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
         {
-            var circle = Assets.Misc.PolaroidCameraCircle.Asset.Value;
+            var circle = Assets.Misc.Camera.PolaroidCameraCircle.Asset.Value;
             var origin = circle.Size() * 0.5f;
 
             var circleColor = color;

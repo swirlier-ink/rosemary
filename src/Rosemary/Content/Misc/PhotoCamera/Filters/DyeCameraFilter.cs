@@ -17,7 +17,7 @@ namespace Rosemary.Content.Misc;
 
 public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
 {
-    public override string Texture => Assets.Misc.PolaroidCameraFilters.DyeFilter_Empty.KEY;
+    public override string Texture => Assets.Misc.Camera.Filters.DyeFilter_Empty.KEY;
 
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 
@@ -209,14 +209,14 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
         sb.End(out var ss);
         sb.Begin(ss with { SortMode = SpriteSortMode.Immediate });
         {
-            var outlineTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Outline.Asset.Value;
+            var outlineTexture = Assets.Misc.Camera.Filters.DyeFilter_Outline.Asset.Value;
 
             var outlineFrame = outlineTexture.Frame(11, 1, (int)(definition?.LidType ?? 0));
             outlineFrame.Width -= 2;
 
             sb.Draw(outlineTexture, position, outlineFrame, drawColor, 0f, origin, scale, SpriteEffects.None, 0f);
 
-            var lensTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Lens.Asset.Value;
+            var lensTexture = Assets.Misc.Camera.Filters.DyeFilter_Lens.Asset.Value;
 
             var dye = GameShaders.Armor.GetShaderFromItemId(Dye.type);
 
@@ -238,7 +238,7 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
 
             if (definition?.Overlays.HasFlag(DyeOverlayType.Animated) is true)
             {
-                var overlayTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Overlay.Asset.Value;
+                var overlayTexture = Assets.Misc.Camera.Filters.DyeFilter_Overlay.Asset.Value;
 
                 sb.Draw(overlayTexture, position, null, drawColor, 0f, origin, scale, SpriteEffects.None, 0f);
             }
@@ -266,14 +266,14 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
         sb.End(out var ss);
         sb.Begin(ss with { SortMode = SpriteSortMode.Immediate });
         {
-            var outlineTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Outline.Asset.Value;
+            var outlineTexture = Assets.Misc.Camera.Filters.DyeFilter_Outline.Asset.Value;
 
             var outlineFrame = outlineTexture.Frame(11, 1, (int)(definition?.LidType ?? 0));
             outlineFrame.Width -= 2;
 
             sb.Draw(outlineTexture, position - Main.screenPosition, outlineFrame, alphaColor, rotation, origin, scale, SpriteEffects.None, 0f);
 
-            var lensTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Lens.Asset.Value;
+            var lensTexture = Assets.Misc.Camera.Filters.DyeFilter_Lens.Asset.Value;
 
             var dye = GameShaders.Armor.GetShaderFromItemId(Dye.type);
 
@@ -296,7 +296,7 @@ public sealed class DyeCameraFilter : ModItem, IPolaroidCameraFilter
 
             if (definition?.Overlays.HasFlag(DyeOverlayType.Animated) is true)
             {
-                var overlayTexture = Assets.Misc.PolaroidCameraFilters.DyeFilter_Overlay.Asset.Value;
+                var overlayTexture = Assets.Misc.Camera.Filters.DyeFilter_Overlay.Asset.Value;
 
                 sb.Draw(overlayTexture, position - Main.screenPosition, null, alphaColor, rotation, origin, scale, SpriteEffects.None, 0f);
             }
