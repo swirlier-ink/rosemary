@@ -31,7 +31,7 @@ public static partial class Images
 
     private static List<IPolaroidCameraFilter> filters = [];
 
-    public static string Capture(PolaroidCamera item)
+    public static string Capture(IPolaroidCamera item)
     {
         var captureFilters = new List<IPolaroidCameraFilter>();
 
@@ -62,6 +62,37 @@ public static partial class Images
     private static void Load_Capturing()
     {
         On_FilterManager.EndCapture_RenderTarget2D_RenderTarget2D_RenderTarget2D_Vector2_Vector2_Vector2 += HandleCapture;
+        On_Main.DrawInterface_36_Cursor += DrawInterface_36_Cursor_HideWhilstUsingCamera;
+
+        On_Main.DrawInterface_41_InterfaceLogic4 += DrawInterface_41_InterfaceLogic4_CacheTooltipState;
+    }
+
+    private static bool oldTooltipVisible;
+
+    private static void DrawInterface_41_InterfaceLogic4_CacheTooltipState(On_Main.orig_DrawInterface_41_InterfaceLogic4 orig)
+    {
+        orig();
+
+        oldTooltipVisible = Main.instance._mouseTextCache.isValid
+                         || !Main.MouseDisplayItem.IsAir
+                         || Main.LocalPlayer.cursorItemIconEnabled;
+    }
+
+    private static void DrawInterface_36_Cursor_HideWhilstUsingCamera(On_Main.orig_DrawInterface_36_Cursor orig)
+    {
+        var alive = Main.LocalPlayer is { noItems: false, CCed: false, dead: false };
+
+        if (alive
+         && Main.LocalPlayer.HeldItem.ModItem is IPolaroidCamera
+         && !Main.LocalPlayer.lastMouseInterface
+         && !Main.gamePaused
+         && FocusHelper.GameplayActive
+         && !oldTooltipVisible)
+        {
+            return;
+        }
+
+        orig();
     }
 
     [ModSystemHooks.PostUpdateEverything]
@@ -199,19 +230,41 @@ public static partial class Images
     
     private static void DrawCameraOverlay(SpriteBatch sb, Rectangle frame)
     {
-        var alive = Main.LocalPlayer is { noItems: false, CCed: false, dead: false };
+        var player = Main.LocalPlayer;
+
+        var alive = player is { noItems: false, CCed: false, dead: false };
 
         var texture = TextureAssets.MagicPixel.Value;
 
         if (!alive
-         || Main.LocalPlayer.HeldItem.type != ModContent.ItemType<PolaroidCamera>()
-         || Main.LocalPlayer.lastMouseInterface)
+         || player.HeldItem.ModItem is not IPolaroidCamera
+         || player.lastMouseInterface
+         || Main.gamePaused
+         || !FocusHelper.GameplayActive)
         {
             return;
         }
 
+        var fade = (player.itemAnimationMax <= 0 ? 0f : player.itemAnimation / (float)player.itemAnimationMax);
+        fade = Utils.Remap(fade, 0f, 1f, 1f, 0.6f);
+
+        var color = Color.White * fade;
+        color.A = byte.MaxValue;
+
         sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
         {
+            var circle = Assets.Misc.PolaroidCameraCircle.Asset.Value;
+            var origin = circle.Size() * 0.5f;
+
+            var circleColor = color;
+
+            if (oldTooltipVisible)
+            {
+                circleColor *= 0.35f;
+            }
+
+            sb.Draw(circle, Main.MouseScreen, null, circleColor, 0f, origin, 1f, SpriteEffects.None, 0f);
+
             DrawFrame();
 
             sb.Draw(texture, frame, Color.White * captureVfx);
@@ -222,19 +275,25 @@ public static partial class Images
 
         void DrawFrame()
         {
-            sb.Draw(texture, frame with { Width = 2 }, Color.White);
-            sb.Draw(texture, frame with { X = frame.Right - 2, Width = 2 }, Color.White);
+            const float off = 10f;
 
-            sb.Draw(texture, frame with { Height = 2 }, Color.White);
-            sb.Draw(texture, frame with { Y = frame.Bottom - 2, Height = 2 }, Color.White);
+            var pulse = (1f - MathF.Pow(1f - captureVfx, 3f)) * off;
 
-            var size = (int)(ScaledResolution * 0.5f) - 30;
+            var size = frame;
 
-            sb.Draw(texture, frame with { Width = 2, X = frame.Center.X, Height = size }, Color.White);
-            sb.Draw(texture, frame with { Width = 2, X = frame.Center.X, Height = size, Y = frame.Bottom - size}, Color.White);
+            size.Inflate((int)(-off + pulse), (int)(-off + pulse));
 
-            sb.Draw(texture, frame with { Height = 2, Y = frame.Center.Y, Width = size }, Color.White);
-            sb.Draw(texture, frame with { Height = 2, Y = frame.Center.Y, Width = size, X = frame.Right - size }, Color.White);
+            sb.Draw(texture, size with { Width = 60, Height = 2 }, null, color, 0f, Origin.TopLeft, SpriteEffects.None, 0f);
+            sb.Draw(texture, size with { Width = 2, Height = 60 }, null, color, 0f, Origin.TopLeft, SpriteEffects.None, 0f);
+
+            sb.Draw(texture, size with { X = size.Right, Width = 60, Height = 2 }, null, color, 0f, Origin.TopRight, SpriteEffects.None, 0f);
+            sb.Draw(texture, size with { X = size.Right, Width = 2, Height = 60 }, null, color, 0f, Origin.TopRight, SpriteEffects.None, 0f);
+
+            sb.Draw(texture, size with { Y = size.Bottom, Width = 60, Height = 2 }, null, color, 0f, Origin.BottomLeft, SpriteEffects.None, 0f);
+            sb.Draw(texture, size with { Y = size.Bottom, Width = 2, Height = 60 }, null, color, 0f, Origin.BottomLeft, SpriteEffects.None, 0f);
+
+            sb.Draw(texture, size with { X = size.Right, Y = size.Bottom, Width = 60, Height = 2 }, null, color, 0f, Origin.BottomRight, SpriteEffects.None, 0f);
+            sb.Draw(texture, size with { X = size.Right, Y = size.Bottom, Width = 2, Height = 60 }, null, color, 0f, Origin.BottomRight, SpriteEffects.None, 0f);
         }
     }
 }

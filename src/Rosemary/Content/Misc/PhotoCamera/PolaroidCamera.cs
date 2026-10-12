@@ -18,7 +18,7 @@ using Terraria.UI;
 
 namespace Rosemary.Content.Misc;
 
-public class PolaroidCamera : ModItem
+public class PolaroidCamera : ModItem, IPolaroidCamera
 {
     public override string Texture => Assets.Misc.PolaroidCamera.KEY;
 
@@ -70,7 +70,7 @@ public class PolaroidCamera : ModItem
 
     public const int MAX_FILTERS = 8;
 
-    public List<Item> Filters = [];
+    public List<Item> Filters { set; get; } = [];
 
     public override bool CanStack(Item source)
     {
