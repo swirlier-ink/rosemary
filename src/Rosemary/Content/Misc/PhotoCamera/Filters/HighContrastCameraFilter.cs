@@ -8,7 +8,7 @@ namespace Rosemary.Content.Misc;
 
 public sealed class HighContrastCameraFilter : ModItem, IPolaroidCameraFilter
 {
-    public override string Texture => Assets.Misc.PolaroidCameraFilters.ContrastFilter.KEY;
+    public override string Texture => Assets.Misc.Camera.Filters.ContrastFilter.KEY;
 
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 
@@ -17,7 +17,7 @@ public sealed class HighContrastCameraFilter : ModItem, IPolaroidCameraFilter
         device.SetRenderTarget(swap);
         device.Clear(Color.Transparent);
 
-        var shader = Assets.Misc.PolaroidCameraFilters.HighContrastPolaroidShader.CreateHighContrastPolaroidShader();
+        var shader = Assets.Misc.Camera.Filters.HighContrastPolaroidShader.CreateHighContrastPolaroidShader();
 
         shader.Parameters.Contrast = 1.7f;
         

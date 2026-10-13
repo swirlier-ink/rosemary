@@ -25,7 +25,7 @@ public static partial class Images
                 continue;
             }
 
-            ScanItems(chest);
+            ScanItems_Development(chest);
         }
 
         if (Main.netMode == NetmodeID.SinglePlayer)
@@ -37,23 +37,23 @@ public static partial class Images
 
         static void ScanPlayer(Player player)
         {
-            ScanItems(player.armor);
-            ScanItems(player.dye);
+            ScanItems_Development(player.armor);
+            ScanItems_Development(player.dye);
 
             // Technically overkill as polaroids cant really be in these slots, but
             foreach (var loadout in player.Loadouts)
             {
-                ScanItems(loadout.Armor);
-                ScanItems(loadout.Dye);
+                ScanItems_Development(loadout.Armor);
+                ScanItems_Development(loadout.Dye);
             }
 
-            ScanItems(player.inventory);
-            ScanItems(player.miscEquips);
-            ScanItems(player.miscDyes);
-            ScanItems(player.bank);
-            ScanItems(player.bank2);
-            ScanItems(player.bank3);
-            ScanItems(player.bank4);
+            ScanItems_Development(player.inventory);
+            ScanItems_Development(player.miscEquips);
+            ScanItems_Development(player.miscDyes);
+            ScanItems_Development(player.bank);
+            ScanItems_Development(player.bank2);
+            ScanItems_Development(player.bank3);
+            ScanItems_Development(player.bank4);
         }
     }
 
@@ -63,9 +63,9 @@ public static partial class Images
         polaroids_to_update.Clear();
     }
 
-    private static void ScanItems(Chest chest) => ScanItems(chest.item);
+    private static void ScanItems_Development(Chest chest) => ScanItems_Development(chest.item);
 
-    private static void ScanItems(Item[] items)
+    private static void ScanItems_Development(Item[] items)
     {
         foreach (var item in items)
         {

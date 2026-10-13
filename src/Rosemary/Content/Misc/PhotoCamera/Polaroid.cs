@@ -17,7 +17,7 @@ namespace Rosemary.Content.Misc;
 
 public sealed class PolaroidItem : ModItem
 {
-    public override string Texture => Assets.Misc.Polaroid.KEY;
+    public override string Texture => Assets.Misc.Camera.Polaroid.KEY;
 
     public override string LocalizationCategory => "Content.Misc";
 
@@ -84,12 +84,24 @@ public sealed class PolaroidItem : ModItem
 
     public uint Age;
 
+    public bool OfCryptid
+    {
+        get;
+
+        set
+        {
+            Item.rare = value ? ItemRarityID.Orange : ItemRarityID.Blue;
+            field = value;
+        }
+    }
+
     public override ModItem Clone(Item newEntity)
     {
         var clone = (PolaroidItem)base.Clone(newEntity);
         {
             clone.ImageIdentifier = ImageIdentifier;
             clone.Age = Age;
+            clone.OfCryptid = OfCryptid;
         }
         return clone;
     }
@@ -98,24 +110,28 @@ public sealed class PolaroidItem : ModItem
     {
         tag[nameof(ImageIdentifier)] = ImageIdentifier;
         tag[nameof(Age)] = Age;
+        tag[nameof(OfCryptid)] = OfCryptid;
     }
 
     public override void LoadData(TagCompound tag)
     {
         ImageIdentifier = tag.Get<string>(nameof(ImageIdentifier));
         Age = tag.Get<uint>(nameof(Age));
+        OfCryptid = tag.Get<bool>(nameof(OfCryptid));
     }
 
     public override void NetSend(BinaryWriter writer)
     {
         writer.Write(ImageIdentifier);
         writer.Write(Age);
+        writer.Write(OfCryptid);
     }
 
     public override void NetReceive(BinaryReader reader)
     {
         ImageIdentifier = reader.ReadString();
         Age = reader.ReadUInt32();
+        OfCryptid = reader.ReadBoolean();
 
         Images.TrackImageDevelopment(this);
     }
@@ -150,7 +166,7 @@ public sealed class PolaroidItem : ModItem
 
             var screenSize = new Vector2(Main.screenWidth, Main.screenHeight);
 
-            var polaroidBase = Assets.Misc.Polaroid_Tooltip.Asset.Value;
+            var polaroidBase = Assets.Misc.Camera.Polaroid_Tooltip.Asset.Value;
 
             var bottomRight = position + polaroidBase.Size();
 
@@ -162,7 +178,7 @@ public sealed class PolaroidItem : ModItem
             
             sb.End(out var ss);
 
-            var shader = Assets.Misc.Vignette.CreateVignetteShader();
+            var shader = Assets.Misc.Camera.Vignette.CreateVignetteShader();
             shader.Parameters.Intensity = 3;
             shader.Parameters.Power = 6;
             shader.Apply();

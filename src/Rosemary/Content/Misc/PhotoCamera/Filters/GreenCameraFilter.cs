@@ -8,7 +8,7 @@ namespace Rosemary.Content.Misc;
 
 public sealed class GreenCameraFilter : ModItem, IPolaroidCameraFilter
 {
-    public override string Texture => Assets.Misc.PolaroidCameraFilters.GreenFilter.KEY;
+    public override string Texture => Assets.Misc.Camera.Filters.GreenFilter.KEY;
 
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 
@@ -17,7 +17,7 @@ public sealed class GreenCameraFilter : ModItem, IPolaroidCameraFilter
         device.SetRenderTarget(swap);
         device.Clear(Color.Transparent);
 
-        var shader = Assets.Misc.PolaroidCameraFilters.MonochromePolaroidShader.CreateMonochromePolaroidShader();
+        var shader = Assets.Misc.Camera.Filters.MonochromePolaroidShader.CreateMonochromePolaroidShader();
 
         shader.Parameters.Power = .75f;
         shader.Parameters.Preservation = 0;

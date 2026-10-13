@@ -11,7 +11,7 @@ public sealed class BaseMotionBlurFilter : IPolaroidCameraFilter
 {
     bool IPolaroidCameraFilter.ApplyFilter(SpriteBatch sb, GraphicsDevice device, RenderTarget2D target, RenderTarget2D swap)
     {
-        var blur = Assets.Misc.PolaroidCameraFilters.BlurPolaroidShader.CreateDirectionalShader();
+        var blur = Assets.Misc.Camera.Filters.BlurPolaroidShader.CreateDirectionalShader();
 
         var speed = MathF.Min(Main.LocalPlayer.velocity.Length() / 12f, 1f);
 
@@ -66,7 +66,7 @@ public sealed class BaseBloomFilter : IPolaroidCameraFilter
 
         void DrawContrast()
         {
-            var shader = Assets.Misc.PolaroidCameraFilters.HighContrastPolaroidShader.CreateHighContrastPolaroidShader();
+            var shader = Assets.Misc.Camera.Filters.HighContrastPolaroidShader.CreateHighContrastPolaroidShader();
 
             shader.Parameters.Contrast = 3f;
 
@@ -81,8 +81,8 @@ public sealed class BaseBloomFilter : IPolaroidCameraFilter
 
         void DrawBlur()
         {
-            var horizBlur = Assets.Misc.PolaroidCameraFilters.BlurPolaroidShader.CreateHorizontalShader();
-            var vertBlur = Assets.Misc.PolaroidCameraFilters.BlurPolaroidShader.CreateVerticalShader();
+            var horizBlur = Assets.Misc.Camera.Filters.BlurPolaroidShader.CreateHorizontalShader();
+            var vertBlur = Assets.Misc.Camera.Filters.BlurPolaroidShader.CreateVerticalShader();
 
             var blurSize = new Vector2(8f / Images.BASE_RESOLUTION);
 
@@ -121,7 +121,7 @@ public sealed class BaseNoiseFilter : IPolaroidCameraFilter
         device.Clear(Color.Transparent);
 
         var noise = Assets.Noise.MulticoloredNoise.Asset.ImmediateValue;
-        var shader = Assets.Misc.PolaroidCameraFilters.BasePolaroidShader.CreateBasePolaroidShader();
+        var shader = Assets.Misc.Camera.Filters.BasePolaroidShader.CreateBasePolaroidShader();
 
         shader.Parameters.Noise = new HlslSampler2D
         {

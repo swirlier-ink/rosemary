@@ -1,8 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using ReLogic.Content;
 using Rosemary.Common;
-using Rosemary.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,6 +24,8 @@ public static partial class Images
     private static float captureVfx;
 
     private static string identifierToCreate = string.Empty;
+
+    public static bool CapturingCryptid { get; private set; }
 
     private static readonly List<IPolaroidCameraFilter> base_filters =
     [
@@ -59,6 +59,8 @@ public static partial class Images
         identifierToCreate = CreateIdentifier();
 
         filters = base_filters.Concat(captureFilters).ToList();
+
+        CapturingCryptid = false;
 
         return identifierToCreate;
     }
@@ -111,44 +113,44 @@ public static partial class Images
 
     public static Rectangle GetCaptureArea()
     {
-        using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
-
-        var position = GetImagePosition();
+        var position = GetCapturePosition();
         var frame = new Rectangle((int)position.X, (int)position.Y, ScaledResolution, ScaledResolution);
 
         return frame;
+    }
 
-        static Vector2 GetImagePosition()
+    public static Vector2 GetCapturePosition()
+    {
+        using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
+
+        var worldPlayArea = WorldUtils.GetWorldPlayArea();
+
+        var size = new Vector2(ScaledResolution) * 0.5f;
+
+        var topLeft = size;
+        var bottomRight = new Vector2(Main.screenWidth, Main.screenHeight) - size;
+
+        if (Main.screenPosition.X <= worldPlayArea.X)
         {
-            var worldPlayArea = WorldUtils.GetWorldPlayArea();
-
-            var size = new Vector2(ScaledResolution) * 0.5f;
-
-            var topLeft = size;
-            var bottomRight = new Vector2(Main.screenWidth, Main.screenHeight) - size;
-
-            if (Main.screenPosition.X <= worldPlayArea.X)
-            {
-                topLeft.X -= 999f;
-            }
-            if (Main.screenPosition.Y <= worldPlayArea.Y)
-            {
-                topLeft.Y -= 999f;
-            }
-            // TODO: Account for zoom nicely
-            if (Main.screenPosition.X + Main.screenWidth >= worldPlayArea.X + worldPlayArea.Width)
-            {
-                bottomRight.X += 999f;
-            }
-            if (Main.screenPosition.Y + Main.screenHeight >= worldPlayArea.Y + worldPlayArea.Height)
-            {
-                bottomRight.Y += 999f;
-            }
-
-            var position = Vector2.Clamp(Main.MouseScreen, topLeft, bottomRight) - size;
-
-            return position;
+            topLeft.X -= 999f;
         }
+        if (Main.screenPosition.Y <= worldPlayArea.Y)
+        {
+            topLeft.Y -= 999f;
+        }
+        // TODO: Account for zoom nicely
+        if (Main.screenPosition.X + Main.screenWidth >= worldPlayArea.X + worldPlayArea.Width)
+        {
+            bottomRight.X += 999f;
+        }
+        if (Main.screenPosition.Y + Main.screenHeight >= worldPlayArea.Y + worldPlayArea.Height)
+        {
+            bottomRight.Y += 999f;
+        }
+
+        var position = Vector2.Clamp(Main.MouseScreen, topLeft, bottomRight) - size;
+
+        return position;
     }
 
     private static void HandleCapture(On_FilterManager.orig_EndCapture_RenderTarget2D_RenderTarget2D_RenderTarget2D_Vector2_Vector2_Vector2 orig, FilterManager self, RenderTarget2D finalTexture, RenderTarget2D screenTarget1, RenderTarget2D screenTarget2, Vector2 screenSize, Vector2 sceneSize, Vector2 sceneOffset)
@@ -177,6 +179,8 @@ public static partial class Images
             return;
         }
 
+        var capturingCryptid = false;
+
         using var lease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
         using var swapLease = RenderTargetPool.Shared.Rent(device, BASE_RESOLUTION, BASE_RESOLUTION);
 
@@ -188,40 +192,55 @@ public static partial class Images
         var id = identifierToCreate;
 
         using var stream = new FileStream(GetImagePath(id), FileMode.Create);
-        target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
+        target.SaveAsJpeg(stream, BASE_RESOLUTION, BASE_RESOLUTION);
         local_identifiers.Add(id);
 
         captureRequested = false;
+
+        if (capturingCryptid)
+        {
+            // SoundEngine.PlaySound(Assets.Misc.Camera.Cryptid.Asset);
+        }
+
+        CapturingCryptid = capturingCryptid;
 
         return;
 
         void DrawImage()
         {
-            using var _ = target.Scope(clearColor: Color.Transparent);
+            using var _ = target.Scope(clearColor: Color.Black);
+
+            var screen = Main.finalScreenTarget!;
+
+            var viewport = Main.graphics.GraphicsDevice.Viewport.Bounds;
+
+            var dest = viewport;
+
+            var zoomFactor = MathF.Clamp(Main.GameZoomTarget, 1f, 2f);
+
+            dest.X += Math.Max(-(int)(frame.X / zoomFactor), 0);
+            dest.Y += Math.Max(-(int)(frame.Y / zoomFactor), 0);
+
+            frame.X = Math.Max(frame.X, 0);
+            frame.Y = Math.Max(frame.Y, 0);
+
+            dest.Width -= (int)Math.Max((frame.Right - screen.Width) / zoomFactor, 0);
+            dest.Height -= (int)Math.Max((frame.Bottom - screen.Height) / zoomFactor, 0);
+
+            frame.Width -= Math.Max(frame.Right - screen.Width, 0);
+            frame.Height -= Math.Max(frame.Bottom - screen.Height, 0);
 
             sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone);
             {
-                var screen = Main.finalScreenTarget!;
-
-                var dest = Main.graphics.GraphicsDevice.Viewport.Bounds;
-
-                var zoomFactor = MathF.Clamp(Main.GameZoomTarget, 1f, 2f);
-
-                dest.X += Math.Max(-(int)(frame.X / zoomFactor), 0);
-                dest.Y += Math.Max(-(int)(frame.Y / zoomFactor), 0);
-
-                frame.X = Math.Max(frame.X, 0);
-                frame.Y = Math.Max(frame.Y, 0);
-
-                dest.Width -= (int)((frame.Right - screen.Width) / zoomFactor);
-                dest.Height -= (int)((frame.Bottom - screen.Height) / zoomFactor);
-
-                frame.Width -= frame.Right - screen.Width;
-                frame.Height -= frame.Bottom - screen.Height;
-
                 sb.Draw(screen, dest, frame, Color.White);
             }
             sb.End();
+
+            if (dest != viewport)
+            {
+                capturingCryptid = true;
+                DrawBarrier(sb, device, dest, frame, screen);
+            }
 
             foreach (var filter in filters)
             {
@@ -258,7 +277,7 @@ public static partial class Images
 
         sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend);
         {
-            var circle = Assets.Misc.PolaroidCameraCircle.Asset.Value;
+            var circle = Assets.Misc.Camera.PolaroidCameraCircle.Asset.Value;
             var origin = circle.Size() * 0.5f;
 
             var circleColor = color;

@@ -1,12 +1,10 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MonoMod.Cil;
 using Rosemary.Common;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
@@ -14,13 +12,12 @@ using Terraria.GameContent;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
-using Terraria.UI;
 
 namespace Rosemary.Content.Misc;
 
 public class PolaroidCamera : ModItem, IPolaroidCamera
 {
-    public override string Texture => Assets.Misc.PolaroidCamera.KEY;
+    public override string Texture => Assets.Misc.Camera.PolaroidCamera.KEY;
 
     public override string LocalizationCategory => "Content.Misc";
 
@@ -48,14 +45,16 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
         ItemID.Sets.HasRightClickSound[Type] = false;
     }
 
+    private const int use_time = 150;
+
     public override void SetDefaults()
     {
         Item.Size = new Vector2(32, 20);
 
         Item.value = Item.buyPrice(0, 10);
 
-        Item.useTime = 45;
-        Item.useAnimation = 45;
+        Item.useTime = use_time;
+        Item.useAnimation = use_time;
 
         Item.consumable = false;
 
@@ -65,7 +64,7 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
         Item.rare = ItemRarityID.LightRed;
 
-        Item.UseSound = SoundID.MenuTick;
+        Item.UseSound = Assets.Misc.Camera.Shoot.Asset;
     }
 
     public const int MAX_FILTERS = 8;
@@ -100,13 +99,13 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
             insertAction: (self, i) =>
             {
                 ((PolaroidCamera)self.ModItem).Filters.Add(i);
-                // TODO: sfx
+                SoundEngine.PlaySound(Assets.Misc.Camera.InsertFilter.Asset);
             },
             removeAction: () =>
             {
                 Main.mouseItem = Filters[^1].Clone();
                 Filters.RemoveAt(Filters.Count - 1);
-                // TODO: sfx
+                SoundEngine.PlaySound(Assets.Misc.Camera.RemoveFilter.Asset);
             }
         );
     }
@@ -159,11 +158,51 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
             return new Vector2(-6, 2);
         }
 
-        var off = currentPlayer.itemAnimation / 45f;
+        var time = use_time - currentPlayer.itemAnimation;
+        if (currentPlayer.itemAnimationMax == 0)
+        {
+            time = use_time;
+        }
+
+        var off = Utils.Remap(time, 0f, 45f, 1f, 0f);
         off = MathF.Pow(off, 1.3f);
         off *= -4f;
 
         return new Vector2(-6, 2 + off);
+    }
+
+    public override void UseStyle(Player player, Rectangle heldItemFrame)
+    {
+        if (use_time - player.itemAnimation == 55)
+        {
+            SoundEngine.PlaySound(
+                Assets.Misc.Camera.Print.Asset,
+                player.Center,
+                s =>
+                {
+                    s.Position = player.Center;
+                    return true;
+                }
+            );
+        }
+
+        if (player.whoAmI != Main.myPlayer)
+        {
+            return;
+        }
+
+        if (player.itemAnimation > 1
+         || queuedItem?.ModItem is not PolaroidItem polaroid)
+        {
+            return;
+        }
+
+        polaroid.OfCryptid = Images.CapturingCryptid;
+
+        player.QuickSpawnItem(player.GetSource_ItemUse(Item, nameof(PolaroidCamera)), queuedItem);
+        Images.TrackImageDevelopment(polaroid);
+
+        queuedItem = null;
     }
 
     public override void ModifyTooltips(List<TooltipLine> tooltips)
@@ -182,22 +221,31 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
         index++;
 
-        tooltips.Insert(index, new TooltipLine(Mod, "PolaroidCameraFiltersHeader", Mods.Rosemary.Content.Misc.PolaroidCamera.FiltersHeader.GetTextValue()));
+        tooltips.Insert(index, new TooltipLine(Mod, "Camera.FiltersHeader", Mods.Rosemary.Content.Misc.PolaroidCamera.FiltersHeader.GetTextValue()));
         index++;
 
         var count = 0;
 
+        var colors = new[]
+        {
+            new Color(245, 116, 198),
+            new Color(248, 244, 127),
+            new Color(115, 209, 245),
+        };
+
         foreach (var item in Filters)
         {
-            var line = new TooltipLine(Mod, $"PolaroidCameraFilters: {count}", $"- {item.Name}");
+            var line = new TooltipLine(Mod, $"Camera.Filters: {count}", $"- {item.Name}");
             {
-                line.Color = (count % 2 == 0) ? new Color(255, 154, 86) : new Color(211, 98, 164);
+                line.Color = colors[count % 3];
             }
             tooltips.Insert(index + count, line);
 
             count++;
         }
     }
+
+    private static Item? queuedItem;
 
     public override bool? UseItem(Player player)
     {
@@ -213,11 +261,9 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
         if (item.ModItem is PolaroidItem polaroid)
         {
             polaroid.ImageIdentifier = id;
-            Images.TrackImageDevelopment(polaroid);
         }
 
-        // TODO: Delay until after some animation?
-        player.QuickSpawnItem(player.GetSource_ItemUse(Item, nameof(PolaroidCamera)), item);
+        queuedItem = item;
 
         return true;
     }
@@ -250,7 +296,13 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
         var texture = TextureAssets.Extra[ExtrasID.NinetyEight].Value;
 
-        var scale = drawInfo.drawPlayer.itemAnimation / 45f;
+        var time = use_time - drawInfo.drawPlayer.itemAnimation;
+        if (drawInfo.drawPlayer.itemAnimationMax == 0)
+        {
+            time = use_time;
+        }
+
+        var scale = Utils.Remap(time, 0f, 45f, 1f, 0f);
         scale = MathF.Pow(scale, 4f);
 
         var color = Color.White * scale;
@@ -258,6 +310,8 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
         var size = new Vector2(24f, 75) / texture.Size();
         size *= scale;
+
+        DrawPrintAnimation(ref drawInfo);
 
         var data = new DrawData(
             texture,
@@ -284,5 +338,32 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
             SpriteEffects.None
         );
         drawInfo.DrawDataCache.Add(data);
+
+        return;
+
+        void DrawPrintAnimation(ref PlayerDrawSet drawInfo)
+        {
+            if (drawInfo.drawPlayer.itemAnimationMax == 0)
+            {
+                return;
+            }
+
+            var print = Assets.Misc.Camera.PolaroidCamera_PrintAnimation.Asset.Value;
+
+            var frame = (int)Utils.Remap(time, 60, use_time, 0, 11);
+
+            var source = print.Frame(1, 12, 0, frame);
+
+            var origin = drawData.origin;
+            origin.X += 4;
+
+            var printData = drawData with
+            {
+                texture = print,
+                sourceRect = source,
+                origin = origin,
+            };
+            drawInfo.DrawDataCache.Add(printData);
+        }
     }
 }
