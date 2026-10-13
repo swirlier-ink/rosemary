@@ -43,6 +43,7 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
     public override void SetStaticDefaults()
     {
         ItemID.Sets.HasRightClickSound[Type] = false;
+        ItemID.Sets.SortingPriorityToolsMisc[Type] = 14;
     }
 
     private const int use_time = 150;

@@ -1,16 +1,20 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Reflection;
+using MonoMod.Cil;
 using ReLogic.Content;
 using Rosemary.Common;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using Terraria;
 using Terraria.GameContent.UI.Chat;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
+using Terraria.UI;
 using Terraria.UI.Chat;
 
 namespace Rosemary.Content.Misc;
@@ -41,9 +45,126 @@ public sealed class PolaroidItem : ModItem
         );
 
         On_ItemTagHandler.ItemSnippet.OnHover += OnHover_DisableTooltip;
+
+        IL_Recipe.UpdateRecipeList += UpdateRecipeList_AddClonePolaroids;
     }
 
-    private void OnHover_DisableTooltip(On_ItemTagHandler.ItemSnippet.orig_OnHover orig, TextSnippet self)
+    private static void UpdateRecipeList_AddClonePolaroids(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchCall<Recipe>(nameof(Recipe.ClearAvailableRecipes))
+        );
+
+        c.EmitDelegate(
+            static () =>
+            {
+                ClearPolaroidRecipes();
+
+                var identifiers = new HashSet<string>();
+
+                if (Main.guideItem.ModItem is PolaroidItem polaroid)
+                {
+                    AddPolaroidRecipe(polaroid);
+                    return;
+                }
+
+                foreach (var chest in Recipe._recipeChests)
+                {
+                    AddPolaroidsFromChest(chest.item);
+                }
+
+                var inv = Main.LocalPlayer.inventory;
+
+                // Bar mouse item
+                AddPolaroidsFromChest(inv.Take(58));
+
+                return;
+
+                void ClearPolaroidRecipes()
+                {
+                    for (var i = 0; i < Main.recipe.Length; i++)
+                    {
+                        if (Main.recipe[i].createItem.type != ModContent.ItemType<PolaroidItem>())
+                        {
+                            continue;
+                        }
+
+                        Main.recipe[i] = new Recipe();
+                        CraftingUI.availableRecipeY[i] = 65f * i;
+
+                        // :sideeye:
+                        Recipe.numRecipes--;
+                    }
+                }
+
+                void AddPolaroidsFromChest(IEnumerable<Item> items)
+                {
+                    foreach (var item in items)
+                    {
+                        if (item.ModItem is not PolaroidItem polaroid)
+                        {
+                            continue;
+                        }
+
+                        AddPolaroidRecipe(polaroid);
+                    }
+                }
+
+                void AddPolaroidRecipe(PolaroidItem parent)
+                {
+                    if (!identifiers.Add(parent.ImageIdentifier))
+                    {
+                        return;
+                    }
+
+                    var recipe = new Recipe(ModContent.GetInstance<ModImpl>());
+
+                    recipe.createItem = parent.Item.Clone();
+                    recipe.createItem.stack = 1;
+                    recipe.notDecraftable = true;
+
+                    // Polaroids should not be consumed
+                    recipe.AddConsumeIngredientCallback(
+                        (_, _, ref amount, _) =>
+                        {
+                            amount = 0;
+                        }
+                    );
+
+                    var req = parent.Item.Clone();
+                    req.stack = 1;
+
+                    recipe.requiredItem.Add(req);
+
+                    recipe.requiredItemQuickLookup = new Recipe.RequiredItemEntry[recipe.requiredItem.Count];
+                    for (var j = 0; j < recipe.requiredItem.Count; j++)
+                    {
+                        var item = recipe.requiredItem[j];
+                        var requiredItemEntry = new Recipe.RequiredItemEntry(item.type, item.stack);
+                        foreach (var num in recipe.acceptedGroups)
+                        {
+                            var recipeGroup = RecipeGroup.recipeGroups[num];
+                            if (recipeGroup.ValidItems.Contains(item.type))
+                            {
+                                requiredItemEntry.itemIdOrRecipeGroup = recipeGroup.GetGroupFakeItemId();
+                            }
+                        }
+                        recipe.requiredItemQuickLookup[j] = requiredItemEntry;
+                    }
+
+                    recipe.Register();
+
+                    Main.availableRecipe[Main.numAvailableRecipes] = recipe.RecipeIndex;
+                    Main.numAvailableRecipes++;
+                }
+            }
+        );
+    }
+
+    private static void OnHover_DisableTooltip(On_ItemTagHandler.ItemSnippet.orig_OnHover orig, TextSnippet self)
     {
         orig(self);
 

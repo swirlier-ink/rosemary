@@ -125,7 +125,6 @@ public static partial class Images
             }
 
             new SendImageToHostPacket(polaroid.ImageIdentifier).Send(PacketDestination.Broadcast);
-
         }
     }
 
