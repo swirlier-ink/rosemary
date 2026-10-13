@@ -156,9 +156,6 @@ public sealed class PolaroidItem : ModItem
                     }
 
                     recipe.Register();
-
-                    Main.availableRecipe[Main.numAvailableRecipes] = recipe.RecipeIndex;
-                    Main.numAvailableRecipes++;
                 }
             }
         );
