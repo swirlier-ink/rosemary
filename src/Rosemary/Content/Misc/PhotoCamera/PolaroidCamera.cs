@@ -199,6 +199,7 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
         }
 
         polaroid.OfCryptid = Images.CapturingCryptid;
+        polaroid.Original = true;
 
         player.QuickSpawnItem(player.GetSource_ItemUse(Item, nameof(PolaroidCamera)), queuedItem);
         Images.TrackImageDevelopment(polaroid);

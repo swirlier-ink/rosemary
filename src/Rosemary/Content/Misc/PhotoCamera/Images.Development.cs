@@ -69,7 +69,7 @@ public static partial class Images
     {
         foreach (var item in items)
         {
-            if (item.ModItem is not PolaroidItem polaroid)
+            if (item.ModItem is not PolaroidItem { Original: true } polaroid)
             {
                 continue;
             }

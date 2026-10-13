@@ -10,12 +10,14 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Terraria;
+using Terraria.GameContent;
 using Terraria.GameContent.UI.Chat;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 using Terraria.UI;
 using Terraria.UI.Chat;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Rosemary.Content.Misc;
 
@@ -25,7 +27,17 @@ public sealed class PolaroidItem : ModItem
 
     public override string LocalizationCategory => "Content.Misc";
 
-    public override bool CanStack(Item source) => ImageIdentifier == ((PolaroidItem)source.ModItem).ImageIdentifier;
+    public override bool CanStack(Item source)
+    {
+        if (source.ModItem is not PolaroidItem polaroid)
+        {
+            return false;
+        }
+
+        return ImageIdentifier == polaroid.ImageIdentifier
+            && !Original
+            && !polaroid.Original;
+    }
 
     public override bool CanResearch() => false;
 
@@ -47,6 +59,48 @@ public sealed class PolaroidItem : ModItem
         On_ItemTagHandler.ItemSnippet.OnHover += OnHover_DisableTooltip;
 
         IL_Recipe.UpdateRecipeList += UpdateRecipeList_AddClonePolaroids;
+
+        On_ItemSlot.Draw_SpriteBatch_ItemArray_int_int_Vector2_Color += Draw_CopyAsterisk;
+    }
+
+    private static void Draw_CopyAsterisk(On_ItemSlot.orig_Draw_SpriteBatch_ItemArray_int_int_Vector2_Color orig, SpriteBatch sb, Item[] inv, int context, int slot, Vector2 position, Color lightColor)
+    {
+        orig(sb, inv, context, slot, position, lightColor);
+
+        if (inv[slot].type != ModContent.ItemType<PolaroidItem>()
+         || inv[slot].ModItem is not PolaroidItem { Original: false })
+        {
+            return;
+        }
+
+        var color = Color.White;
+        if (lightColor != Color.Transparent)
+        {
+            color = lightColor;
+        }
+
+        var scale = Main.inventoryScale;
+
+        var font = FontAssets.MouseText.Value;
+
+        const string text = "*";
+
+        var boxSize = TextureAssets.InventoryBack.Value;
+
+        var textSize = font.MeasureString(text);
+
+        ChatManager.DrawColorCodedStringWithShadow(
+            sb,
+            font,
+            "*",
+            position + new Vector2(boxSize.Width - 5f, 5f) * scale,
+            color,
+            0f,
+            new Vector2(textSize.X, 0),
+            new Vector2(scale),
+            -1f,
+            scale
+        );
     }
 
     private static void UpdateRecipeList_AddClonePolaroids(ILContext il)
@@ -124,21 +178,22 @@ public sealed class PolaroidItem : ModItem
 
                     recipe.createItem = parent.Item.Clone();
                     recipe.createItem.stack = 1;
+                    ((PolaroidItem)recipe.createItem.ModItem).Original = false;
+
                     recipe.notDecraftable = true;
 
-                    // Polaroids should not be consumed
-                    recipe.AddConsumeIngredientCallback(
-                        (_, _, ref amount, _) =>
-                        {
-                            amount = 0;
-                        }
-                    );
+                    // Original polaroids should not be consumed
+                    recipe.AddConsumeIngredientCallback(DisableIngredientConsume);
 
                     var req = parent.Item.Clone();
                     req.stack = 1;
 
+                    // Not a requirement
+                    ((PolaroidItem)req.ModItem).Original = true;
+
                     recipe.requiredItem.Add(req);
 
+                    // Vanilla logic from `Recipe.CreateRequiredItemQuickLookups`
                     recipe.requiredItemQuickLookup = new Recipe.RequiredItemEntry[recipe.requiredItem.Count];
                     for (var j = 0; j < recipe.requiredItem.Count; j++)
                     {
@@ -156,6 +211,11 @@ public sealed class PolaroidItem : ModItem
                     }
 
                     recipe.Register();
+                }
+
+                static void DisableIngredientConsume(Recipe recipe, int type, ref int amount, bool isDecrafting)
+                {
+                    amount = 0;
                 }
             }
         );
@@ -202,6 +262,8 @@ public sealed class PolaroidItem : ModItem
 
     public uint Age;
 
+    public bool Original;
+
     public bool OfCryptid
     {
         get;
@@ -220,6 +282,7 @@ public sealed class PolaroidItem : ModItem
             clone.ImageIdentifier = ImageIdentifier;
             clone.Age = Age;
             clone.OfCryptid = OfCryptid;
+            clone.Original = Original;
         }
         return clone;
     }
@@ -229,6 +292,7 @@ public sealed class PolaroidItem : ModItem
         tag[nameof(ImageIdentifier)] = ImageIdentifier;
         tag[nameof(Age)] = Age;
         tag[nameof(OfCryptid)] = OfCryptid;
+        tag[nameof(Original)] = Original;
     }
 
     public override void LoadData(TagCompound tag)
@@ -236,6 +300,7 @@ public sealed class PolaroidItem : ModItem
         ImageIdentifier = tag.Get<string>(nameof(ImageIdentifier));
         Age = tag.Get<uint>(nameof(Age));
         OfCryptid = tag.Get<bool>(nameof(OfCryptid));
+        Original = tag.Get<bool>(nameof(Original));
     }
 
     public override void NetSend(BinaryWriter writer)
@@ -243,6 +308,7 @@ public sealed class PolaroidItem : ModItem
         writer.Write(ImageIdentifier);
         writer.Write(Age);
         writer.Write(OfCryptid);
+        writer.Write(Original);
     }
 
     public override void NetReceive(BinaryReader reader)
@@ -250,6 +316,7 @@ public sealed class PolaroidItem : ModItem
         ImageIdentifier = reader.ReadString();
         Age = reader.ReadUInt32();
         OfCryptid = reader.ReadBoolean();
+        Original = reader.ReadBoolean();
 
         Images.TrackImageDevelopment(this);
     }
