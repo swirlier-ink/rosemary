@@ -84,12 +84,24 @@ public sealed class PolaroidItem : ModItem
 
     public uint Age;
 
+    public bool OfCryptid
+    {
+        get;
+
+        set
+        {
+            Item.rare = value ? ItemRarityID.Orange : ItemRarityID.Blue;
+            field = value;
+        }
+    }
+
     public override ModItem Clone(Item newEntity)
     {
         var clone = (PolaroidItem)base.Clone(newEntity);
         {
             clone.ImageIdentifier = ImageIdentifier;
             clone.Age = Age;
+            clone.OfCryptid = OfCryptid;
         }
         return clone;
     }
@@ -98,24 +110,28 @@ public sealed class PolaroidItem : ModItem
     {
         tag[nameof(ImageIdentifier)] = ImageIdentifier;
         tag[nameof(Age)] = Age;
+        tag[nameof(OfCryptid)] = OfCryptid;
     }
 
     public override void LoadData(TagCompound tag)
     {
         ImageIdentifier = tag.Get<string>(nameof(ImageIdentifier));
         Age = tag.Get<uint>(nameof(Age));
+        OfCryptid = tag.Get<bool>(nameof(OfCryptid));
     }
 
     public override void NetSend(BinaryWriter writer)
     {
         writer.Write(ImageIdentifier);
         writer.Write(Age);
+        writer.Write(OfCryptid);
     }
 
     public override void NetReceive(BinaryReader reader)
     {
         ImageIdentifier = reader.ReadString();
         Age = reader.ReadUInt32();
+        OfCryptid = reader.ReadBoolean();
 
         Images.TrackImageDevelopment(this);
     }

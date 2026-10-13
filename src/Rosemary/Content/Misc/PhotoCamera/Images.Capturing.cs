@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Terraria;
-using Terraria.Audio;
 using Terraria.GameContent;
 using Terraria.GameInput;
 using Terraria.Graphics.Effects;
@@ -25,6 +24,8 @@ public static partial class Images
     private static float captureVfx;
 
     private static string identifierToCreate = string.Empty;
+
+    public static bool CapturingCryptid { get; private set; }
 
     private static readonly List<IPolaroidCameraFilter> base_filters =
     [
@@ -58,6 +59,8 @@ public static partial class Images
         identifierToCreate = CreateIdentifier();
 
         filters = base_filters.Concat(captureFilters).ToList();
+
+        CapturingCryptid = false;
 
         return identifierToCreate;
     }
@@ -198,6 +201,8 @@ public static partial class Images
         {
             // SoundEngine.PlaySound(Assets.Misc.Camera.Cryptid.Asset);
         }
+
+        CapturingCryptid = capturingCryptid;
 
         return;
 
