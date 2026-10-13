@@ -255,7 +255,7 @@ public sealed class DinosaurExtendoGrip : ModItem
 
         offset.Magnitude = MathF.Min(offset.Length(), 15f);
 
-        npc.velocity += offset;
+        npc.velocity += offset.RotatedByRandom(0.3f);
 
         return index;
     }
@@ -1178,13 +1178,16 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
         void DropItem()
         {
-            if (item.makeNPC > 0)
+            if (item.makeNPC > 0 && item.stack <= 30)
             {
                 var position = Projectile.Center;
 
                 if (player.whoAmI == Main.myPlayer)
                 {
-                    NPC.ReleaseNPC((int)position.X, (int)position.Y, item.makeNPC, item.placeStyle, player.whoAmI);
+                    for (var i = 0; i < item.stack; i++)
+                    {
+                        NPC.ReleaseNPC((int)position.X, (int)position.Y, item.makeNPC, item.placeStyle, player.whoAmI);
+                    }
 
                     item.TurnToAir();
                     item.Hidden = false;
