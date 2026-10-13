@@ -189,7 +189,7 @@ public static partial class Images
         var id = identifierToCreate;
 
         using var stream = new FileStream(GetImagePath(id), FileMode.Create);
-        target.SaveAsJpeg(stream, ScaledResolution, ScaledResolution);
+        target.SaveAsJpeg(stream, BASE_RESOLUTION, BASE_RESOLUTION);
         local_identifiers.Add(id);
 
         captureRequested = false;
