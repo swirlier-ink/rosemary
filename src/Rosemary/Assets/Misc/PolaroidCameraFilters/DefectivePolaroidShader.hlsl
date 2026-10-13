@@ -14,7 +14,6 @@ sampler2D Texture : register(s0);
 
 float4 DefectivePolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : TEXCOORD0) : COLOR0
 {
-    float4 amb = float4(1, 1, 1, 1) - pow(AmbientLight + float4(0.5, 0.5, 0.5, 0.5), 2) - float4(0.5, 0.5, 0.5, 0.5);
 
     float4 c = tex2D(Texture, uv);
     float4 color = c;
@@ -30,20 +29,23 @@ float4 DefectivePolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : TE
     // for each channel, we take the AmbientLight value (the amount of compenstatoin)
     // and then we reduce the two other channels by that amount
     // and take what we reduced and add it to the original channel
-    float2 rComp = c.gb * amb.r;
-    float2 gComp = c.rb * amb.g;
-    float2 bComp = c.rg * amb.b;
+    // the idea is that if there's a lot of red light the filter tries to "compensate" this
+    
+    
+    float rComp = c.r * AmbientLight.r * 2;
+    float gComp = c.g * AmbientLight.g * 2;
+    float bComp = c.b * AmbientLight.b * 2;
 
-    color.gb -= rComp;
-    color.r += (rComp.x + rComp.y) * 0.08;
-    color.rg -= bComp;
-    color.b += (bComp.x + bComp.y) * 0.2;
-    color.rb -= gComp;
-    color.g += (gComp.x + gComp.y) * 0.2;
+    color.gb += rComp;
+    color.r -= rComp * 2;
+    color.rg += bComp;
+    color.b -= bComp * 2;
+    color.rb += gComp;
+    color.g -= gComp * 2;
 
     
     // then we do "yellow compensation"
-    float yellowComp = 0.2 * ((amb.r + amb.g) * 1.0 - amb.b);
+    float yellowComp = 0.2 * ((AmbientLight.r + AmbientLight.g) * 1.0 - AmbientLight.b);
     color.rg *= float2(1.0 + yellowComp, 1.0 + yellowComp);
 
     // then we ad some nonexposure
@@ -55,7 +57,7 @@ float4 DefectivePolaroidShaderFragment(float4 baseColor : COLOR0, float2 uv : TE
     
     
     float3 chsl = RGBToHSL(color.rgb);
-    chsl.y *= 0.8 - (amb.b * 0.1);
+    chsl.y *= 0.8 - (AmbientLight.b * 0.1);
     float4 postAdj = float4(HSLToRGB(chsl), 1);
 
     postAdj = lerp(postAdj, TintPenis, TemperatureApplyAmount);
