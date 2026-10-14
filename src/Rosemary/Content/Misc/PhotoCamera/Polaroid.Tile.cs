@@ -35,7 +35,6 @@ public sealed class PolaroidTile : ModTile
             .CoordinateWidth(16)
             .CoordinateHeights(22)
             .CoordinatePadding(2)
-            .StyleMultiplier(3)
             .WaterPlacement(LiquidPlacement.NotAllowed)
             .LavaPlacement(LiquidPlacement.NotAllowed)
             .WaterDeath(false)
