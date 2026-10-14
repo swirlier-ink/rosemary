@@ -32,7 +32,7 @@ public sealed class PolaroidTile : ModTile
             .Origin(0, 0)
             .FlattenAnchors(true)
             .DrawStepDown(4)
-            .CoordinateWidth(20)
+            .CoordinateWidth(16)
             .CoordinateHeights(22)
             .CoordinatePadding(2)
             .StyleMultiplier(3)
