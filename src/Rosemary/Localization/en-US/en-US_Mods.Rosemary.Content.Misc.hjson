@@ -1,4 +1,4 @@
-DinosaurExtendoGrip: {
+﻿DinosaurExtendoGrip: {
 	DisplayName: Dino Grabber
 	Tooltip:
 		'''
@@ -16,6 +16,7 @@ PolaroidItem: {
 	DisplayName: Polaroid
 	Tooltip: ""
 }
+PolaroidTile.MapName: Polaroid
 
 PolaroidCamera: {
 	DisplayName: Printer Camera
