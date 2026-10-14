@@ -1,7 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using Terraria;
 using Terraria.DataStructures;
 using Terraria.Enums;
 using Terraria.ModLoader;
@@ -41,6 +41,11 @@ public sealed partial class PrimaryTileObjectDataBuilder(int type, TileObjectDat
         return new AlternateTileObjectDataBuilder(Type, baseStyle, cloneStyle ?? new TileObjectData(TileObjectData._baseObject), this);
     }
 
+    public AlternateTileObjectDataBuilder NewAlternateTileFromParent(int baseStyle)
+    {
+        return new AlternateTileObjectDataBuilder(Type, baseStyle, Data, this);
+    }
+
     public SubTileObjectDataBuilder NewSubTile(int startStyle, int styleCount, TileObjectData? cloneStyle = null) =>
         NewSubTile(Enumerable.Range(startStyle, startStyle + styleCount).ToArray(), cloneStyle);
 
@@ -51,17 +56,24 @@ public sealed partial class PrimaryTileObjectDataBuilder(int type, TileObjectDat
     {
         return new SubTileObjectDataBuilder(Type, styles, cloneStyle ?? new TileObjectData(TileObjectData._baseObject), this);
     }
+
+    public SubTileObjectDataBuilder NewSubTileFromParent(int startStyle, int styleCount) =>
+        NewSubTileFromParent(Enumerable.Range(startStyle, startStyle + styleCount).ToArray());
+
+    public SubTileObjectDataBuilder NewSubTileFromParent(params int[] styles)
+    {
+        return new SubTileObjectDataBuilder(Type, styles, Data, this);
+    }
 }
 
 public sealed partial class AlternateTileObjectDataBuilder(int type, int baseStyle, TileObjectData data, TileObjectDataBuilder parent)
-    : TileObjectDataBuilder(type, data, parent)
+    : TileObjectDataBuilder<AlternateTileObjectDataBuilder>(type, data, parent)
 {
-    public TileObjectDataBuilder Register()
+    public PrimaryTileObjectDataBuilder Register()
     {
-        if (Parent?.Data is not { } parentData)
-        {
-            return this;
-        }
+        Debug.Assert(Parent is not null);
+
+        var parentData = Parent.Data;
 
         Data.Calculate();
 
@@ -75,19 +87,18 @@ public sealed partial class AlternateTileObjectDataBuilder(int type, int baseSty
 
         parentData.Alternates.Add(Data);
 
-        return Parent;
+        return (PrimaryTileObjectDataBuilder)Parent;
     }
 }
 
 public sealed partial class SubTileObjectDataBuilder(int type, int[] styles, TileObjectData data, TileObjectDataBuilder parent)
-    : TileObjectDataBuilder(type, data, parent)
+    : TileObjectDataBuilder<SubTileObjectDataBuilder>(type, data, parent)
 {
-    public TileObjectDataBuilder Register()
+    public PrimaryTileObjectDataBuilder Register()
     {
-        if (Parent?.Data is not { } parentData)
-        {
-            return this;
-        }
+        Debug.Assert(Parent is not null);
+
+        var parentData = Parent.Data;
 
         Data.Calculate();
 
@@ -117,7 +128,7 @@ public sealed partial class SubTileObjectDataBuilder(int type, int[] styles, Til
             list[num] = Data;
         }
 
-        return Parent;
+        return (PrimaryTileObjectDataBuilder)Parent;
     }
 }
 
@@ -168,7 +179,6 @@ public static class TileObjectDataExtensions
                    .CoordinateHeights(coordinateHeights)
                    .CoordinateWidth(16)
                    .CoordinatePadding(2)
-                   .LavaDeath(true) // Should this be default?
                    .Register()
                    .Data;
 
