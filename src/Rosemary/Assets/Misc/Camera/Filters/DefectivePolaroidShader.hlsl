@@ -1,5 +1,5 @@
-#include "../../common.h"
-#include "../../colors.h"
+#include "../../../common.h"
+#include "../../../colors.h"
 
 
 float4 AmbientLight;

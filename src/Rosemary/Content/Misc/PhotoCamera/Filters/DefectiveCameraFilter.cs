@@ -14,7 +14,7 @@ public sealed class DefectiveCameraFilter : ModItem, IPolaroidCameraFilter
 {
 
     
-    public override string Texture => Assets.Misc.PolaroidCameraFilters.BlurFilter.KEY;
+    public override string Texture => Assets.Misc.Camera.Filters.BlurFilter.KEY;
 
     public override string LocalizationCategory => "Content.Misc.CameraFilters";
 
@@ -32,7 +32,7 @@ public sealed class DefectiveCameraFilter : ModItem, IPolaroidCameraFilter
         #endif
         
         
-        var shader = Assets.Misc.PolaroidCameraFilters.DefectivePolaroidShader.CreateDefectivePolaroidShader();
+        var shader = Assets.Misc.Camera.Filters.DefectivePolaroidShader.CreateDefectivePolaroidShader();
 
         shader.Parameters.TintPenis = Color.White.ToVector4();
         shader.Parameters.TemperatureApplyAmount = 0.01f;
@@ -76,7 +76,7 @@ public sealed class DefectiveCameraFilter : ModItem, IPolaroidCameraFilter
         sb.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointWrap, DepthStencilState.None, RasterizerState.CullNone, null);
         {
             // drawing webbing
-            var webbing = AssetReferences.Assets.Misc.PolaroidCameraFilters.DefectWebs.Asset.Value;
+            var webbing = AssetReferences.Assets.Misc.Camera.Filters.DefectWebs.Asset.Value;
             
             for (int i = 0; i < Main.rand.Next(0, 3); i++)
             {
