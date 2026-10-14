@@ -87,30 +87,32 @@ public static partial class Images
 
             static void ScanPlayer(Player player)
             {
-                ScanItems_Development(player.armor);
-                ScanItems_Development(player.dye);
+                var seen = new HashSet<string>();
+
+                ScanItems_Syncing(player.armor, seen);
+                ScanItems_Syncing(player.dye, seen);
 
                 // Technically overkill as polaroids cant really be in these slots, but
                 foreach (var loadout in player.Loadouts)
                 {
-                    ScanItems_Development(loadout.Armor);
-                    ScanItems_Development(loadout.Dye);
+                    ScanItems_Syncing(loadout.Armor, seen);
+                    ScanItems_Syncing(loadout.Dye, seen);
                 }
 
-                ScanItems_Development(player.inventory);
-                ScanItems_Development(player.miscEquips);
-                ScanItems_Development(player.miscDyes);
-                ScanItems_Development(player.bank);
-                ScanItems_Development(player.bank2);
-                ScanItems_Development(player.bank3);
-                ScanItems_Development(player.bank4);
+                ScanItems_Syncing(player.inventory, seen);
+                ScanItems_Syncing(player.miscEquips, seen);
+                ScanItems_Syncing(player.miscDyes, seen);
+                ScanItems_Syncing(player.bank, seen);
+                ScanItems_Syncing(player.bank2, seen);
+                ScanItems_Syncing(player.bank3, seen);
+                ScanItems_Syncing(player.bank4, seen);
             }
         }
     }
 
-    private static void ScanItems_Syncing(Chest chest) => ScanItems_Syncing(chest.item);
+    private static void ScanItems_Syncing(Chest chest, HashSet<string> seenIdentifiers) => ScanItems_Syncing(chest.item, seenIdentifiers);
 
-    private static void ScanItems_Syncing(Item[] items)
+    private static void ScanItems_Syncing(Item[] items, HashSet<string> seenIdentifiers)
     {
         foreach (var item in items)
         {
@@ -119,7 +121,8 @@ public static partial class Images
                 continue;
             }
 
-            if (multiplayer_host_identifiers.Contains(polaroid.ImageIdentifier))
+            if (multiplayer_host_identifiers.Contains(polaroid.ImageIdentifier)
+             || !seenIdentifiers.Add(polaroid.ImageIdentifier))
             {
                 continue;
             }
