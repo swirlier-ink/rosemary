@@ -1,4 +1,4 @@
-﻿DinosaurExtendoGrip: {
+DinosaurExtendoGrip: {
 	DisplayName: Dino Grabber
 	Tooltip:
 		'''
@@ -22,7 +22,7 @@ PolaroidCamera: {
 	Tooltip:
 		'''
 		Add filters with {InputTrigger_ToggleOrOpen}
-		''
+		'…That way, I can take a piece of you wherever I go…'
 		'''
 	FiltersHeader: Filters:
 }
@@ -30,31 +30,39 @@ PolaroidCamera: {
 CameraFilters: {
 	DyeCameraFilter: {
 		DisplayName: Dye Camera Lens
-		Tooltip: Add dyes with {InputTrigger_ToggleOrOpen}
+		Tooltip:
+			'''
+			Can be added to a camera with {InputTrigger_ToggleOrOpen}
+			Add dyes with {InputTrigger_ToggleOrOpen}
+			'''
 	}
 
 	GreenCameraFilter: {
 		DisplayName: Green Camera Lens
-		Tooltip: "'That one friend that's too green:'"
+		Tooltip:
+			'''
+			Can be added to a camera with {InputTrigger_ToggleOrOpen}
+			'That one friend that's too green:'
+			'''
 	}
 
 	HighContrastCameraFilter: {
 		DisplayName: High Contrast Camera Lens
-		Tooltip: ""
+		Tooltip: Can be added to a camera with {InputTrigger_ToggleOrOpen}
 	}
 
 	NoirCameraFilter: {
 		DisplayName: Noir Camera Lens
-		Tooltip: ""
+		Tooltip: Can be added to a camera with {InputTrigger_ToggleOrOpen}
 	}
 
 	SepiaCameraFilter: {
 		DisplayName: Sepia Camera Lens
-		Tooltip: ""
+		Tooltip: Can be added to a camera with {InputTrigger_ToggleOrOpen}
 	}
 
 	BlurCameraFilter: {
 		DisplayName: Blurry Camera Lens
-		Tooltip: ""
+		Tooltip: Can be added to a camera with {InputTrigger_ToggleOrOpen}
 	}
 }
