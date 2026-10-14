@@ -43,6 +43,7 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
     public override void SetStaticDefaults()
     {
         ItemID.Sets.HasRightClickSound[Type] = false;
+        ItemID.Sets.SortingPriorityToolsMisc[Type] = 14;
     }
 
     private const int use_time = 150;
@@ -198,6 +199,7 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
         }
 
         polaroid.OfCryptid = Images.CapturingCryptid;
+        polaroid.Original = true;
 
         player.QuickSpawnItem(player.GetSource_ItemUse(Item, nameof(PolaroidCamera)), queuedItem);
         Images.TrackImageDevelopment(polaroid);
