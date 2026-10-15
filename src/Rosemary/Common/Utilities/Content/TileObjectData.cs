@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -9,17 +10,30 @@ using Terraria.ObjectData;
 
 namespace Rosemary.Common;
 
-public abstract class TileObjectDataBuilder(int type, TileObjectData data, TileObjectDataBuilder? parent = null)
+public abstract class TileObjectDataBuilder
 {
-    protected TileObjectDataBuilder? Parent { get; init; } = parent;
+    public int Type { get; init; }
 
-    public int Type { get; init; } = type;
+    public TileObjectData Data { get; init; }
 
-    public TileObjectData Data { get; init; } = data;
+    protected TileObjectDataBuilder(int type, TileObjectData data)
+    {
+        Type = type;
+        Data = data;
+
+        Data.UsesCustomCanPlace = true;
+    }
+
+    public TileObjectData Calculate()
+    {
+        Data.Calculate();
+
+        return Data;
+    }
 }
 
-public abstract partial class TileObjectDataBuilder<T>(int type, TileObjectData data, TileObjectDataBuilder? parent = null)
-    : TileObjectDataBuilder(type, data, parent) where T : TileObjectDataBuilder<T>;
+public abstract partial class TileObjectDataBuilder<T>(int type, TileObjectData data)
+    : TileObjectDataBuilder(type, data) where T : TileObjectDataBuilder<T>;
 
 public sealed partial class PrimaryTileObjectDataBuilder(int type, TileObjectData data)
     : TileObjectDataBuilder<PrimaryTileObjectDataBuilder>(type, data)
@@ -36,84 +50,42 @@ public sealed partial class PrimaryTileObjectDataBuilder(int type, TileObjectDat
         return this;
     }
 
-    public AlternateTileObjectDataBuilder NewAlternateTile(int baseStyle, TileObjectData? cloneStyle = null)
+    public PrimaryTileObjectDataBuilder AddAlternateTile(int baseStyle, Func<TileObjectData, TileObjectData> func)
     {
-        return new AlternateTileObjectDataBuilder(Type, baseStyle, cloneStyle ?? new TileObjectData(TileObjectData._baseObject), this);
-    }
+        var alternate = func(Data);
 
-    public AlternateTileObjectDataBuilder NewAlternateTileFromParent(int baseStyle)
-    {
-        return new AlternateTileObjectDataBuilder(Type, baseStyle, Data, this);
-    }
-
-    public SubTileObjectDataBuilder NewSubTile(int startStyle, int styleCount, TileObjectData? cloneStyle = null) =>
-        NewSubTile(Enumerable.Range(startStyle, startStyle + styleCount).ToArray(), cloneStyle);
-
-    public SubTileObjectDataBuilder NewSubTile(params int[] styles) =>
-        NewSubTile(styles, null);
-
-    public SubTileObjectDataBuilder NewSubTile(int[] styles, TileObjectData? cloneStyle)
-    {
-        return new SubTileObjectDataBuilder(Type, styles, cloneStyle ?? new TileObjectData(TileObjectData._baseObject), this);
-    }
-
-    public SubTileObjectDataBuilder NewSubTileFromParent(int startStyle, int styleCount) =>
-        NewSubTileFromParent(Enumerable.Range(startStyle, startStyle + styleCount).ToArray());
-
-    public SubTileObjectDataBuilder NewSubTileFromParent(params int[] styles)
-    {
-        return new SubTileObjectDataBuilder(Type, styles, Data, this);
-    }
-}
-
-public sealed partial class AlternateTileObjectDataBuilder(int type, int baseStyle, TileObjectData data, TileObjectDataBuilder parent)
-    : TileObjectDataBuilder<AlternateTileObjectDataBuilder>(type, data, parent)
-{
-    public PrimaryTileObjectDataBuilder Register()
-    {
-        Debug.Assert(Parent is not null);
-
-        var parentData = Parent.Data;
-
-        Data.Calculate();
-
-        if (!parentData._hasOwnAlternates)
+        if (!Data._hasOwnAlternates)
         {
-            parentData.Alternates = [];
+            Data.Alternates = [];
         }
 
-        Data.Style = baseStyle;
-        Data._parent = parentData;
+        alternate.Style = baseStyle;
+        alternate._parent = Data;
 
-        parentData.Alternates.Add(Data);
+        Data.Alternates.Add(alternate);
 
-        return (PrimaryTileObjectDataBuilder)Parent;
+        return this;
     }
-}
 
-public sealed partial class SubTileObjectDataBuilder(int type, int[] styles, TileObjectData data, TileObjectDataBuilder parent)
-    : TileObjectDataBuilder<SubTileObjectDataBuilder>(type, data, parent)
-{
-    public PrimaryTileObjectDataBuilder Register()
+    public PrimaryTileObjectDataBuilder AddSubTile(int startStyle, int styleCount, Func<TileObjectData, TileObjectData> func) =>
+        AddSubTile(Enumerable.Range(startStyle, startStyle + styleCount).ToArray(), func);
+
+    public PrimaryTileObjectDataBuilder AddSubTile(int[] styles, Func<TileObjectData, TileObjectData> func)
     {
-        Debug.Assert(Parent is not null);
-
-        var parentData = Parent.Data;
-
-        Data.Calculate();
+        var subTile = func(Data);
 
         foreach (var num in styles)
         {
             List<TileObjectData?> list;
 
-            if (!parentData._hasOwnSubTiles)
+            if (!Data._hasOwnSubTiles)
             {
                 list = new List<TileObjectData?>(num + 1);
-                parentData.SubTiles = list;
+                Data.SubTiles = list;
             }
             else
             {
-                list = parentData.SubTiles;
+                list = Data.SubTiles;
             }
 
             if (list.Count <= num)
@@ -124,13 +96,19 @@ public sealed partial class SubTileObjectDataBuilder(int type, int[] styles, Til
                 }
             }
 
-            Data._parent = parentData;
-            list[num] = Data;
+            subTile._parent = Data;
+            list[num] = subTile;
         }
 
-        return (PrimaryTileObjectDataBuilder)Parent;
+        return this;
     }
 }
+
+public sealed partial class AlternateTileObjectDataBuilder(int type, TileObjectData data)
+    : TileObjectDataBuilder<AlternateTileObjectDataBuilder>(type, data);
+
+public sealed partial class SubTileObjectDataBuilder(int type, TileObjectData data)
+    : TileObjectDataBuilder<SubTileObjectDataBuilder>(type, data);
 
 public static class TileObjectDataExtensions
 {
@@ -150,6 +128,16 @@ public static class TileObjectDataExtensions
         public static PrimaryTileObjectDataBuilder NewTileData(int type, TileObjectData? cloneStyle = null)
         {
             return new PrimaryTileObjectDataBuilder(type, cloneStyle ?? new TileObjectData(TileObjectData._baseObject));
+        }
+
+        public static AlternateTileObjectDataBuilder NewAlternateTileData(TileObjectData? cloneStyle = null)
+        {
+            return new AlternateTileObjectDataBuilder(-1, cloneStyle ?? new TileObjectData(TileObjectData._baseObject));
+        }
+
+        public static SubTileObjectDataBuilder NewSubTileData(TileObjectData? cloneStyle = null)
+        {
+            return new SubTileObjectDataBuilder(-1, cloneStyle ?? new TileObjectData(TileObjectData._baseObject));
         }
 
         public static TileObjectData SizedStyle(int width, int height, Point origin, bool lastCoordinateHeight18 = false) =>

@@ -27,7 +27,6 @@ public sealed class PolaroidTile : ModTile
         TileID.Sets.FramesOnKillWall[Type] = true;
 
         this.NewTileData()
-            .UsesCustomCanPlace(true)
             .Size(1, 1)
             .Origin(0, 0)
             .FlattenAnchors(true)
@@ -39,16 +38,31 @@ public sealed class PolaroidTile : ModTile
             .LavaPlacement(LiquidPlacement.NotAllowed)
             .WaterDeath(false)
             .LavaDeath(true)
-                .NewAlternateTileFromParent(1)
-                .AnchorLeft(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
-                .Register()
-                .NewAlternateTileFromParent(2)
-                .AnchorRight(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
-                .Register()
-                .NewAlternateTileFromParent(3)
-                .RandomStyleRange(2)
-                .AnchorWall(true)
-                .Register()
+            .AddAlternateTile(
+                 1,
+                 tod =>
+                     TileObjectData
+                        .NewAlternateTileData(tod)
+                        .AnchorLeft(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
+                        .Calculate()
+             )
+            .AddAlternateTile(
+                 2,
+                 tod =>
+                     TileObjectData
+                        .NewAlternateTileData(tod)
+                        .AnchorRight(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
+                        .Calculate()
+             )
+            .AddAlternateTile(
+                 3,
+                 tod =>
+                     TileObjectData
+                        .NewAlternateTileData(tod)
+                        .RandomStyleRange(2)
+                        .AnchorWall(true)
+                        .Calculate()
+             )
             .AnchorBottom(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide, 1, 0))
             .Register();
 
