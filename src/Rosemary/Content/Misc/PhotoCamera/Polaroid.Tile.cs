@@ -5,7 +5,6 @@ using Terraria.DataStructures;
 using Terraria.Enums;
 using Terraria.ID;
 using Terraria.ModLoader;
-using Terraria.ObjectData;
 
 namespace Rosemary.Content.Misc;
 
@@ -34,6 +33,8 @@ public sealed class PolaroidTile : ModTile
             .CoordinateWidth(16)
             .CoordinateHeights(22)
             .CoordinatePadding(2)
+            .StyleWrapLimit(9)
+            .StyleHorizontal(true)
             .WaterPlacement(LiquidPlacement.NotAllowed)
             .LavaPlacement(LiquidPlacement.NotAllowed)
             .WaterDeath(false)

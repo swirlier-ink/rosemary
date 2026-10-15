@@ -120,6 +120,20 @@ public static class TileObjectDataExtensions
         }
     }
 
+    extension(TileObjectData data)
+    {
+        public TileObjectData Clone(bool full = false)
+        {
+            var @new = new TileObjectData(data);
+
+            if (full)
+            {
+                @new.FullCopyFrom(data);
+            }
+
+            return @new;
+        }
+    }
     extension(TileObjectData)
     {
         public static PrimaryTileObjectDataBuilder NewTileData(TileObjectData? cloneStyle = null) =>
@@ -127,17 +141,17 @@ public static class TileObjectDataExtensions
 
         public static PrimaryTileObjectDataBuilder NewTileData(int type, TileObjectData? cloneStyle = null)
         {
-            return new PrimaryTileObjectDataBuilder(type, cloneStyle ?? new TileObjectData(TileObjectData._baseObject));
+            return new PrimaryTileObjectDataBuilder(type, cloneStyle?.Clone() ?? new TileObjectData(TileObjectData._baseObject));
         }
 
         public static AlternateTileObjectDataBuilder NewAlternateTileData(TileObjectData? cloneStyle = null)
         {
-            return new AlternateTileObjectDataBuilder(-1, cloneStyle ?? new TileObjectData(TileObjectData._baseObject));
+            return new AlternateTileObjectDataBuilder(-1, cloneStyle?.Clone() ?? new TileObjectData(TileObjectData._baseObject));
         }
 
         public static SubTileObjectDataBuilder NewSubTileData(TileObjectData? cloneStyle = null)
         {
-            return new SubTileObjectDataBuilder(-1, cloneStyle ?? new TileObjectData(TileObjectData._baseObject));
+            return new SubTileObjectDataBuilder(-1, cloneStyle?.Clone() ?? new TileObjectData(TileObjectData._baseObject));
         }
 
         public static TileObjectData SizedStyle(int width, int height, Point origin, bool lastCoordinateHeight18 = false) =>
@@ -167,8 +181,7 @@ public static class TileObjectDataExtensions
                    .CoordinateHeights(coordinateHeights)
                    .CoordinateWidth(16)
                    .CoordinatePadding(2)
-                   .Register()
-                   .Data;
+                   .Calculate();
 
             return data;
         }
