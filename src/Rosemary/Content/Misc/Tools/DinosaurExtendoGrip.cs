@@ -194,7 +194,7 @@ public sealed class DinosaurExtendoGrip : ModItem
         {
             switch (source)
             {
-                case EntitySource_DropAsItem { Entity: Projectile { ModProjectile: DinosaurExtendoGripHoldout } proj, Context: nameof(DinosaurExtendoGrip) }:
+                case EntitySource_DropAsItem { Entity: Projectile { ModProjectile: DinosaurExtendoGripHoldout } proj, Context: $"{nameof(Rosemary)}: {nameof(DinosaurExtendoGrip)}" }:
                 {
                     SendGrabPacket(proj.owner);
                 }
@@ -901,7 +901,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                     return true;
                 }
 
-                index = Item.NewItem(Entity.GetSource_DropAsItem(nameof(DinosaurExtendoGrip)), Projectile.Center, item);
+                index = Item.NewItem(Entity.GetSource_DropAsItem($"{nameof(Rosemary)}: {nameof(DinosaurExtendoGrip)}"), Projectile.Center, item);
                 item.TurnToAir();
                 Main.item[index].whoAmI = index;
 

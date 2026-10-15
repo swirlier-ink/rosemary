@@ -227,7 +227,7 @@ public sealed class PolaroidItem : ModItem
 
         if (Main.HoverItem.ModItem is PolaroidItem polaroid)
         {
-            polaroid.showTooltip = false;
+            polaroid.ShowTooltip = false;
         }
     }
 
@@ -235,7 +235,7 @@ public sealed class PolaroidItem : ModItem
     {
         using var _ = Main.SettingsEnabled_OpaqueBoxBehindTooltips.Cache();
 
-        if (Main.HoverItem.ModItem is PolaroidItem { showTooltip: true })
+        if (Main.HoverItem.ModItem is PolaroidItem { ShowTooltip: true })
         {
             Main.SettingsEnabled_OpaqueBoxBehindTooltips = false;
         }
@@ -270,7 +270,7 @@ public sealed class PolaroidItem : ModItem
         Age = 0;
     }
 
-    private bool showTooltip = true;
+    public bool ShowTooltip = true;
 
     public string ImageIdentifier = string.Empty;
 
@@ -339,7 +339,7 @@ public sealed class PolaroidItem : ModItem
     // - Also make the image ONLY be requested if hovered in the inventory, not in world/chat
     public override bool PreDrawTooltip(ReadOnlyCollection<TooltipLine> lines, ref int x, ref int y)
     {
-        if (!showTooltip)
+        if (!ShowTooltip)
         {
             return true;
         }
