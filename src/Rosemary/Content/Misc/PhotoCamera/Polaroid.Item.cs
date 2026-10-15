@@ -253,7 +253,7 @@ public sealed class PolaroidItem : ModItem
         Item.width = 40;
         Item.height = 40;
 
-        Item.value = Item.buyPrice(gold: 1);
+        Item.value = 0;
 
         // Purely to prevent burning
         Item.rare = ItemRarityID.Blue;
