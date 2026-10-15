@@ -7,7 +7,6 @@ using Terraria.Enums;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
-using static Terraria.ModLoader.BackupIO;
 
 namespace Rosemary.Content.Misc;
 
@@ -94,6 +93,11 @@ public sealed class PolaroidTile : ModTile
             .Register();
 
         AddMapEntry(new Color(219, 237, 228), Mods.Rosemary.Content.Misc.PolaroidTile.MapName.GetText());
+    }
+
+    public override void NumDust(int i, int j, bool fail, ref int num)
+    {
+        num = 0;
     }
 
     public override void MouseOver(int i, int j)
