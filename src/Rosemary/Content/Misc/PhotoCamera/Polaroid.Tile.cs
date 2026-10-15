@@ -190,8 +190,4 @@ public sealed class PolaroidTileEntity : ModTileEntity
     {
         Polaroid = ItemIO.Receive(reader);
     }
-
-    public override void Update()
-    {
-    }
 }
