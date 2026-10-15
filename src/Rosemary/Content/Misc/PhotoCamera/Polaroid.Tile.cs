@@ -40,28 +40,19 @@ public sealed class PolaroidTile : ModTile
             .LavaDeath(true)
             .AddAlternateTile(
                  1,
-                 tod =>
-                     TileObjectData
-                        .NewAlternateTileData(tod)
-                        .AnchorLeft(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
-                        .Calculate()
+                 b => b.AnchorLeft(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
+                       .Calculate()
              )
             .AddAlternateTile(
                  2,
-                 tod =>
-                     TileObjectData
-                        .NewAlternateTileData(tod)
-                        .AnchorRight(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
-                        .Calculate()
+                 b => b.AnchorRight(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
+                       .Calculate()
              )
             .AddAlternateTile(
                  3,
-                 tod =>
-                     TileObjectData
-                        .NewAlternateTileData(tod)
-                        .RandomStyleRange(2)
-                        .AnchorWall(true)
-                        .Calculate()
+                 b => b.RandomStyleRange(2)
+                       .AnchorWall(true)
+                       .Calculate()
              )
             .AnchorBottom(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide, 1, 0))
             .Register();

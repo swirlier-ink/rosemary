@@ -50,9 +50,9 @@ public sealed partial class PrimaryTileObjectDataBuilder(int type, TileObjectDat
         return this;
     }
 
-    public PrimaryTileObjectDataBuilder AddAlternateTile(int baseStyle, Func<TileObjectData, TileObjectData> func)
+    public PrimaryTileObjectDataBuilder AddAlternateTile(int baseStyle, Func<AlternateTileObjectDataBuilder, TileObjectData> func)
     {
-        var alternate = func(Data);
+        var alternate = func(TileObjectData.NewAlternateTileData(Data));
 
         if (!Data._hasOwnAlternates)
         {
@@ -67,12 +67,12 @@ public sealed partial class PrimaryTileObjectDataBuilder(int type, TileObjectDat
         return this;
     }
 
-    public PrimaryTileObjectDataBuilder AddSubTile(int startStyle, int styleCount, Func<TileObjectData, TileObjectData> func) =>
+    public PrimaryTileObjectDataBuilder AddSubTile(int startStyle, int styleCount, Func<SubTileObjectDataBuilder, TileObjectData> func) =>
         AddSubTile(Enumerable.Range(startStyle, startStyle + styleCount).ToArray(), func);
 
-    public PrimaryTileObjectDataBuilder AddSubTile(int[] styles, Func<TileObjectData, TileObjectData> func)
+    public PrimaryTileObjectDataBuilder AddSubTile(int[] styles, Func<SubTileObjectDataBuilder, TileObjectData> func)
     {
-        var subTile = func(Data);
+        var subTile = func(TileObjectData.NewSubTileData(Data));
 
         foreach (var num in styles)
         {
