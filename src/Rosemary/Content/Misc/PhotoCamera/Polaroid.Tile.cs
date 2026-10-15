@@ -29,33 +29,34 @@ public sealed class PolaroidTile : ModTile
             .Size(1, 1)
             .Origin(0, 0)
             .FlattenAnchors(true)
-            .DrawStepDown(4)
             .CoordinateWidth(16)
             .CoordinateHeights(22)
             .CoordinatePadding(2)
-            .StyleWrapLimit(9)
+            .StyleWrapLimit(8)
+            .RandomStyleRange(2)
             .StyleHorizontal(true)
             .WaterPlacement(LiquidPlacement.NotAllowed)
             .LavaPlacement(LiquidPlacement.NotAllowed)
             .WaterDeath(false)
             .LavaDeath(true)
             .AddAlternateTile(
-                 1,
+                 2,
+                 b => b.DrawYOffset(-2)
+                       .AnchorWall(true)
+                       .Calculate()
+             )
+            .AddAlternateTile(
+                 4,
                  b => b.AnchorLeft(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
                        .Calculate()
              )
             .AddAlternateTile(
-                 2,
+                 6,
                  b => b.AnchorRight(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide | AnchorType.Tree | AnchorType.AlternateTile, 1, 0))
                        .Calculate()
              )
-            .AddAlternateTile(
-                 3,
-                 b => b.RandomStyleRange(2)
-                       .AnchorWall(true)
-                       .Calculate()
-             )
             .AnchorBottom(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide, 1, 0))
+            .DrawYOffset(-4)
             .Register();
 
         AddMapEntry(new Color(219, 237, 228), Mods.Rosemary.Content.Misc.PolaroidTile.MapName.GetText());
