@@ -1,4 +1,4 @@
-DinosaurExtendoGrip: {
+﻿DinosaurExtendoGrip: {
 	DisplayName: Dino Grabber
 	Tooltip:
 		'''
@@ -67,4 +67,9 @@ CameraFilters: {
 		DisplayName: Blurry Camera Lens
 		Tooltip: Can be added to a camera with {InputTrigger_ToggleOrOpen}
 	}
+}
+
+ConspiratorialWallItem: {
+	DisplayName: Cork Board Wall
+	Tooltip: ""
 }
