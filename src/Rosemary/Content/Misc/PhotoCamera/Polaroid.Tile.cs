@@ -74,7 +74,7 @@ public sealed class PolaroidTile : ModTile
             .HookPostPlaceMyPlayer(ModContent.GetInstance<PolaroidTileEntity>().PlacePolaroidHook)
             .AddAlternateTile(
                  2,
-                 b => b.DrawYOffset(-2)
+                 b => b.DrawYOffset(2)
                        .AnchorWall(true)
                        .Calculate()
              )
@@ -89,7 +89,7 @@ public sealed class PolaroidTile : ModTile
                        .Calculate()
              )
             .AnchorBottom(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide, 1, 0))
-            .DrawYOffset(-4)
+            .DrawYOffset(2)
             .Register();
 
         AddMapEntry(new Color(219, 237, 228), Mods.Rosemary.Content.Misc.PolaroidTile.MapName.GetText());
