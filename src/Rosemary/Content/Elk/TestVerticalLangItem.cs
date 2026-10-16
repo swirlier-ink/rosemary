@@ -47,9 +47,6 @@ public sealed class TestVerticalLangItem : ModItem
         Item.value = Item.buyPrice(gold: 1);
         Item.UseSound = SoundID.Item1;
 
-        // fuck me i guess
-        Item.AllowReforgeForStackableItem = true;
-
         Item.rare = ItemRarityID.Purple;
     }
 }

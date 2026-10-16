@@ -204,6 +204,8 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
         player.QuickSpawnItem(player.GetSource_ItemUse(Item, nameof(PolaroidCamera)), queuedItem);
         Images.TrackImageDevelopment(polaroid);
 
+        new Images.SendImageToHostPacket(polaroid.ImageIdentifier).Send(PacketDestination.Broadcast);
+
         queuedItem = null;
     }
 

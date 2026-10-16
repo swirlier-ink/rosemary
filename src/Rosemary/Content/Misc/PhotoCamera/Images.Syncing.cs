@@ -145,6 +145,11 @@ public static partial class Images
 
             var path = GetImagePath(Identifier);
 
+            if (!File.Exists(path))
+            {
+                return;
+            }
+
             var info = new FileInfo(path);
 
             // 2mb limit, overkill?
