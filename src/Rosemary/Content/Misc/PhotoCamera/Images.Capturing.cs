@@ -20,10 +20,11 @@ public static partial class Images
 
     private static int ScaledResolution => (int)(BASE_RESOLUTION * MathF.Clamp(Main.GameZoomTarget, 1f, 2f));
     
-    private static bool captureRequested;
-    private static float captureVfx;
+    private static float captureAreaVisualTimer;
 
     private static string identifierToCreate = string.Empty;
+
+    public static bool CaptureRequested { get; private set; }
 
     public static bool CapturingCryptid { get; private set; }
 
@@ -53,14 +54,13 @@ public static partial class Images
 
     public static string Capture(List<IPolaroidCameraFilter> captureFilters)
     {
-        captureVfx = 1f;
-        captureRequested = true;
+        CaptureRequested = true;
+        CapturingCryptid = false;
+
+        captureAreaVisualTimer = 1f;
 
         identifierToCreate = CreateIdentifier();
-
         filters = base_filters.Concat(captureFilters).ToList();
-
-        CapturingCryptid = false;
 
         return identifierToCreate;
     }
@@ -105,11 +105,11 @@ public static partial class Images
     [ModSystemHooks.PostUpdateEverything]
     private static void PostUpdate_Capturing()
     {
-        captureVfx = MathF.Max(0, captureVfx - 0.1f);
+        captureAreaVisualTimer = MathF.Max(0, captureAreaVisualTimer - 0.1f);
     }
 
     [ModSystemHooks.RequiresScreenTarget]
-    private static bool RequiresScreenTarget() => captureRequested;
+    private static bool RequiresScreenTarget() => CaptureRequested;
 
     public static Rectangle GetCaptureArea()
     {
@@ -172,10 +172,10 @@ public static partial class Images
 
         DrawCameraOverlay(sb, frame);
 
-        if (!captureRequested
+        if (!CaptureRequested
          || string.IsNullOrEmpty(identifierToCreate))
         {
-            captureRequested = false;
+            CaptureRequested = false;
             return;
         }
 
@@ -195,7 +195,7 @@ public static partial class Images
         target.SaveAsJpeg(stream, BASE_RESOLUTION, BASE_RESOLUTION);
         local_identifiers.Add(id);
 
-        captureRequested = false;
+        CaptureRequested = false;
 
         if (capturingCryptid)
         {
@@ -291,7 +291,7 @@ public static partial class Images
 
             DrawFrame();
 
-            sb.Draw(texture, frame, Color.White * captureVfx);
+            sb.Draw(texture, frame, Color.White * captureAreaVisualTimer);
         }
         sb.End();
 
@@ -301,7 +301,7 @@ public static partial class Images
         {
             const float off = 10f;
 
-            var pulse = (1f - MathF.Pow(1f - captureVfx, 3f)) * off;
+            var pulse = (1f - MathF.Pow(1f - captureAreaVisualTimer, 3f)) * off;
 
             var size = frame;
 

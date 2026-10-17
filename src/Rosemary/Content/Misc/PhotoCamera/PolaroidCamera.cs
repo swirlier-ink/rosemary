@@ -192,6 +192,12 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
             return;
         }
 
+        // Only true if EndCapture has not run up to this point, shouldn't happen
+        if (Images.CaptureRequested)
+        {
+            return;
+        }
+
         if (player.itemAnimation > 1
          || queuedItem?.ModItem is not PolaroidItem polaroid)
         {
