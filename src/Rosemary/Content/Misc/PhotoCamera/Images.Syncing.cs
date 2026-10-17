@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -10,21 +12,31 @@ namespace Rosemary.Content.Misc;
 
 public static partial class Images
 {
-    /*
-     * Client Joining:
-     * > Sends a packet to request the server for the identifiers it has, to prevent sending excess data.
-     * > Server receives the packet and sends it back to the caller with the identifiers it has.
-     * > Client receives the identifiers, and sends a different packet with the image data of all the images it doesn't have, (how do we best limit this?)
-     *
-     * New Photo Being Taken:
-     * > Sends a packet to the server with the image data.
-     * (TODO: Should the host of the server in a non-dedicated server context be told it has the images locally? If so, how?)
-    */
-
-    public record struct HostIdentifiersPacket(int WhoAmI, bool Asking, bool SendImages) : IPacket<HostIdentifiersPacket>
+    /// <summary>
+    ///     Updates the host's image identifiers and the identifiers that clients think the host has.<br/><br/>
+    ///
+    ///     <b>Client joining world:</b>
+    ///     <list type="bullet">
+    ///         <item><description>
+    ///             Sends this packet with <paramref name="Asking"/> and
+    ///             <paramref name="SendImages"/> set to <see langword="true"/>.
+    ///         </description></item>
+    ///         <item><description>
+    ///             Host (server) receives the packet, and returns it to the
+    ///             sender with <paramref name="Asking"/> set to <see langword="false"/>,
+    ///             which writes all the server's local identifiers.
+    ///         </description></item>
+    ///         <item><description>
+    ///             Client receives the host's identifiers and writes them to <see cref="multiplayer_host_identifiers"/>;<br/>
+    ///             if <paramref name="SendImages"/> is <see langword="true"/> then the client will
+    ///             scan its personal inventories for polaroids with identifiers that the host doesn't have,
+    ///             then sends them with <see cref="Images.SendImage"/>.
+    ///         </description></item>
+    ///     </list>
+    /// </summary>
+    private record struct HostIdentifiersPacket(int WhoAmI, bool Asking, bool SendImages) : IPacket<HostIdentifiersPacket>
     {
-        public HostIdentifiersPacket() : this(-1, false, false)
-        { }
+        public HostIdentifiersPacket() : this(-1, false, false) { }
 
         public void Write(BinaryWriter writer)
         {
@@ -90,10 +102,10 @@ public static partial class Images
             {
                 var seen = new HashSet<string>();
 
+                // Technically overkill as polaroids cant really be in these slots, but
                 ScanItems_Syncing(player.armor, seen);
                 ScanItems_Syncing(player.dye, seen);
 
-                // Technically overkill as polaroids cant really be in these slots, but
                 foreach (var loadout in player.Loadouts)
                 {
                     ScanItems_Syncing(loadout.Armor, seen);
@@ -228,6 +240,8 @@ public static partial class Images
             return;
         }
 
+        incoming_images.Clear();
+
         new HostIdentifiersPacket(Main.myPlayer, true, true).Send(PacketDestination.Broadcast);
     }
 
@@ -238,6 +252,8 @@ public static partial class Images
         {
             return;
         }
+
+        incoming_images.Clear();
 
         multiplayer_host_identifiers.Clear();
         waiting_on_identifiers.Clear();
@@ -266,6 +282,15 @@ public static partial class Images
         }
     }
 
+    /// <summary>
+    ///     Sends the image with identifier <paramref name="id"/> to the target client <paramref name="toWho"/>.
+    /// </summary>
+    /// <param name="id">
+    ///     Identifier of an image that exists locally.
+    /// </param>
+    /// <param name="toWho">
+    ///     Target client, should be <c>-1</c> being run on a client, (as clients should only send images to the host.)
+    /// </param>
     public static void SendImage(string id, int toWho)
     {
         if (Main.netMode == NetmodeID.SinglePlayer)
@@ -288,13 +313,22 @@ public static partial class Images
             return;
         }
 
-        const ushort max_bytes_per_packet = (ushort)(ushort.MaxValue * 0.75f);
+        const ushort max_bytes = ushort.MaxValue;
+
+        var stringSize = 5
+                       + Encoding.UTF8.GetByteCount(id);
+
+        var segmentByteCount = max_bytes
+                             - stringSize
+                             - sizeof(int) // Total length
+                             - sizeof(int) // Segment length
+                             - 128;        // Padding because I don't trust something to not go wrong
 
         var bytes = File.ReadAllBytes(path);
 
-        for (var i = 0; i < bytes.Length; i += max_bytes_per_packet)
+        for (var i = 0; i < bytes.Length; i += segmentByteCount)
         {
-            var segment = bytes.Skip(i).Take(max_bytes_per_packet).ToArray();
+            var segment = bytes.Skip(i).Take(segmentByteCount).ToArray();
 
             new SendImageSegmentPacket(id, bytes.Length, segment).Send(PacketDestination.Only(toWho));
         }
