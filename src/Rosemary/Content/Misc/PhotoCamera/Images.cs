@@ -77,7 +77,7 @@ public static partial class Images
          && multiplayer_host_identifiers.Contains(id)
          && waiting_on_identifiers.Add(id))
         {
-            new ImageFromHostPacket(Main.myPlayer, true, id).Send();
+            new RequestImageFromHostPacket(Main.myPlayer, id).Send(PacketDestination.Broadcast);
         }
 
         return false;

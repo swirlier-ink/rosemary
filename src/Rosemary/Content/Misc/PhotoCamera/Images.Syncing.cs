@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Terraria;
@@ -20,7 +21,7 @@ public static partial class Images
      * (TODO: Should the host of the server in a non-dedicated server context be told it has the images locally? If so, how?)
     */
 
-    private record struct HostIdentifiersPacket(int WhoAmI, bool Asking, bool SendImages) : IPacket<HostIdentifiersPacket>
+    public record struct HostIdentifiersPacket(int WhoAmI, bool Asking, bool SendImages) : IPacket<HostIdentifiersPacket>
     {
         public HostIdentifiersPacket() : this(-1, false, false)
         { }
@@ -127,173 +128,84 @@ public static partial class Images
                 continue;
             }
 
-            new SendImageToHostPacket(polaroid.ImageIdentifier).Send(PacketDestination.Broadcast);
+            SendImage(polaroid.ImageIdentifier, -1);
         }
     }
 
-    private record struct SendImageToHostPacket(string Identifier) : IPacket<SendImageToHostPacket>
+    private record struct RequestImageFromHostPacket(int FromWho, string Identifier) : IPacket<RequestImageFromHostPacket>
     {
-        public SendImageToHostPacket() : this(string.Empty)
-        { }
+        public RequestImageFromHostPacket() : this(-1, string.Empty) { }
 
         public void Write(BinaryWriter writer)
         {
-            if (!Directory.Exists(ImageSavesPath))
-            {
-                return;
-            }
-
-            var path = GetImagePath(Identifier);
-
-            if (!File.Exists(path))
-            {
-                return;
-            }
-
-            var info = new FileInfo(path);
-
-            // 2mb limit, overkill?
-            if (info.Length >= 2 * 1024 * 1024)
-            {
-                writer.Write(false);
-
-                return;
-            }
-
-            writer.Write(true);
-
+            writer.Write(FromWho);
             writer.Write(Identifier);
-
-            writer.Write(info.Length);
-            writer.Write(File.ReadAllBytes(path));
-        }
-
-        public static void Receive(BinaryReader reader, int sender)
-        {
-            if (Main.netMode != NetmodeID.Server)
-            {
-                return;
-            }
-
-            if (!reader.ReadBoolean())
-            {
-                return;
-            }
-
-            var id = reader.ReadString();
-
-            var length = reader.ReadInt64();
-
-            var bytes = new byte[length];
-
-            for (var i = 0; i < length; i++)
-            {
-                bytes[i] = reader.ReadByte();
-            }
-
-            var path = GetImagePath(id);
-
-            if (File.Exists(path))
-            {
-                local_identifiers.Add(id);
-                new HostIdentifiersPacket(-1, false, false).Send(PacketDestination.Broadcast);
-
-                return;
-            }
-
-            File.WriteAllBytesAsync(path, bytes).ContinueWith(_ => { local_identifiers.Add(id); });
-
-            new HostIdentifiersPacket(-1, false, false).Send(PacketDestination.Broadcast);
-        }
-    }
-
-    private record struct ImageFromHostPacket(int WhoAmI, bool Asking, string Identifier) : IPacket<ImageFromHostPacket>
-    {
-        public ImageFromHostPacket() : this(-1, false, string.Empty)
-        { }
-
-        public void Write(BinaryWriter writer)
-        {
-            writer.Write(WhoAmI);
-
-            writer.Write(Asking);
-
-            writer.Write(Identifier);
-
-            if (Asking)
-            {
-                return;
-            }
-
-            var path = GetImagePath(Identifier);
-
-            if (!File.Exists(path))
-            {
-                writer.Write(false);
-
-                return;
-            }
-
-            var info = new FileInfo(path);
-
-            // 1mb limit, overkill?
-            if (info.Length >= 1024 * 1024)
-            {
-                writer.Write(false);
-
-                return;
-            }
-
-            writer.Write(true);
-
-            writer.Write(Identifier);
-
-            writer.Write(info.Length);
-            writer.Write(File.ReadAllBytes(path));
         }
 
         public static void Receive(BinaryReader reader, int sender)
         {
             sender = reader.ReadInt32();
-
-            var asking = reader.ReadBoolean();
-
             var id = reader.ReadString();
 
-            if (asking)
+            SendImage(id, sender);
+        }
+    }
+
+    private record struct SendImageSegmentPacket(string Identifier, int TotalSize, byte[] Segment) : IPacket<SendImageSegmentPacket>
+    {
+        public SendImageSegmentPacket() : this(string.Empty, -1, []) { }
+
+        public void Write(BinaryWriter writer)
+        {
+            writer.Write(Identifier);
+            writer.Write(TotalSize);
+            writer.Write(Segment.Length);
+            writer.Write(Segment);
+        }
+
+        public static void Receive(BinaryReader reader, int sender)
+        {
+            var id = reader.ReadString();
+
+            var totalCount = reader.ReadInt32();
+
+            var count = reader.ReadInt32();
+            var bytes = reader.ReadBytes(count);
+
+            if (!incoming_images.TryGetValue(id, out var info))
             {
-                new ImageFromHostPacket(sender, false, id).Send(PacketDestination.Only(sender));
-                return;
+                info = incoming_images[id] = (new byte[totalCount], new(0));
             }
 
-            if (!reader.ReadBoolean())
+            Array.Copy(bytes, 0, info.Data, info.Index.Value, bytes.Length);
+
+            info.Index.Value += count;
+
+            if (info.Index.Value < totalCount)
             {
                 return;
-            }
-
-            var length = reader.ReadInt64();
-
-            var bytes = new byte[length];
-
-            for (var i = 0; i < length; i++)
-            {
-                bytes[i] = reader.ReadByte();
             }
 
             var path = GetImagePath(id);
 
-            if (File.Exists(path))
-            {
-                local_identifiers.Add(id);
-                waiting_on_identifiers.Remove(id);
-                new HostIdentifiersPacket(-1, false, false).Send(PacketDestination.Broadcast);
+            File.WriteAllBytesAsync(path, bytes).ContinueWith(
+                _ =>
+                {
+                    local_identifiers.Add(id);
+                    waiting_on_identifiers.Remove(id);
 
-                return;
-            }
+                    if (Main.netMode != NetmodeID.Server)
+                    {
+                        return;
+                    }
 
-            File.WriteAllBytesAsync(path, bytes).ContinueWith(_ => { local_identifiers.Add(id); waiting_on_identifiers.Remove(id); });
+                    new HostIdentifiersPacket(-1, false, false).Send(PacketDestination.Broadcast);
+                }
+            );
         }
     }
+
+    private static readonly Dictionary<string, (byte[] Data, Ref<int> Index)> incoming_images = [];
 
     // TODO: How should we handle images being deleted or otherwise removed past load-time?
     private static readonly HashSet<string> local_identifiers = [];
@@ -351,6 +263,40 @@ public static partial class Images
             {
                 local_identifiers.Add(Path.GetFileNameWithoutExtension(file));
             }
+        }
+    }
+
+    public static void SendImage(string id, int toWho)
+    {
+        if (Main.netMode == NetmodeID.SinglePlayer)
+        {
+            return;
+        }
+
+        var path = GetImagePath(id);
+
+        if (!File.Exists(path))
+        {
+            return;
+        }
+
+        var info = new FileInfo(path);
+
+        // 1mb limit, overkill?
+        if (info.Length >= 1024 * 1024)
+        {
+            return;
+        }
+
+        const ushort max_bytes_per_packet = (ushort)(ushort.MaxValue * 0.75f);
+
+        var bytes = File.ReadAllBytes(path);
+
+        for (var i = 0; i < bytes.Length; i += max_bytes_per_packet)
+        {
+            var segment = bytes.Skip(i).Take(max_bytes_per_packet).ToArray();
+
+            new SendImageSegmentPacket(id, bytes.Length, segment).Send(PacketDestination.Only(toWho));
         }
     }
 }

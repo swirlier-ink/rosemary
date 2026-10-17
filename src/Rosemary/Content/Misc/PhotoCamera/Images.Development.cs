@@ -83,10 +83,7 @@ public static partial class Images
     [ModSystemHooks.PostUpdateEverything]
     private static void PostUpdate_Development()
     {
-        if (Main.netMode == NetmodeID.MultiplayerClient)
-        {
-            return;
-        }
+        // TODO: Handle multiplayer cases correctly
 
         foreach (var polaroid in polaroids_to_update)
         {
