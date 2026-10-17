@@ -188,7 +188,7 @@ public static partial class Images
 
             var path = GetImagePath(id);
 
-            File.WriteAllBytesAsync(path, bytes).ContinueWith(
+            File.WriteAllBytesAsync(path, info.Data).ContinueWith(
                 _ =>
                 {
                     local_identifiers.Add(id);
