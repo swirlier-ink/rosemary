@@ -335,8 +335,6 @@ public sealed class PolaroidItem : ModItem
         Images.TrackImageDevelopment(this);
     }
 
-    // TODO:
-    // - Also make the image ONLY be requested if hovered in the inventory, not in world/chat
     public override bool PreDrawTooltip(ReadOnlyCollection<TooltipLine> lines, ref int x, ref int y)
     {
         if (!ShowTooltip)

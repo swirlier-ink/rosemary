@@ -6,6 +6,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Terraria;
 using Terraria.ID;
+using Terraria.ModLoader;
 
 namespace Rosemary.Content.Misc;
 
@@ -16,6 +17,8 @@ public static partial class Images
     public static string ImageSavesPath => Path.Combine(RosemaryIO.SavePath, "polaroids");
 
     private static readonly Dictionary<string, Texture2D> image_cache = [];
+
+    private static Mod Mod => ModContent.GetInstance<ModImpl>();
 
     [OnUnload]
     private static void Unload()
@@ -46,6 +49,13 @@ public static partial class Images
         return path;
     }
 
+    /// <summary>
+    ///     Attempts to grab the image with identifier <paramref name="id"/>
+    ///     from either local files, or request it from the host (server) in multiplayer.
+    /// </summary>
+    /// <returns>
+    ///     <see langword="true"/> if the image was obtained successfully.
+    /// </returns>
     public static bool TryRequestImage(string id, [NotNullWhen(true)] out Texture2D? image)
     {
         image = null;
@@ -60,17 +70,16 @@ public static partial class Images
             return true;
         }
 
-        if (local_identifiers.Contains(id) && Directory.Exists(ImageSavesPath))
+        if (local_identifiers.Contains(id))
         {
-            var path = GetImagePath(id);
+            if (LoadLocalImage(out image))
+            {
+                return true;
+            }
 
-            using var stream = File.OpenRead(path);
-
-            image = Texture2D.FromStream(Main.graphics.GraphicsDevice, stream);
-
-            image_cache.Add(id, image);
-
-            return true;
+            // If the file doesn't exist, or otherwise shouldn't be
+            // loaded (e.g. egregious file size,) remove it from the local identifiers
+            local_identifiers.Remove(id);
         }
 
         if (Main.netMode == NetmodeID.MultiplayerClient
@@ -81,5 +90,41 @@ public static partial class Images
         }
 
         return false;
+
+        bool LoadLocalImage([NotNullWhen(true)] out Texture2D? image)
+        {
+            image = null;
+
+            var path = GetImagePath(id);
+            
+            if (!File.Exists(path))
+            {
+                return false;
+            }
+
+            var info = new FileInfo(path);
+
+            // 1mb limit, overkill?
+            if (info.Length >= 1024 * 1024)
+            {
+                return false;
+            }
+
+            try
+            {
+                using var stream = File.OpenRead(path);
+                image = Texture2D.FromStream(Main.graphics.GraphicsDevice, stream, BASE_RESOLUTION, BASE_RESOLUTION, false);
+
+                image_cache.Add(id, image);
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                Mod.Logger.Warn($"Failed to load polaroid image with identifier \"{id}\": {e}");
+            }
+
+            return false;
+        }
     }
 }

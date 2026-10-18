@@ -6,17 +6,12 @@ using System;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ID;
-using Terraria.ModLoader;
-using static Terraria.GameContent.Animations.Actions.Sprites;
-using static Terraria.GameContent.Skies.StardustSky;
 
 namespace Rosemary.Content.Misc;
 
 public static partial class Images
 {
     private static bool[] hiddenOnCamera = [];
-
-    private static Mod Mod => ModContent.GetInstance<ModImpl>();
 
     [ModSystemHooks.ResizeArrays]
     private static void ResizeArrays()
@@ -43,13 +38,15 @@ public static partial class Images
     [OnLoad]
     private static void Load_Special()
     {
-        // This same effect could be achieved via GlobalNPC or s
+        // This same effect could be achieved via GlobalNPC.Pre/PostDraw,
+        // but I imagine it'd be more difficult to manage a scissor rectangle between Pre/PostDraw;
+        // additionally makes drawing the NPC multiple times more annoying.
         On_Main.DrawNPCDirect += DrawNPCDirect_Exclusions;
     }
 
     private static void DrawNPCDirect_Exclusions(On_Main.orig_DrawNPCDirect orig, Main self, SpriteBatch sb, NPC npc, bool behindTiles, Vector2 screenPos)
     {
-        if (!captureRequested
+        if (!CaptureRequested
          || !NPCID.Sets.HiddenOnCamera[npc.type])
         {
             orig(self, sb, npc, behindTiles, screenPos);
