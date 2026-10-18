@@ -186,14 +186,14 @@ public static partial class Images
 
             if (!incoming_images.TryGetValue(id, out var info))
             {
-                info = incoming_images[id] = (new byte[totalCount], new(0));
+                info = incoming_images[id] = new IncomingImageData(totalCount);
             }
 
-            Array.Copy(bytes, 0, info.Data, info.Index.Value, bytes.Length);
+            Array.Copy(bytes, 0, info.Data, info.Index, bytes.Length);
 
-            info.Index.Value += count;
+            info.Index += count;
 
-            if (info.Index.Value < totalCount)
+            if (info.Index < totalCount)
             {
                 return;
             }
@@ -217,7 +217,14 @@ public static partial class Images
         }
     }
 
-    private static readonly Dictionary<string, (byte[] Data, Ref<int> Index)> incoming_images = [];
+    private sealed class IncomingImageData(int length)
+    {
+        public readonly byte[] Data = new byte[length];
+
+        public int Index = 0;
+    }
+
+    private static readonly Dictionary<string, IncomingImageData> incoming_images = [];
 
     // TODO: How should we handle images being deleted or otherwise removed past load-time?
     private static readonly HashSet<string> local_identifiers = [];
