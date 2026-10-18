@@ -8,7 +8,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices.JavaScript;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;

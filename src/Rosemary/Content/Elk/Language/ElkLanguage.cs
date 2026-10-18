@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Terraria;
+
 // ReSharper disable ConvertToExtensionBlock
 
 namespace Rosemary.Content.Elk;

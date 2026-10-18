@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Terraria;
+﻿using Terraria;
 using Terraria.GameContent.Drawing;
 using Terraria.ID;
 

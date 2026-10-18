@@ -2,7 +2,6 @@
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Terraria;
 using Terraria.Audio;
@@ -11,7 +10,6 @@ using Terraria.Graphics.Shaders;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
-using Terraria.ModLoader.UI;
 
 namespace Rosemary.Content.Misc;
 
