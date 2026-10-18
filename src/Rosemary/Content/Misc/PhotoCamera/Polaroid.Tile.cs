@@ -133,6 +133,37 @@ public sealed class PolaroidTile : ModTile
     }
 }
 
+file record struct SyncPolaroidTileEntityPacket(int X, int Y, Item Item) : IPacket<SyncPolaroidTileEntityPacket>
+{
+    public SyncPolaroidTileEntityPacket() : this(-1, -1, new()) { }
+
+    public void Write(BinaryWriter writer)
+    {
+        writer.Write(X);
+        writer.Write(Y);
+
+        ItemIO.Send(Item, writer);
+    }
+
+    public static void Receive(BinaryReader reader, int sender)
+    {
+        var x = reader.ReadInt32();
+        var y = reader.ReadInt32();
+
+        var item = ItemIO.Receive(reader);
+
+        if (TileEntity.TryGet(x, y, out PolaroidTileEntity tileEntity))
+        {
+            tileEntity.Polaroid = item;
+        }
+
+        if (Main.netMode == NetmodeID.Server)
+        {
+            new SyncPolaroidTileEntityPacket(x, y, item).Send(PacketDestination.AllExcept(sender));
+        }
+    }
+}
+
 public sealed class PolaroidTileEntity : ModTileEntity
 {
     public PlacementHook PlacePolaroidHook => new(HookPostPlaceMyPlayer_PlacePolaroid, -1, 0, processedCoordinates: true);
@@ -144,13 +175,22 @@ public sealed class PolaroidTileEntity : ModTileEntity
         // TODO: CUSTOM PACKET
         var id = Generic_Hook_AfterPlacement(i, j, type, style, direction, alternate);
 
-        var tileEntity = (PolaroidTileEntity)ByID[id];
-
         var player = Main.LocalPlayer;
 
         // Should be reliable?
-        tileEntity.Polaroid = player.inventory[player.selectedItem].Clone();
-        tileEntity.Polaroid.stack = 1;
+        var item = player.inventory[player.selectedItem].Clone();
+        item.stack = 1;
+
+        if (Main.netMode != NetmodeID.SinglePlayer)
+        {
+            new SyncPolaroidTileEntityPacket(i, j, item).Send(PacketDestination.Broadcast);
+
+            return id;
+        }
+
+        var tileEntity = (PolaroidTileEntity)ByID[id];
+
+        tileEntity.Polaroid = item;
 
         return id;
     }
