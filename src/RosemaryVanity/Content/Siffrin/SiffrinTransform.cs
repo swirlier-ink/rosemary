@@ -14,7 +14,7 @@ namespace Rosemary.Vanity.Content;
 
 public sealed class SiffrinTransform : ModItem
 {
-    public override string Texture => Assets.Vanity.Siffrin.Hat.KEY;
+    public override string Texture => Assets.Vanity.Siffrin.TransformItem.KEY;
 
     public override string LocalizationCategory => "Content";
 
