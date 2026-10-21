@@ -3,13 +3,12 @@
 	Tooltip: "[Looks remarkably like a wizard's hat]"
 
 	Name: {
-		0: Standard
-		1: … Hat expansion. That can't be good.
-		2: Wide (Foward)
-		3: Wide (Backward)
-		4: Obscurity
-		5: Hat expansion (Serious)
-		6: None
+		0: Pointy
+		1: Curled
+		2: Windswept
+		3: Folded
+		4: Curiosity
+		5: None
 	}
 }
 

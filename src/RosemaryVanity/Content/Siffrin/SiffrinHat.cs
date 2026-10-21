@@ -209,7 +209,7 @@ public sealed class SiffrinHat : ModItem
 
             if ((int)player.gravDir == -1 && !drawInfo.headOnlyRender)
             {
-                position.Y += player.height - player.headPosition.Y + 8;
+                position.Y += player.height - player.headPosition.Y - 4;
             }
 
             var style = player.GetModPlayer<HatStylePlayer>().Style;
@@ -284,7 +284,7 @@ file sealed class HatStylePlayer : ModPlayer
         }
     }
 
-    public const int MAX_STYLE = 7;
+    public const int MAX_STYLE = 6;
 
     public int Style;
 
