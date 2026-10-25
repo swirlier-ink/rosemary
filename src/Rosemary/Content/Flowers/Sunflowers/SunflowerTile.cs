@@ -1,12 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoMod.Cil;
 using Rosemary.Common;
 using Terraria;
+using Terraria.DataStructures;
 using Terraria.Enums;
 using Terraria.GameContent.Drawing;
 using Terraria.ID;
+using Terraria.IO;
 using Terraria.ModLoader;
 using Terraria.ObjectData;
 
@@ -20,6 +23,12 @@ public sealed class SunflowerTile : ModTile
         public override bool AppliesToEntity(Item item, bool lateInstantiation) =>
             item.type == ItemID.Sunflower;
 
+        public override void SetStaticDefaults()
+        {
+            // TODO: Better system for this, because this is stupid
+            ItemID.Sets.DisableAutomaticPlaceableDrop[ItemID.Sunflower] = true;
+        }
+
         public override void SetDefaults(Item item)
         {
             item.createTile = ModContent.TileType<SunflowerTile>();
@@ -31,6 +40,16 @@ public sealed class SunflowerTile : ModTile
     public override void Load()
     {
         IL_TileDrawing.DrawRisingVineStrip += DrawRisingVineStrip_DrawSunflowerHead;
+        On_WorldFile.SetOngoingToTemps += SetOngoingToTemps_ResetSunflowerRotation;
+    }
+
+    private static void SetOngoingToTemps_ResetSunflowerRotation(On_WorldFile.orig_SetOngoingToTemps orig)
+    {
+        orig();
+
+        var targetRotation = GetTargetRotation();
+
+        sunRotation = targetRotation;
     }
 
     private static void DrawRisingVineStrip_DrawSunflowerHead(ILContext il)
@@ -106,24 +125,74 @@ public sealed class SunflowerTile : ModTile
             ) =>
             {
                 var tile = Framing.GetTileSafely(i, j);
+                var above = Framing.GetTileSafely(i, j - 1);
+
+                var bud = tile.TileFrameY == 18 * 2 && !(above.HasTile && above.TileType == tile.TileType);
 
                 if (tile.TileType != ModContent.TileType<SunflowerTile>()
-                 || tile.TileFrameY != 0)
+                 || !(tile.TileFrameY == 0 || bud))
                 {
                     return;
                 }
 
                 position += new Vector2(i % 2 == 0 ? -1 : 1, -15).RotatedBy(baseRotation);
 
-                var frame = new Rectangle(0, 56, 34, 22);
+                var xFrameNormal = tile.TileFrameX / 18;
+
+                var frame = new Rectangle(34 * xFrameNormal, 56, 34, 22);
                 var origin = frame.Size() * 0.5f;
 
-                var rotation = 0f;
+                var flags = SideFlags.None;
+                var rotation = sunRotation;
+
+                if (bud)
+                {
+                    frame = new Rectangle(0, 80, 34, 30);
+                    origin.Y = 25;
+
+                    flags |= SideFlags.Bottom;
+                    rotation = 0f;
+
+                    position += new Vector2(0, xFrameNormal * 4).RotatedBy(baseRotation);
+                }
+
                 rotation += baseRotation;
 
-                renderer.DrawNature(texture, position, frame, color, rotation, origin, 1f, effects, 0f, SideFlags.None);
+                renderer.DrawNature(texture, position, frame, color, rotation, origin, 1f, effects, 0f, flags);
             }
         );
+    }
+
+    private static float sunRotation;
+
+    [ModSystemHooks.PostUpdateTime]
+    private static void PostUpdateTime()
+    {
+        var targetRotation = GetTargetRotation();
+
+        if (Math.Abs(sunRotation - targetRotation) > 0.02f)
+        {
+            sunRotation += 0.001f * (sunRotation < targetRotation ? 1f : -1f);
+        }
+    }
+
+    private static float GetTargetRotation()
+    {
+        var targetRotation = (((float)Main.time / 54000f) * 2f) - 7.3f;
+
+        if (!Main.IsItDay())
+        {
+            if (Main.remixWorld)
+            {
+                targetRotation = 0;
+            }
+            else
+            {
+                targetRotation = -7.3f;
+            }
+        }
+
+        return targetRotation;
     }
 
     public override void SetStaticDefaults()
@@ -147,6 +216,7 @@ public sealed class SunflowerTile : ModTile
         this.NewTileData(TileObjectData.Style1x1)
             .LavaDeath(true)
             .WaterPlacement(LiquidPlacement.NotAllowed)
+            .AnchorBottom(new AnchorData(AnchorType.SolidTile | AnchorType.SolidSide, 1, 0))
             .AnchorValidTiles(
                  TileID.Grass,
                  TileID.GolfGrass,
@@ -219,22 +289,35 @@ public sealed class SunflowerTile : ModTile
 
     public override bool TileFrame(int i, int j, ref bool resetFrame, ref bool noBreak)
     {
-        var above = Framing.GetTileSafely(i, j - 1);
-        var tile = Framing.GetTileSafely(i, j);
         var below = Framing.GetTileSafely(i, j + 1);
+        var tile = Framing.GetTileSafely(i, j);
+        var above = Framing.GetTileSafely(i, j - 1);
 
-        if (!above.HasTile || above.TileType != tile.TileType)
+        if (tile.TileFrameY == 18
+         && below.HasTile && below.TileType == tile.TileType
+         && (!above.HasTile || above.TileType != tile.TileType))
         {
-            tile.TileFrameY = below.TileType == tile.TileType ? (short)(0) : (short)(18 * 2);
+            tile.TileFrameY = 0;
             tile.TileFrameX = (short)(18 * Rand.Next(5));
         }
 
         return !below.HasTile;
     }
 
+    public override IEnumerable<Item> GetItemDrops(int i, int j)
+    {
+        var tile = Framing.GetTileSafely(i, j);
+
+        if (tile.TileFrameY == 18 * 2 || Rand.NextBoolean(5))
+        {
+            yield return new Item(ItemID.Sunflower);
+        }
+    }
+
     public override void RandomUpdate(int i, int j, bool underground)
     {
-        if (underground)
+        if (underground
+         || !Rand.NextBoolean(6))
         {
             return;
         }
