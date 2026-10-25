@@ -1,4 +1,7 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using System;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using MonoMod.Cil;
 using Rosemary.Common;
 using Terraria;
 using Terraria.Enums;
@@ -25,6 +28,104 @@ public sealed class SunflowerTile : ModTile
 
     public override string Texture => Assets.Flowers.Sunflowers.SunflowerTile.KEY;
 
+    public override void Load()
+    {
+        IL_TileDrawing.DrawRisingVineStrip += DrawRisingVineStrip_DrawSunflowerHead;
+    }
+
+    private static void DrawRisingVineStrip_DrawSunflowerHead(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        var rendererIndex = ParameterIndex.Invalid;
+
+        var iIndex = ParameterIndex.Invalid;
+        var jIndex = VariableIndex.Invalid;
+
+        var textureIndex = VariableIndex.Invalid;
+        var positionIndex = VariableIndex.Invalid;
+        var colorIndex = VariableIndex.Invalid;
+        var rotationIndex = VariableIndex.Invalid;
+        var tileSpriteEffectsIndex = VariableIndex.Invalid;
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchLdarg(out iIndex),
+            i => i.MatchLdloc(out jIndex),
+            i => i.MatchCall<Tilemap>("get_Item")
+        );
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchCall<TileDrawing>(nameof(TileDrawing.DrawNature))
+        );
+
+        // Find permits gaps, riskier
+
+        {
+            var c2 = c.Clone();
+
+            c2.GotoPrev(
+                i => i.MatchLdarg(out rendererIndex),
+                i => i.MatchLdloc(out textureIndex),
+                i => i.MatchLdloc(out positionIndex)
+            );
+
+            c2.GotoNext(
+                i => i.MatchNewobj<Rectangle>(),
+                i => i.MatchLdloc(out colorIndex),
+                i => i.MatchLdloc(out rotationIndex)
+            );
+
+            c2.GotoNext(
+                i => i.MatchNewobj<Vector2>(),
+                i => i.MatchLdcR4(1f),
+                i => i.MatchLdloc(out tileSpriteEffectsIndex)
+            );
+        }
+
+        c.EmitLdarg(rendererIndex);
+        c.EmitLdloc(textureIndex);
+        c.EmitLdarg(iIndex);
+        c.EmitLdloc(jIndex);
+        c.EmitLdloc(positionIndex);
+        c.EmitLdloc(colorIndex);
+        c.EmitLdloc(rotationIndex);
+        c.EmitLdloc(tileSpriteEffectsIndex);
+
+        c.EmitDelegate(
+            static (
+                TileDrawing renderer,
+                Texture2D texture,
+                int i,
+                int j,
+                Vector2 position,
+                Color color,
+                float baseRotation,
+                SpriteEffects effects
+            ) =>
+            {
+                var tile = Framing.GetTileSafely(i, j);
+
+                if (tile.TileType != ModContent.TileType<SunflowerTile>()
+                 || tile.TileFrameY != 0)
+                {
+                    return;
+                }
+
+                position += new Vector2(i % 2 == 0 ? -1 : 1, -15).RotatedBy(baseRotation);
+
+                var frame = new Rectangle(0, 56, 34, 22);
+                var origin = frame.Size() * 0.5f;
+
+                var rotation = 0f;
+                rotation += baseRotation;
+
+                renderer.DrawNature(texture, position, frame, color, rotation, origin, 1f, effects, 0f, SideFlags.None);
+            }
+        );
+    }
+
     public override void SetStaticDefaults()
     {
         Main.tileCut[Type] = true;
@@ -32,12 +133,16 @@ public sealed class SunflowerTile : ModTile
         Main.tileLavaDeath[Type] = true;
         Main.tileNoFail[Type] = true;
         Main.tileFrameImportant[Type] = true;
+        Main.tileNoAttach[Type] = true;
 
         TileID.Sets.TileCutIgnore.Regrowth[Type] = true;
         TileID.Sets.ReplaceTileBreakUp[Type] = true;
         TileID.Sets.ReverseVineThreads[Type] = true;
         TileID.Sets.MultiTileSway[Type] = true;
         TileID.Sets.DoesntGetReplacedWithTileReplacement[Type] = true;
+        TileID.Sets.IsMultitile[Type] = true;
+        TileID.Sets.PreventsTileReplaceIfOnTopOfIt[Type] = true;
+        TileID.Sets.BreakableWhenPlacing[Type] = false;
 
         this.NewTileData(TileObjectData.Style1x1)
             .LavaDeath(true)
@@ -55,7 +160,30 @@ public sealed class SunflowerTile : ModTile
         DustType = DustID.Grass;
         HitSound = SoundID.Grass;
 
-        // AddMapEntry(new Color(200, 170, 108));
+        AddMapEntry(new Color(54, 154, 54), Lang.GetItemName(ItemID.Sunflower));
+        AddMapEntry(new Color(226, 196, 49), Lang.GetItemName(ItemID.Sunflower));
+    }
+
+    public override ushort GetMapOption(int i, int j)
+    {
+        var tile = Framing.GetTileSafely(i, j);
+        var above = Framing.GetTileSafely(i, j - 1);
+
+        return tile.TileFrameY == 0
+            || !above.HasTile
+            || above.TileType != tile.TileType
+             ? (ushort)1
+             : (ushort)0;
+    }
+
+    public override void NearbyEffects(int i, int j, bool closer)
+    {
+        if (closer)
+        {
+            return;
+        }
+
+        Main.SceneMetrics.HasSunflower = true;
     }
 
     public override bool PreDraw(int i, int j, SpriteBatch sb)
@@ -118,6 +246,23 @@ public sealed class SunflowerTile : ModTile
         if (above.HasTile || above.LiquidAmount > 0)
         {
             return;
+        }
+
+        var maxHeight = (Math.Abs(i % 3 + i % 23 - i) % 7) + 5;
+
+        for (var k = 0; k <= maxHeight; ++k)
+        {
+            var cur = Framing.GetTileSafely(i, j + k);
+
+            if (!cur.HasTile || cur.TileType != tile.TileType)
+            {
+                break;
+            }
+
+            if (k >= maxHeight)
+            {
+                return;
+            }
         }
 
         if (below.TileType == tile.TileType)
