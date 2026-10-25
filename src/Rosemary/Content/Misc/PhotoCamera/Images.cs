@@ -119,7 +119,7 @@ public static partial class Images
 
                 // TODO: Figure out why this silent crashes, and see if SixLabors.ImageSharp is required
                 // By all means this *should* work, but for some esoteric reason beyond human comprehension it doesn't
-                // image = Texture2D.FromStream(Main.graphics.GraphicsDevice, stream, BASE_RESOLUTION, BASE_RESOLUTION, false);
+                // image = Texture2D.FromStream(Graphics.Device, stream, BASE_RESOLUTION, BASE_RESOLUTION, false);
 
                 var sharpImage = Image.Load<Rgba32>(stream);
 

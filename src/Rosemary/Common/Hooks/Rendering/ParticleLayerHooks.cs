@@ -112,7 +112,7 @@ file static class ParticleLayerRenderer
 
         foreach (var renderLayer in layers)
         {
-            renderLayer(Main.spriteBatch, Main.graphics.GraphicsDevice);
+            renderLayer(Main.spriteBatch, Graphics.Device);
         }
     }
 }

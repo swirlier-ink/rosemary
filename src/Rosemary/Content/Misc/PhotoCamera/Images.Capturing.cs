@@ -164,7 +164,7 @@ public static partial class Images
 
         var sb = Main.spriteBatch;
 
-        var device = Main.graphics.GraphicsDevice;
+        var device = Graphics.Device;
 
         using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
 
@@ -212,7 +212,7 @@ public static partial class Images
 
             var screen = Main.finalScreenTarget!;
 
-            var viewport = Main.graphics.GraphicsDevice.Viewport.Bounds;
+            var viewport = Graphics.Device.Viewport.Bounds;
 
             var dest = viewport;
 

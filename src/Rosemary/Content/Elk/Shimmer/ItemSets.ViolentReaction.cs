@@ -195,7 +195,7 @@ public static partial class ElkShimmerItemSets
 
         var mesmerShaderizer = Assets.Elk.Shimmer.Mesmerizer.CreateMesmerizerShader();
 
-        using var lease = ScreenspaceTargetProvider.Shared.Create(Main.graphics.GraphicsDevice, (_, _, targetWidth, targetHeight) => (targetWidth, targetHeight));
+        using var lease = ScreenspaceTargetProvider.Shared.Create(Graphics.Device, (_, _, targetWidth, targetHeight) => (targetWidth, targetHeight));
 
         using (lease.Scope(clearColor: Color.Transparent))
         {

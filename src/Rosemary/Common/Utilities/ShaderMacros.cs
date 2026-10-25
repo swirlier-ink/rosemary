@@ -11,7 +11,7 @@ public static class ShaderMacros
 {
     public static Vector2 TextureSize(int register)
     {
-        if (Main.graphics.GraphicsDevice.Textures[register] is not Texture2D tex)
+        if (Graphics.Device.Textures[register] is not Texture2D tex)
         {
             return Vector2.Zero;
         }
@@ -21,6 +21,6 @@ public static class ShaderMacros
 
     public static Vector2 ViewportSize()
     {
-        return Main.graphics.GraphicsDevice.Viewport.Bounds.Size();
+        return Graphics.Device.Viewport.Bounds.Size();
     }
 }
