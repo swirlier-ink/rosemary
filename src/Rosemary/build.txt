@@ -3,4 +3,5 @@ author = SWIRLIER-INK
 version = 1.0.0
 side = Both
 modReferences = Daybreak
+dllReferences = SixLabors.ImageSharp
 buildIgnore = .idea\*, .vs\*, *.tmp, Properties\*, *.csproj, *.user, obj\*, bin\*, *.config, .editorconfig, TemplateEngineHost\*, *\ElkAtlas.json
