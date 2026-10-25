@@ -130,6 +130,7 @@ public sealed class SunflowerTile : ModTile
                 var bud = tile.TileFrameY == 18 * 2 && !(above.HasTile && above.TileType == tile.TileType);
 
                 if (tile.TileType != ModContent.TileType<SunflowerTile>()
+                 || tile.TileFrameX == 18 * 5
                  || !(tile.TileFrameY == 0 || bud))
                 {
                     return;
@@ -293,12 +294,20 @@ public sealed class SunflowerTile : ModTile
         var tile = Framing.GetTileSafely(i, j);
         var above = Framing.GetTileSafely(i, j - 1);
 
+        // Stunted frames
         if (tile.TileFrameY == 18
          && below.HasTile && below.TileType == tile.TileType
          && (!above.HasTile || above.TileType != tile.TileType))
         {
-            tile.TileFrameY = 0;
-            tile.TileFrameX = (short)(18 * Rand.Next(5));
+            tile.TileFrameY = 18;
+            tile.TileFrameX = 18 * 5;
+        }
+
+        if (tile.TileFrameY == 18 * 2
+         && (!above.HasTile || above.TileType != tile.TileType))
+        {
+            tile.TileFrameY = 18 * 2;
+            tile.TileFrameX = 18 * 5;
         }
 
         return !below.HasTile;
@@ -326,7 +335,9 @@ public sealed class SunflowerTile : ModTile
         var above = Framing.GetTileSafely(i, j - 1);
         var below = Framing.GetTileSafely(i, j + 1);
 
-        if (above.HasTile || above.LiquidAmount > 0)
+        if (above.HasTile
+         || above.LiquidAmount > 0
+         || tile.TileFrameX == 18 * 5) // Broken frame should "stunt" growth
         {
             return;
         }
