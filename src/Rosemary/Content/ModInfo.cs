@@ -1,10 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using ReLogic.OS.Windows;
 using Rosemary.Content.Elk;
 using System;
 using System.Reflection;
-using System.Xml.Linq;
 using Rosemary.Common;
 using Terraria;
 using Terraria.GameContent.UI.Elements;

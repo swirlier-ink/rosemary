@@ -9,9 +9,13 @@ public abstract class AbstractDyeItem : ModItem
 {
     public abstract ShaderData Data { get; }
 
+    public virtual IDyeDefinition? Definition => null;
+
     public override void SetStaticDefaults()
     {
         Item.ResearchUnlockCount = 3;
+
+        ItemID.Sets.DyeDefinitions[Type] = Definition;
 
         if (Main.dedServ)
         {
