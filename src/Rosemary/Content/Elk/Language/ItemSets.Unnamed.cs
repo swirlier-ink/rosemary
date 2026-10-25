@@ -18,7 +18,13 @@ public static partial class ElkLangItemSets
     [OnLoad]
     private static void Load_Unnamed()
     {
+        LoadNames();
+    }
 
+    [OnUnload]
+    private static void Unload_Unnamed()
+    {
+        SaveNames();
     }
 
     public static void Unnamed_Name(int type)
@@ -32,9 +38,6 @@ public static partial class ElkLangItemSets
         unnamed[type] = false;
         Lang._itemNameCache[type] = unnamed_prior_names[type];
     }
-
-    [ModSystemHooks.PostSetupContent]
-    private static void PostSetupContent() => LoadNames();
 
     [ModPlayerHooks.PostSavePlayer]
     private static void PostSavePlayer() => SaveNames();
@@ -67,6 +70,7 @@ public static partial class ElkLangItemSets
         catch
         {
             ModContent.GetInstance<ModImpl>().Logger.Warn($"Could not create directory at: \"{RosemaryIO.SavePath}\"!");
+            return;
         }
 
         if (!File.Exists(NamedItemsPath))

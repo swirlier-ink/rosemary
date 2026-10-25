@@ -8,7 +8,6 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Reflection;
-using System.Runtime.InteropServices.JavaScript;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
@@ -194,7 +193,7 @@ public sealed class DinosaurExtendoGrip : ModItem
         {
             switch (source)
             {
-                case EntitySource_DropAsItem { Entity: Projectile { ModProjectile: DinosaurExtendoGripHoldout } proj, Context: nameof(DinosaurExtendoGrip) }:
+                case EntitySource_DropAsItem { Entity: Projectile { ModProjectile: DinosaurExtendoGripHoldout } proj, Context: $"{nameof(Rosemary)}: {nameof(DinosaurExtendoGrip)}" }:
                 {
                     SendGrabPacket(proj.owner);
                 }
@@ -255,7 +254,7 @@ public sealed class DinosaurExtendoGrip : ModItem
 
         offset.Magnitude = MathF.Min(offset.Length(), 15f);
 
-        npc.velocity += offset;
+        npc.velocity += offset.RotatedByRandom(0.3f);
 
         return index;
     }
@@ -901,7 +900,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
                     return true;
                 }
 
-                index = Item.NewItem(Entity.GetSource_DropAsItem(nameof(DinosaurExtendoGrip)), Projectile.Center, item);
+                index = Item.NewItem(Entity.GetSource_DropAsItem($"{nameof(Rosemary)}: {nameof(DinosaurExtendoGrip)}"), Projectile.Center, item);
                 item.TurnToAir();
                 Main.item[index].whoAmI = index;
 
@@ -1178,13 +1177,16 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
         void DropItem()
         {
-            if (item.makeNPC > 0)
+            if (item.makeNPC > 0 && item.stack <= 30)
             {
                 var position = Projectile.Center;
 
                 if (player.whoAmI == Main.myPlayer)
                 {
-                    NPC.ReleaseNPC((int)position.X, (int)position.Y, item.makeNPC, item.placeStyle, player.whoAmI);
+                    for (var i = 0; i < item.stack; i++)
+                    {
+                        NPC.ReleaseNPC((int)position.X, (int)position.Y, item.makeNPC, item.placeStyle, player.whoAmI);
+                    }
 
                     item.TurnToAir();
                     item.Hidden = false;
