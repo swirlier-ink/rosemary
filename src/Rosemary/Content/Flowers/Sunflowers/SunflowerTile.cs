@@ -1,17 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using FullSerializer.Internal;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoMod.Cil;
 using Rosemary.Common;
+using System;
+using System.Collections.Generic;
 using Terraria;
 using Terraria.DataStructures;
 using Terraria.Enums;
 using Terraria.GameContent.Drawing;
+using Terraria.GameContent.Generation;
 using Terraria.ID;
 using Terraria.IO;
 using Terraria.ModLoader;
 using Terraria.ObjectData;
+using Terraria.WorldBuilding;
 
 namespace Rosemary.Content.Flowers;
 
@@ -41,6 +44,153 @@ public sealed class SunflowerTile : ModTile
     {
         IL_TileDrawing.DrawRisingVineStrip += DrawRisingVineStrip_DrawSunflowerHead;
         On_WorldFile.SetOngoingToTemps += SetOngoingToTemps_ResetSunflowerRotation;
+
+        WorldGen.ModifyPass((PassLegacy)WorldGen.VanillaGenPasses[GenPassNameID.SpreadingGrassOnSurfaceSunflowersEvilsOnSurfaceAndLavaCleanup], UseModifiedSunflowers);
+        WorldGen.ModifyPass((PassLegacy)WorldGen.VanillaGenPasses[GenPassNameID.SunflowersPart2], UseModifiedSunflowers);
+
+        On_WorldGenerator.GenerateWorld += GenerateWorld_TempSunflowers;
+
+        IL_WorldGen.SpreadGrass += SpreadGrass_RosemarySunflowers;
+    }
+
+    private static void SpreadGrass_RosemarySunflowers(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        while (c.TryGotoNext(
+                MoveType.After,
+                i => i.MatchCall<Tile>($"get_{nameof(Tile.type)}"),
+                i => i.MatchLdindU2(),
+                i => i.MatchLdcI4(27)
+            ))
+        {
+            c.EmitPop();
+            c.EmitStaticDelegateUnsafe(static () => ModContent.TileType<SunflowerTile>());
+        }
+    }
+
+    private static bool GenerateWorld_TempSunflowers(On_WorldGenerator.orig_GenerateWorld orig, WorldGenerator self)
+    {
+        var type = ModContent.TileType<SunflowerTile>();
+
+        Main.tileCut[type] = false;
+        Main.tileSolid[type] = true;
+
+        var ret = orig(self);
+
+        Main.tileCut[type] = true;
+        Main.tileSolid[type] = false;
+
+        return ret;
+    }
+
+    private static void UseModifiedSunflowers(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        var iIndex = VariableIndex.Invalid;
+        var jIndex = VariableIndex.Invalid;
+
+        var jumpPlaceTileLabel = c.DefineLabel();
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchCall<WorldGen>(nameof(WorldGen.PlaceTile)),
+            i => i.MatchPop()
+        );
+
+        c.MarkLabel(jumpPlaceTileLabel);
+
+        {
+            var c2 = c.Clone();
+
+            c2.GotoPrev(
+                MoveType.Before,
+                i => i.MatchLdloc(out iIndex),
+                i => i.MatchLdloc(out jIndex),
+                i => i.MatchLdcI4(1),
+                i => i.MatchSub()
+            );
+
+            c2.EmitBr(jumpPlaceTileLabel);
+        }
+
+        c.EmitLdloc(iIndex);
+        c.EmitLdloc(jIndex);
+        c.EmitLdcI4(1);
+        c.EmitSub();
+        c.EmitDelegate(
+            static (int i, int j) =>
+            {
+                if (Rand.NextBoolean(6))
+                {
+                    return;
+                }
+                
+                var height = Rand.Next(3, 12);
+
+                var type = ModContent.TileType<SunflowerTile>();
+
+                var counter = 0;
+
+                while (ValidTile(i, j) && counter <= height)
+                {
+                    var tile = Framing.GetTileSafely(i, j);
+
+                    if (counter == 0)
+                    {
+                        var below = Framing.GetTileSafely(i, j + 1);
+
+                        below.ClearSlope();
+
+                        if (Main.tileCut[tile.TileType])
+                        {
+                            WorldGen.KillTile(i, j, noItem: true);
+                        }
+
+                        if (!WorldGen.PlaceTile(i, j, type, true))
+                        {
+                            return;
+                        }
+                    }
+
+                    tile.HasTile = true;
+                    tile.TileType = (ushort)type;
+                    tile.TileFrameY = counter == 0 ? (short)(18 * 2) : (short)0;
+                    tile.TileFrameX = (short)(18 * Rand.Next(5));
+
+                    if (counter >= 2)
+                    {
+                        var below = Framing.GetTileSafely(i, j + 1);
+
+                        below.TileFrameY = 18;
+                    }
+
+                    counter++;
+
+                    if (counter > height && Rand.NextBoolean(5))
+                    {
+                        tile.TileFrameY = 18;
+                        tile.TileFrameX = 18 * 5;
+                    }
+
+                    j--;
+                }
+
+                return;
+
+                static bool ValidTile(int i, int j)
+                {
+                    var tile = Framing.GetTileSafely(i, j);
+
+                    return !tile.HasWall
+                        && tile.LiquidAmount <= 0
+                        && (!tile.HasTile
+                         || !Main.tileSolid[tile.TileType]
+                         || Main.tileCut[tile.TileType]);
+                }
+            }
+        );
     }
 
     private static void SetOngoingToTemps_ResetSunflowerRotation(On_WorldFile.orig_SetOngoingToTemps orig)
@@ -213,6 +363,16 @@ public sealed class SunflowerTile : ModTile
         TileID.Sets.IsMultitile[Type] = true;
         TileID.Sets.PreventsTileReplaceIfOnTopOfIt[Type] = true;
         TileID.Sets.BreakableWhenPlacing[Type] = false;
+        TileID.Sets.CanBeClearedDuringGeneration[Type] = false;
+        TileID.Sets.SpawnsNatureFlies[Type] = true;
+        TileID.Sets.SlowlyDiesInWater[Type] = true;
+
+        // Vanilla sunflowers reduce evil biome counts, should tall
+        // sunflowers reduce them by less to compensate for their height?
+        TileID.Sets.CorruptBiome[Type] = -5;
+        TileID.Sets.CrimsonBiome[Type] = -5;
+        TileID.Sets.RemixCorruptBiome[Type] = -5;
+        TileID.Sets.RemixCrimsonBiome[Type] = -5;
 
         this.NewTileData(TileObjectData.Style1x1)
             .LavaDeath(true)
@@ -238,11 +398,8 @@ public sealed class SunflowerTile : ModTile
     public override ushort GetMapOption(int i, int j)
     {
         var tile = Framing.GetTileSafely(i, j);
-        var above = Framing.GetTileSafely(i, j - 1);
 
         return tile.TileFrameY == 0
-            || !above.HasTile
-            || above.TileType != tile.TileType
              ? (ushort)1
              : (ushort)0;
     }
@@ -261,7 +418,63 @@ public sealed class SunflowerTile : ModTile
     {
         TileDrawing.Instance.CrawlToBottomOfReverseVineAndAddSpecialPoint(j, i);
 
+        if (!TileDrawing.Instance._isActiveAndNotPaused || !Rand.NextBoolean(4))
+        {
+            return false;
+        }
+
+        // For whatever reason TileDrawing.EmitParticles doesn't work correctly here?
+        // No matter though, since a bit of custom logic is preferable
+
+        var tile = Framing.GetTileSafely(i, j);
+
+        if (tile.TileFrameY != 0)
+        {
+            return false;
+        }
+
+        var lerpValue = Utils.GetLerpValue(0.08f, 0.18f, Math.Abs(Main.WindForVisuals), clamped: true);
+        lerpValue += 0.3f;
+
+        if (Rand.Next(1f) >= lerpValue)
+        {
+            return false;
+        }
+
+        var flag2 = Rand.Next(400) == 0; // 600
+
+        if (!flag2)
+        {
+            TileDrawing.Instance._windGrid.GetWindTime(i, j, 8, out var windTimeLeft, out _, out _);
+            flag2 = windTimeLeft > 0 && Rand.Next(48) == 0;
+        }
+
+        if (flag2)
+        {
+            ParticleOrchestrator.RequestParticleSpawn(
+                clientOnly: true,
+                ParticleOrchestraType.NatureFly,
+                new ParticleOrchestraSettings
+                {
+                    PositionInWorld = new Point(i, j).ToWorldCoordinates(new Vector2(8, 0)),
+                }
+            );
+        }
+
         return false;
+    }
+
+    public override bool CanPlace(int i, int j)
+    {
+        var tile = Framing.GetTileSafely(i, j);
+
+        if ((j > Main.worldSurface - 1 && !Main.remixWorld)
+         || tile.HasWall)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public override void PlaceInWorld(int i, int j, Item item)
@@ -291,26 +504,35 @@ public sealed class SunflowerTile : ModTile
     public override bool TileFrame(int i, int j, ref bool resetFrame, ref bool noBreak)
     {
         var below = Framing.GetTileSafely(i, j + 1);
+
+        return !below.HasTile;
+    }
+
+    public override void KillTile(int i, int j, ref bool fail, ref bool effectOnly, ref bool noItem)
+    {
+        j++;
+
+        var below = Framing.GetTileSafely(i, j + 1);
         var tile = Framing.GetTileSafely(i, j);
-        var above = Framing.GetTileSafely(i, j - 1);
+
+        if (tile.TileType != Type)
+        {
+            return;
+        }
 
         // Stunted frames
         if (tile.TileFrameY == 18
-         && below.HasTile && below.TileType == tile.TileType
-         && (!above.HasTile || above.TileType != tile.TileType))
+         && below.HasTile && below.TileType == tile.TileType)
         {
             tile.TileFrameY = 18;
             tile.TileFrameX = 18 * 5;
         }
 
-        if (tile.TileFrameY == 18 * 2
-         && (!above.HasTile || above.TileType != tile.TileType))
+        if (tile.TileFrameY == 18 * 2)
         {
             tile.TileFrameY = 18 * 2;
             tile.TileFrameX = 18 * 5;
         }
-
-        return !below.HasTile;
     }
 
     public override IEnumerable<Item> GetItemDrops(int i, int j)
