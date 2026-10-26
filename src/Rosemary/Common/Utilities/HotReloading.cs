@@ -1,8 +1,6 @@
-﻿using Rosemary.Common;
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Metadata;
 using Microsoft.Xna.Framework;
 using MonoMod.RuntimeDetour;
 using MonoMod.RuntimeDetour.HookGen;
@@ -10,7 +8,7 @@ using Terraria;
 using Terraria.ModLoader;
 
 #if PROJECT_BUILD && DEBUG
-[assembly: MetadataUpdateHandler(typeof(HotReloading))]
+[assembly: System.Reflection.Metadata.MetadataUpdateHandler(typeof(Rosemary.Common.HotReloading))]
 
 namespace Rosemary.Common;
 

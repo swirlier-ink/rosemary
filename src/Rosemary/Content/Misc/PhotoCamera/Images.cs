@@ -7,6 +7,9 @@ using System.IO;
 using Terraria;
 using Terraria.ID;
 using Terraria.ModLoader;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using XnaColor = Microsoft.Xna.Framework.Color;
 
 namespace Rosemary.Content.Misc;
 
@@ -91,7 +94,7 @@ public static partial class Images
 
         return false;
 
-        bool LoadLocalImage([NotNullWhen(true)] out Texture2D? image)
+        unsafe bool LoadLocalImage([NotNullWhen(true)] out Texture2D? image)
         {
             image = null;
 
@@ -113,7 +116,37 @@ public static partial class Images
             try
             {
                 using var stream = File.OpenRead(path);
-                image = Texture2D.FromStream(Main.graphics.GraphicsDevice, stream, BASE_RESOLUTION, BASE_RESOLUTION, false);
+
+                // TODO: Figure out why this silent crashes, and see if SixLabors.ImageSharp is required
+                // By all means this *should* work, but for some esoteric reason beyond human comprehension it doesn't
+                // image = Texture2D.FromStream(Graphics.Device, stream, BASE_RESOLUTION, BASE_RESOLUTION, false);
+
+                var sharpImage = Image.Load<Rgba32>(stream);
+
+                if (sharpImage.Width != BASE_RESOLUTION
+                 || sharpImage.Height != BASE_RESOLUTION)
+                {
+                    return false;
+                }
+
+                var colorBuffer = new XnaColor[sharpImage.Width * sharpImage.Height];
+
+                for (var i = 0; i < sharpImage.Width; i++)
+                {
+                    for (var j = 0; j < sharpImage.Height; j++)
+                    {
+                        var col = sharpImage[i, j];
+
+                        colorBuffer[i + j * sharpImage.Width] = new XnaColor(col.R, col.G, col.B, col.A);
+                    }
+                }
+
+                image = new Texture2D(Graphics.Device, sharpImage.Width, sharpImage.Height);
+
+                fixed (XnaColor* pColorBuffer = &colorBuffer[0])
+                {
+                    image.SetDataPointerEXT(0, null, (nint)pColorBuffer, sharpImage.Width * sharpImage.Height * 4);
+                }
 
                 image_cache.Add(id, image);
 

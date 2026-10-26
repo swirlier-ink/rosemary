@@ -9,7 +9,3 @@ obj/
 
 # Binaries
 *.fxc
-
-# Libraries (TODO: Revise if non-Daybreak libraries are needed)
-lib/
-libanalyzer/

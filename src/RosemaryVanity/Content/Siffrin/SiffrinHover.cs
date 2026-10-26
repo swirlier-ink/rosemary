@@ -159,7 +159,7 @@ file sealed class OutlineAfterImagesPlayer : ModPlayer
 
         var sb = Main.spriteBatch;
 
-        var device = Main.graphics.GraphicsDevice;
+        var device = Graphics.Device;
 
         var effect = Assets.Vanity.Siffrin.PlayerOutline.CreatePlayerOutlineShader();
 
@@ -276,7 +276,7 @@ public sealed class SiffrinHoverMount : ModMount
 
         var sb = Main.spriteBatch;
 
-        var device = Main.graphics.GraphicsDevice;
+        var device = Graphics.Device;
 
         const float max_velocity = 18f;
 

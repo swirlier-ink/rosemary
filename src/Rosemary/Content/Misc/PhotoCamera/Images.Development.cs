@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using Rosemary.Common.DataStructures;
 using Terraria;
 using Terraria.ID;
 
@@ -6,7 +6,7 @@ namespace Rosemary.Content.Misc;
 
 public static partial class Images
 {
-    private static readonly HashSet<PolaroidItem> polaroids_to_update = [];
+    private static readonly WeakCollection<PolaroidItem> polaroids_to_update = [];
 
     [ModSystemHooks.PostWorldLoad]
     private static void PostWorldLoad_Development()
@@ -74,11 +74,17 @@ public static partial class Images
                 continue;
             }
 
-            polaroids_to_update.Add(polaroid);
+            TrackImageDevelopment(polaroid);
         }
     }
 
-    public static void TrackImageDevelopment(PolaroidItem item) => polaroids_to_update.Add(item);
+    public static void TrackImageDevelopment(PolaroidItem item)
+    {
+        if (!polaroids_to_update.Contains(item))
+        {
+            polaroids_to_update.Add(item);
+        }
+    }
 
     [ModSystemHooks.PostUpdateEverything]
     private static void PostUpdate_Development()

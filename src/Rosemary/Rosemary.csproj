@@ -17,6 +17,11 @@
         <PackageReference Include="GoldMeridian.KeyGen" Version="1.0.1" PrivateAssets="All" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     </ItemGroup>
 
+    <!-- SixLabors.ImageSharp -->
+    <ItemGroup>
+        <Reference Include="SixLabors.ImageSharp" HintPath="lib\SixLabors.ImageSharp.dll" />
+    </ItemGroup>
+
     <!-- Usings -->
     <Import Project="..\Usings.targets" />
 
