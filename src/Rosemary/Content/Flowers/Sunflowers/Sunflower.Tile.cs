@@ -161,21 +161,29 @@ public sealed class SunflowerTile : ModTile
 
     private static float GetTargetRotation()
     {
-        var targetRotation = (((float)Main.time / 54000f) * 2f) - 7.3f;
-
-        if (!Main.IsItDay())
+        if (Main.IsItDay())
         {
-            if (Main.remixWorld)
+            if (Main.eclipse)
             {
-                targetRotation = 0;
+                return -7.3f;
             }
-            else
-            {
-                targetRotation = -7.3f;
-            }
+
+            return (((float)Main.time / 54000f) * 2f) - 7.3f;
         }
 
-        return targetRotation;
+        if (Main.remixWorld)
+        {
+            return 0f;
+        }
+
+        if (!Main.dayTime
+         && Main.bloodMoon
+         && Main.moonPhase == (int)MoonPhase.Full)
+        {
+            return ((float)Main.time / 32400f) * 2f - 7.3f;
+        }
+
+        return -7.3f;
     }
 
     public override void SetStaticDefaults()
