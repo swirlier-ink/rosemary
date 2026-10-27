@@ -1,13 +1,14 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Rosemary.Common;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
-using Terraria.GameContent.Personalities;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
+using LangPhotographer = Rosemary.Core.LocalizationReferences.Mods.Rosemary.Content.Misc.Photographer;
 
 namespace Rosemary.Content.Misc;
 
@@ -18,7 +19,7 @@ public class Photographer : ModNPC
 
     public override string Texture => Assets.Misc.Camera.Photographer.KEY;
     
-    private static Profiles.StackedNPCProfile profile;
+    private static Profiles.StackedNPCProfile? profile;
     
     public override void SetStaticDefaults()
     {
@@ -30,10 +31,10 @@ public class Photographer : ModNPC
         NPCID.Sets.NoTownNPCHappiness[Type] = true;
         NPCID.Sets.SpawnsWithCustomName[Type] = true;
         
-        NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, new ()
+        NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, new()
         {
             Velocity = 1f,
-            Direction = 1
+            Direction = 1,
         });
 
         profile = new Profiles.StackedNPCProfile(new Profiles.DefaultNPCProfile(Texture, -1));
@@ -57,7 +58,7 @@ public class Photographer : ModNPC
 
     public override void ModifyHoverBoundingBox(ref Rectangle boundingBox)
     {
-        boundingBox = new Rectangle((int)NPC.position.X, (int)NPC.position.Y, NPC.width, NPC.height);
+        boundingBox = NPC.Hitbox;
     }
 
     public override void SetBestiary(BestiaryDatabase database, BestiaryEntry bestiaryEntry)
@@ -67,39 +68,50 @@ public class Photographer : ModNPC
         IBestiaryInfoElement[] info = 
             [
                 BestiaryDatabaseNPCsPopulator.CommonTags.SpawnConditions.Biomes.Surface, 
-                new FlavorTextBestiaryInfoElement(Mods.Rosemary.Content.Misc.Photographer.Entry.KEY)
+                new FlavorTextBestiaryInfoElement(LangPhotographer.Entry.KEY),
             ];
         
         bestiaryEntry.Info.AddRange(info);
     }
 
     public override bool CanChat() => true;
-    public override ITownNPCProfile TownNPCProfile() => profile;
-    public override List<string> SetNPCNameList() => [Language.GetTextValue(Mods.Rosemary.Content.Misc.Photographer.Name.KEY)];
-    public override string GetChat() => Language.SelectRandom(Lang.CreateDialogFilter(Mods.Rosemary.Content.Misc.Photographer.Chat.KEY)).Value;
+
+    public override ITownNPCProfile TownNPCProfile() => profile!;
+
+    public override List<string> SetNPCNameList() => Language.GetAllTextValues(LangPhotographer.Name.KEY);
+
+    public override string GetChat() => Language.SelectRandom(Lang.CreateDialogFilter(LangPhotographer.Chat.KEY)).Value;
+
     public override void RegisterChatButtons(NPCInteractionList interactions) => interactions.InsertBefore(NPCInteractions.Shop(), NPCInteractionDatabase.CloseButton);
 
     public override void HitEffect(NPC.HitInfo hit)
     {
-        base.HitEffect(hit);
+        if (Main.dedServ)
+        {
+            return;
+        }
 
-        for (int i = 0; i < (NPC.life > 0 ? 1 : 5); i++)
+        for (var i = 0; i < (NPC.life > 0 ? 1 : 5); i++)
         {
             Dust.NewDust(NPC.position, NPC.width, NPC.height, DustID.Blood);
         }
         
-        if (Main.dedServ || NPC.life > 0)
+        if (NPC.life > 0)
+        {
             return;
+        }
 
-        for (int i = 0; i < 3; i++)
+        for (var i = 0; i < 3; i++)
         {
             var type = Mod.Find<ModGore>($"{Name}{i}").Type;
+
             Vector2[] offset =
             [
                 new(0, -20),
                 new(0, -4),
-                new(0, 4)
+                new(0, 4),
             ];
+
             Gore.NewGore(NPC.GetSource_Death(), NPC.Center + offset[i], NPC.velocity + Main.rand.NextVector2Circular(5, 5) + new Vector2(hit.HitDirection * 5, 0), type);
         }
     }

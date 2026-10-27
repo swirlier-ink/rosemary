@@ -76,7 +76,11 @@ ConspiratorialWallItem: {
 
 Photographer: {
 	DisplayName: Photographer
-	Name: Iris
+	Name.0: Iris
 	Entry: "    hi"
-	Chat.0: Hi
+
+	Chat: {
+		0: Hi
+		1: foid fo life
+	}
 }
