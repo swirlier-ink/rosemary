@@ -77,10 +77,31 @@ ConspiratorialWallItem: {
 Photographer: {
 	DisplayName: Photographer
 	Name.0: Iris
-	Entry: "    hi"
+	Entry: The Photographer travels across the world in search of the perfect photos to add to their collection. They sell misprints and old cameras to make a living.
 
 	Chat: {
-		0: Hi
-		1: foid fo life
+		First: Oh hello there traveller, I don't believe we've met before, name's {NPCFirstName_Rosemary/Photographer}.
+
+		Forest: {
+			0: Hey traveller, was just amiring the quiet forest; I even snapped a few good photos for my collection!
+			1: Nice day for some pictures of the flower fields on this island.
+			2: The sunflowers here are alot taller than the ones back up north, it's hard to get a pcture from a good angle!
+		}
+
+		Tundra.0: a
+
+		Generic: {
+			0: Howdy traveller, find any good photo spots?
+			1: Oh! Traveller, how've you been?
+			2: Hey traveller, would any of the townies here be interested in a photoshoot? Free of charge of course.
+			3: This island gives me the best photo opportunities!
+			4: Happy to be back to this island, helps get my mind off of my failed polaroid lifts back home.
+		}
+
+		Night: {
+			0: Unfortunately stars don't show up too well on film, but I managed to capture a few good long exposures!
+			Tundra.0: b
+			FullMoon.0: Hey traveller, caught a nice photo of the full moon, I bet it'll look great fully developed!
+		}
 	}
 }

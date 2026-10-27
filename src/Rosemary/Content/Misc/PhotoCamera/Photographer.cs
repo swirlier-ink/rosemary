@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
 using Terraria;
+using Terraria.Enums;
 using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
 using Terraria.ID;
@@ -80,7 +82,62 @@ public class Photographer : ModNPC
 
     public override List<string> SetNPCNameList() => Language.GetAllTextValues(LangPhotographer.Name.KEY);
 
-    public override string GetChat() => Language.SelectRandom(Lang.CreateDialogFilter(LangPhotographer.Chat.KEY)).Value;
+    public override string GetChat()
+    {
+        var player = Main.LocalPlayer;
+
+        var keys = new HashSet<string> { LangPhotographer.Chat.Generic.KEY };
+
+        var night = !Main.IsItDay();
+        var surfaceTundra = player.ZoneSnow && !player.ShoppingZone_BelowSurface;
+
+        if (night)
+        {
+            keys.Add(LangPhotographer.Chat.Night.KEY);
+
+            if (Main.moonPhase == (int)MoonPhase.Full)
+            {
+                keys.Add(LangPhotographer.Chat.Night.FullMoon.KEY);
+            }
+        }
+
+        if (surfaceTundra)
+        {
+            if (night)
+            {
+                keys.Add(LangPhotographer.Chat.Night.Tundra.KEY);
+            }
+
+            keys.Add(LangPhotographer.Chat.Tundra.KEY);
+        }
+
+        return GetRandomValue(Rand.Instance.NextFromList(keys.ToArray()));
+
+        string GetRandomValue(string key)
+        {
+            return Language.SelectRandom(
+                (newKey, text) =>
+                {
+                    if (!newKey.StartsWith(key))
+                    {
+                        return false;
+                    }
+
+                    if (newKey != key)
+                    {
+                        var id = newKey[(key.Length + 1)..];
+
+                        if (!int.TryParse(id, out _))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return text.ConditionsMet;
+                }
+            ).Value;
+        }
+    }
 
     public override void RegisterChatButtons(NPCInteractionList interactions) => interactions.InsertBefore(NPCInteractions.Shop(), NPCInteractionDatabase.CloseButton);
 
