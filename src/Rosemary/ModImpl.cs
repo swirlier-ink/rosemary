@@ -28,6 +28,12 @@ partial class ModImpl
         MusicAutoloadingEnabled = false;
     }
 
+    // TODO: yell at tomat to fix this
+    public override void Load()
+    {
+        SmallModIcon = icon_small.Asset;
+    }
+
     public override void HandlePacket(BinaryReader reader, int whoAmI)
     {
         PacketHandler.Handle(this, reader, whoAmI);
