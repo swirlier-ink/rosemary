@@ -26,7 +26,7 @@ public sealed class ElkPhrase : List<ElkSymbol>
     }
 }
 
-public record struct ElkSymbol(Vector2 Position, Rectangle Source, float Height);
+public record struct ElkSymbol(Vector2 Position, Rectangle Source, float Height, SpriteEffects Effects = SpriteEffects.None);
 
 public static class ElkLanguage
 {
@@ -53,6 +53,17 @@ public static class ElkLanguage
             var symbol = phrase[^1];
 
             symbol.Height = height;
+
+            phrase[^1] = symbol;
+
+            return phrase;
+        }
+
+        public ElkPhrase UseEffects(SpriteEffects effects)
+        {
+            var symbol = phrase[^1];
+
+            symbol.Effects = effects;
 
             phrase[^1] = symbol;
 
@@ -85,7 +96,7 @@ public static class ElkLanguage
 
         position -= origin * scale;
 
-        foreach (var (offset, source, height) in phrase)
+        foreach (var (offset, source, height, effects) in phrase)
         {
             sb.Draw(
                 texture,
@@ -95,7 +106,7 @@ public static class ElkLanguage
                 0f,
                 Vector2.Zero,
                 scale,
-                SpriteEffects.None,
+                effects,
                 0f
             );
 
