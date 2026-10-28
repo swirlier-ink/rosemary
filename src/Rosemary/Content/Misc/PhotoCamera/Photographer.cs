@@ -36,7 +36,7 @@ public class Photographer : ModNPC
         NPCID.Sets.NPCBestiaryDrawOffset.Add(Type, new()
         {
             Velocity = 1f,
-            Direction = 1,
+            Direction = -1,
         });
 
         profile = new Profiles.StackedNPCProfile(new Profiles.DefaultNPCProfile(Texture, -1));
