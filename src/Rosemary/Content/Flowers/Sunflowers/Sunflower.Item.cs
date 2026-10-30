@@ -23,14 +23,6 @@ internal sealed class SunflowerGlobal : GlobalItem
     public override void Unload()
     {
         TextureAssets.Item[ItemID.Sunflower] = priorAsset;
-
-        ItemID.Sets.DisableAutomaticPlaceableDrop[ItemID.Sunflower] = false;
-    }
-
-    public override void SetStaticDefaults()
-    {
-        // TODO: Better system for this, because this is stupid
-        ItemID.Sets.DisableAutomaticPlaceableDrop[ItemID.Sunflower] = true;
     }
 
     public override void SetDefaults(Item item)

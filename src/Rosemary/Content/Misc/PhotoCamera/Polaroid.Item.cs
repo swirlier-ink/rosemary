@@ -242,11 +242,6 @@ public sealed class PolaroidItem : ModItem
         orig(self, info, rare, diff, x, y);
     }
 
-    public override void SetStaticDefaults()
-    {
-        ItemID.Sets.DisableAutomaticPlaceableDrop[Type] = true;
-    }
-
     public override void SetDefaults()
     {
         Item.width = 40;

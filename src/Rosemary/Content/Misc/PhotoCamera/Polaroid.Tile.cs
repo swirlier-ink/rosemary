@@ -93,6 +93,8 @@ public sealed class PolaroidTile : ModTile
             .Register();
 
         AddMapEntry(new Color(219, 237, 228), Mods.Rosemary.Content.Misc.PolaroidTile.MapName.GetText());
+
+        RegisterItemDrop(ItemID.None);
     }
 
     public override void NumDust(int i, int j, bool fail, ref int num)
