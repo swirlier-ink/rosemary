@@ -155,6 +155,7 @@ public static class ElkLanguage
         );
     }
 
+    // TODO: Generalize to some custom tooltip provider API
     public static ElkPhrase? MousePhrase;
 
     private static void MouseTextInner_MousePhrase_Reset(Action<Main, Main.MouseTextCache> orig, Main self, Main.MouseTextCache info)
