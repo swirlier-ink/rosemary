@@ -1,9 +1,16 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoMod.Cil;
+using Rosemary.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using Terraria;
+using Terraria.ID;
+using Terraria.ModLoader;
+using Terraria.UI.Chat;
 
 // ReSharper disable ConvertToExtensionBlock
 
@@ -132,6 +139,95 @@ public static class ElkLanguage
     {
         sb.DrawPhraseOutline(phrase, position, shadowColor, scale, origin, spread, directions);
         sb.DrawPhrase(phrase, position, color, scale, origin);
+    }
+
+    [OnLoad]
+    private static void Load()
+    {
+        IL_Main.MouseTextInner += MouseTextInner_MousePhrase;
+
+        MonoModHooks.Add(
+            typeof(Main).GetMethod(
+                nameof(Main.MouseTextInner),
+                BindingFlags.Instance | BindingFlags.NonPublic
+            ),
+            MouseTextInner_MousePhrase_Reset
+        );
+    }
+
+    public static ElkPhrase? MousePhrase;
+
+    private static void MouseTextInner_MousePhrase_Reset(Action<Main, Main.MouseTextCache> orig, Main self, Main.MouseTextCache info)
+    {
+        orig(self, info);
+
+        MousePhrase = null;
+    }
+
+    private static void MouseTextInner_MousePhrase(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        var bigXIndex = VariableIndex.Invalid;
+        var bigYIndex = VariableIndex.Invalid;
+
+        var jumpDrawStringTarget = c.DefineLabel();
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchCall(typeof(ChatManager), nameof(ChatManager.GetStringSize))
+        );
+
+        c.EmitDelegate(
+            static (Vector2 originalSize) =>
+            {
+                if (MousePhrase is not { } phrase)
+                {
+                    return originalSize;
+                }
+
+                return phrase.Measure(1f);
+            }
+        );
+
+        c.GotoNext(
+            i => i.MatchLdfld<Main.MouseTextCache>(nameof(Main.MouseTextCache.buffTooltip)),
+            i => i.MatchLdloca(out bigXIndex),
+            i => i.MatchLdloca(out bigYIndex)
+        );
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchCall(typeof(ChatManager), nameof(ChatManager.DrawColorCodedStringWithShadow))
+        );
+
+        c.MarkLabel(jumpDrawStringTarget);
+
+        c.GotoPrev(
+            MoveType.Before,
+            i => i.MatchLdsfld<Main>(nameof(Main.spriteBatch))
+        );
+
+        c.MoveAfterLabels();
+
+        c.EmitLdloc(bigXIndex);
+        c.EmitLdloc(bigYIndex);
+
+        c.EmitDelegate(
+            static (int x, int y) =>
+            {
+                if (MousePhrase is null)
+                {
+                    return false;
+                }
+
+                Main.spriteBatch.DrawPhraseWithOutline(MousePhrase, new Vector2(x + 6f, y + 8f), Color.White, Color.Black, 1f, Vector2.Zero);
+
+                return true;
+            }
+        );
+
+        c.EmitBrtrue(jumpDrawStringTarget);
     }
 }
 

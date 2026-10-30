@@ -9,6 +9,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using Microsoft.Xna.Framework;
+using Rosemary.Content;
 
 namespace Rosemary;
 
@@ -16,11 +17,21 @@ partial class ModImpl
 {
     public static readonly ElkPhrase ELK_NAME =
         ElkLanguage.NewPhrase
-                   .CurlB.UseHeight(6f).UseOffset(new Vector2(-16f, 0f))
-                   .Rosemary.UseOffset(new Vector2(-8f, 4f))
+                   .CurlB       .UseHeight(6f).UseOffset(new Vector2(-16f, 0f))
+                   .Rosemary                  .UseOffset(new Vector2(-8f, 4f))
                    .BranchRightB.UseHeight(5f).UseOffset(new Vector2(17f, 0f))
-                   .DotSmall.UseHeight(0f).UseOffset(new Vector2(-20f, -8f))
+                   .DotSmall    .UseHeight(0f).UseOffset(new Vector2(-20f, -8f))
                    .FullStop;
+
+    public static readonly ElkPhrase SMALL_SCRIPT_ELK_NAME =
+        ElkLanguage.NewPhrase
+                   .OpenBracketA .UseHeight(16f)
+                   .BranchRightC .UseHeight(18f)
+                   .BranchRightF .UseHeight(12f).UseOffset(new Vector2(-4f, 2f))
+                   .CurlA        .UseHeight(22f).UseOffset(new Vector2(4f, -2f))
+                   .BranchLeftD  .UseHeight(14f).UseOffset(new Vector2(6f, 0f))
+                   .CloseBracketA.UseHeight(12f)
+                   .FullStopSmall               .UseOffset(new Vector2(6f, 2f));
 
     public ModImpl()
     {
@@ -28,10 +39,12 @@ partial class ModImpl
         MusicAutoloadingEnabled = false;
     }
 
-    // TODO: yell at tomat to fix this
     public override void Load()
     {
+        // TODO: yell at tomat to fix this
         SmallModIcon = icon_small.Asset;
+
+        ModSourceBestiaryInfoElement = new ModBestiaryInfo.RosemarySourceBestiaryInfoElement(this, string.Empty);
     }
 
     public override void HandlePacket(BinaryReader reader, int whoAmI)

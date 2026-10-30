@@ -196,7 +196,7 @@ internal static class ModInfo
         }
     }
 
-    // TODO: Abstract out when more UI is needed?
+    // TODO: Move to ElkPhraseElement
     private sealed class ElkLangPanel(ElkPhrase name) : UIPanel
     {
         public override void Recalculate()

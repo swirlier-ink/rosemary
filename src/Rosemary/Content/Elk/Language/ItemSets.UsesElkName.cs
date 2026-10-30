@@ -762,7 +762,7 @@ public static partial class ElkLangItemSets
             {
                 var item = worldHoverItem;
 
-                if (item is null || usesElkName[item.type] is not { } phrase)
+                if (item is null || ItemID.Sets.UsesElkName[item.type] is not { } phrase)
                 {
                     return originalSize;
                 }
