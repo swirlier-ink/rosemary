@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
 using Rosemary.Core;
 using Terraria;
+using Terraria.Utilities;
 
 namespace Rosemary.Vanity.Content;
 
@@ -15,7 +16,7 @@ public static class FlyeParticles
         public readonly int Seed = Main.rand.Next(int.MaxValue); 
         bool IUpdatingParticle.Update()
         {
-            var rand = new Rand(Seed);
+            var rand = new FastRandom(Seed);
 
             var progress = LifeTime / StartLifeTime;
             
@@ -23,7 +24,7 @@ public static class FlyeParticles
 
             Position += Velocity;
 
-            Velocity = Velocity.RotatedBy(rand.NextFloat(0.1f, 0.25f) * MathF.Sin(LifeTime * rand.NextFloat(0.01f, 0.0f) + rand.NextFloat(MathF.PI * 2)) * progress);
+            Velocity = Velocity.RotatedBy(rand.NextFloat(0.1f, 0.25f) * MathF.Sin(LifeTime * rand.NextFloat(0.01f, 0.0f) + rand.NextFloat(MathF.PI * 2f)) * progress);
             
             return LifeTime > 1f;
         }
@@ -68,7 +69,7 @@ public static class FlyeParticles
         {
             ref var fish = ref Fishes[index];
             
-            var rand = new Rand(fish.Seed);
+            var rand = new FastRandom(fish.Seed);
 
             var rotation = fish.Velocity.ToRotation();
 
@@ -77,7 +78,9 @@ public static class FlyeParticles
             var opacity = MathHelper.Clamp(progress * 2, 0, 1);
 
             if (fish.LifeTime > fish.StartLifeTime - 6f)
-                opacity *= 1f - (fish.LifeTime - fish.StartLifeTime + 5f) / 5f; 
+            {
+                opacity *= 1f - (fish.LifeTime - fish.StartLifeTime + 5f) / 5f;
+            }
 
             var scale = rand.NextFloat(0.8f, 1.2f);
             

@@ -150,6 +150,12 @@ public static class Rand
     extension(FastRandom random)
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float NextFloat(float max)
+        {
+            return random.NextFloat() * max;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float NextFloat(float min, float max)
         {
             return random.NextFloat() * (max - min) + min;
