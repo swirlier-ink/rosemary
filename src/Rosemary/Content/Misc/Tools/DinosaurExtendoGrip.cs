@@ -590,7 +590,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
         Projectile.velocity += -Vector2.UnitY * 6f;
 
-        if (!Rand.NextBoolean(3))
+        if (!Rand.NextBool(3))
         {
             return;
         }
@@ -754,7 +754,7 @@ public sealed class DinosaurExtendoGripHoldout : ModProjectile
 
         Projectile.velocity = GetVelocity(target) * speed;
 
-        if (Projectile.velocity.Length() > min_speed && Rand.NextBoolean(10) && !Collision.SolidCollision(Projectile.position - new Vector2(2), Projectile.width + 4, Projectile.height + 4))
+        if (Projectile.velocity.Length() > min_speed && Rand.NextBool(10) && !Collision.SolidCollision(Projectile.position - new Vector2(2), Projectile.width + 4, Projectile.height + 4))
         {
             var soundPosition = Vector2.Lerp(center, Projectile.Center, 0.5f);
 

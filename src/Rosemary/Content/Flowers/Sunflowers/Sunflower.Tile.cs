@@ -260,7 +260,7 @@ public sealed class SunflowerTile : ModTile
     {
         TileDrawing.Instance.CrawlToBottomOfReverseVineAndAddSpecialPoint(j, i);
 
-        if (!TileDrawing.Instance._isActiveAndNotPaused || !Rand.NextBoolean(4))
+        if (!TileDrawing.Instance._isActiveAndNotPaused || !Rand.NextBool(4))
         {
             return false;
         }
@@ -386,7 +386,7 @@ public sealed class SunflowerTile : ModTile
     {
         var tile = Framing.GetTileSafely(i, j);
 
-        if (tile.TileFrameY == 18 * 2 || Rand.NextBoolean(5))
+        if (tile.TileFrameY == 18 * 2 || Rand.NextBool(5))
         {
             yield return new Item(ItemID.Sunflower);
         }
@@ -395,7 +395,7 @@ public sealed class SunflowerTile : ModTile
     public override void RandomUpdate(int i, int j, bool underground)
     {
         if (underground
-         || !Rand.NextBoolean(6))
+         || !Rand.NextBool(6))
         {
             return;
         }

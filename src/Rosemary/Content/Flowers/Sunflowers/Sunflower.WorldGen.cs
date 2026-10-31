@@ -100,7 +100,7 @@ public static class SunflowerWorldGen
         c.EmitDelegate(
             static (int i, int j) =>
             {
-                if (Rand.NextBoolean(6))
+                if (Rand.NextBool(6))
                 {
                     return;
                 }
@@ -146,7 +146,7 @@ public static class SunflowerWorldGen
 
                     counter++;
 
-                    if (counter > height && Rand.NextBoolean(5))
+                    if (counter > height && Rand.NextBool(5))
                     {
                         tile.TileFrameY = 18;
                         tile.TileFrameX = 18 * 5;

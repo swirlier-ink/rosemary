@@ -38,15 +38,15 @@ public sealed class SiffrinHover : ModItem
     {
         if (Main.mouseItem == Item)
         {
-            if (Rand.NextBoolean())
+            if (Rand.NextBool())
             {
-                SiffrinParticles.UIStars += new SiffrinParticles.Star(Main.MouseScreen, Rand.NextBoolean() ? Color.White : Color.Black, Rand.Next((byte)4), 0, 0);
+                SiffrinParticles.UIStars += new SiffrinParticles.Star(Main.MouseScreen, Rand.NextBool() ? Color.White : Color.Black, Rand.Next((byte)4), 0, 0);
             }
 
             return;
         }
 
-        if (!Rand.NextBoolean(6))
+        if (!Rand.NextBool(6))
         {
             return;
         }
@@ -55,19 +55,19 @@ public sealed class SiffrinHover : ModItem
 
         var spawnPositon = Rand.Next(texture.Size() * scale) + position - (origin * scale);
 
-        SiffrinParticles.UIStars += new SiffrinParticles.Star(spawnPositon, Rand.NextBoolean() ? Color.White : Color.Black, Rand.Next((byte)4), 0, 0);
+        SiffrinParticles.UIStars += new SiffrinParticles.Star(spawnPositon, Rand.NextBool() ? Color.White : Color.Black, Rand.Next((byte)4), 0, 0);
     }
 
     public override void PostDrawInWorld(WorldItem item, SpriteBatch spriteBatch, Color lightColor, Color alphaColor, float rotation, float scale, int whoAmI)
     {
-        if (!Rand.NextBoolean(6))
+        if (!Rand.NextBool(6))
         {
             return;
         }
 
         var spawnPositon = Rand.Next(item.Hitbox);
 
-        SiffrinParticles.ForegroundStars += new SiffrinParticles.Star(spawnPositon, Rand.NextBoolean() ? Color.White : Color.Black, Rand.Next((byte)4), 0, 0);
+        SiffrinParticles.ForegroundStars += new SiffrinParticles.Star(spawnPositon, Rand.NextBool() ? Color.White : Color.Black, Rand.Next((byte)4), 0, 0);
     }
 }
 
@@ -425,7 +425,7 @@ public sealed class SiffrinHoverMount : ModMount
             effectsPlayer.AfterImages += OutlineAfterImagesPlayer.AfterImageInfo.FromPlayer(player);
         }
 
-        if (Rand.NextBoolean(7))
+        if (Rand.NextBool(7))
         {
             var range = player.Hitbox;
 
@@ -443,7 +443,7 @@ public sealed class SiffrinHoverMount : ModMount
             SiffrinParticles.BackgroundStars += new SiffrinParticles.Star(position, Color.Black, Rand.Next((byte)4), 0, 0);
         }
 
-        if (Rand.NextBoolean(12))
+        if (Rand.NextBool(12))
         {
             var range = player.Hitbox;
 

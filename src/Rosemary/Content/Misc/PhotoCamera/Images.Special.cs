@@ -210,7 +210,7 @@ public static partial class Images
             {
                 var vector = Rand.NextSquare(-size, size);
 
-                if (Rand.NextBoolean())
+                if (Rand.NextBool())
                 {
                     vector.X = size * Rand.NextDirection();
                 }

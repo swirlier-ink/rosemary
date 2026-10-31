@@ -1131,7 +1131,7 @@ public static partial class ElkShimmerItemSets
                 innerOffset -= 16;
             }
 
-            var style = Rand.NextBoolean(7, 3) ? (byte)0 : Rand.Next((byte)3);
+            var style = Rand.NextBool(7, 3) ? (byte)0 : Rand.Next((byte)3);
 
             ElkShimmerParticles.Spikes += new ElkShimmerParticles.ShimmerSpike(tilePosition, innerOffset, height, style, 0f, speed);
         }

@@ -57,7 +57,7 @@ public abstract class ShimmerReactionGore : ModGore, ICustomDrawGore
         {
             gore.alpha += 3;
         }
-        else if (Rand.NextBoolean(12))
+        else if (Rand.NextBool(12))
         {
             var dust = Dust.NewDustPerfect(
                 gore.Center,
@@ -184,7 +184,7 @@ public abstract class ShimmerReactionGore : ModGore, ICustomDrawGore
 
             WaterShaderData.Instance.QueueRipple(Rand.Next(gore.Hitbox), Rand.Next(0.15f, 0.85f) * (1f - ratio), RippleShape.Square, MathF.PiOver4);
 
-            if (Rand.NextBoolean(subSurface ? 6 : 2))
+            if (Rand.NextBool(subSurface ? 6 : 2))
             {
                 var rect = gore.Hitbox;
 
