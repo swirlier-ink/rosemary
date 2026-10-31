@@ -87,7 +87,7 @@ public sealed class GiantAntlers : ModItem
 
             if ((int)player.gravDir == -1 && !drawInfo.headOnlyRender)
             {
-                position.Y += player.height - player.headPosition.Y - 4;
+                position.Y += player.height - player.headPosition.Y + 10;
             }
 
             var frame = texture.Frame(2, 1, FrameX);
