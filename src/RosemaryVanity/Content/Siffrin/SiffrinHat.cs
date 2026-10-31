@@ -271,16 +271,16 @@ file sealed class HatStylePlayer : ModPlayer
 
         public static void Receive(BinaryReader reader, int sender)
         {
-            var whoAmI = reader.ReadInt32();
+            sender = reader.ReadInt32();
+
+            var player = Main.player[sender];
+
+            player.GetModPlayer<HatStylePlayer>().Style = reader.ReadInt32();
 
             if (Main.netMode == NetmodeID.Server)
             {
-                whoAmI = sender;
+                new Packet(sender).Send(PacketDestination.AllExcept(sender));
             }
-
-            var player = Main.player[whoAmI];
-
-            player.GetModPlayer<HatStylePlayer>().Style = reader.ReadInt32();
         }
     }
 

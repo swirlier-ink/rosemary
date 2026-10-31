@@ -169,10 +169,10 @@ file sealed class OutlineAfterImagesPlayer : ModPlayer
 
         using (lease.Scope(clearColor: Color.Transparent))
         {
-            sb.Begin(ss with { TransformMatrix = Matrix.Identity, SamplerState = SamplerState.LinearClamp });
+            sb.Begin(ss with { TransformMatrix = Matrix.Identity, SamplerState = SamplerState.LinearClamp, RasterizerState = RasterizerState.CullCounterClockwise });
             {
                 using var _ = Main.GameViewMatrix._transformationMatrix.Override(Matrix.Identity);
-
+                
                 var tempPosition = Main.screenPosition + device.Viewport.Bounds.Size() * 0.5f;
                 tempPosition -= Player.Size * 0.5f;
                 using var __ = Player.position.Override(tempPosition);
@@ -302,7 +302,7 @@ public sealed class SiffrinHoverMount : ModMount
             sb.End();
         }
 
-        sb.Begin(ss with { SortMode = SpriteSortMode.Immediate, TransformMatrix = Matrix.Identity });
+        sb.Begin(ss with { SortMode = SpriteSortMode.Immediate, TransformMatrix = Matrix.Identity, RasterizerState = RasterizerState.CullCounterClockwise });
 
         for (var i = 0; i < 4; i++)
         {
