@@ -88,9 +88,11 @@ public class Photographer : ModNPC
 
         var keys = new HashSet<string> { LangPhotographer.Chat.Generic.KEY };
 
-        var night = !Main.IsItDay();
-        var surfaceTundra = player.ZoneSnow && !player.ShoppingZone_BelowSurface;
+        var metrics = Main.SceneMetrics;
 
+        var surface = !player.ShoppingZone_BelowSurface;
+
+        var night = !Main.IsItDay();
         if (night)
         {
             keys.Add(LangPhotographer.Chat.Night.KEY);
@@ -101,14 +103,21 @@ public class Photographer : ModNPC
             }
         }
 
-        if (surfaceTundra)
+        if (player.ShoppingZone_Forest && surface)
         {
-            if (night)
-            {
-                keys.Add(LangPhotographer.Chat.Night.Tundra.KEY);
-            }
+            keys.Add(night ? LangPhotographer.Chat.Night.Forest.KEY : LangPhotographer.Chat.Forest.KEY);
+        }
 
-            keys.Add(LangPhotographer.Chat.Tundra.KEY);
+        if (player.ZoneSnow && surface)
+        {
+            if (metrics.ZoneRain)
+            {
+                keys.Add(LangPhotographer.Chat.Tundra.Snowing.KEY);
+            }
+            else
+            {
+                keys.Add(night ? LangPhotographer.Chat.Night.Tundra.KEY : LangPhotographer.Chat.Tundra.KEY);
+            }
         }
 
         return GetRandomValue(Rand.Instance.NextFromList(keys.ToArray()));
