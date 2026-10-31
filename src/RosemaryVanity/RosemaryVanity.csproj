@@ -28,5 +28,8 @@
     <ItemGroup>
         <Publicize Include="FNA;ReLogic;MonoMod.RuntimeDetour" IncludeCompilerGeneratedMembers="false" IncludeVirtualMembers="false" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Assets\Vanity\Fawn\" />
+    </ItemGroup>
 
 </Project>

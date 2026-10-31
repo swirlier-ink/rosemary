@@ -1,4 +1,4 @@
-﻿SiffrinHat: {
+SiffrinHat: {
 	DisplayName: Traveler's hat
 	Tooltip: "[Looks remarkably like a wizard's hat]"
 
@@ -34,4 +34,9 @@ SiffrinHoverBuff: {
 EmptinessDye: {
 	DisplayName: Emptiness Dye
 	Tooltip: '''[rsmryshk/4.3:[my truama is not your larp!\]]'''
+}
+
+GiantAntlers: {
+	DisplayName: Giant Antlers
+	Tooltip: ""
 }

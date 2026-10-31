@@ -169,7 +169,7 @@ public sealed class SiffrinHat : ModItem
         Item.headSlot = equipSlotHead;
     }
 
-    private class HatBehindDrawLayer : PlayerDrawLayer
+    internal class HatBehindDrawLayer : PlayerDrawLayer
     {
         private static bool IsVisible(PlayerDrawSet drawInfo)
         {
@@ -241,7 +241,7 @@ public sealed class SiffrinHat : ModItem
         }
     }
 
-    private sealed class HatFrontDrawLayer : HatBehindDrawLayer
+    internal sealed class HatFrontDrawLayer : HatBehindDrawLayer
     {
         public override Position GetDefaultPosition() => new AfterParent(PlayerDrawLayers.FaceAcc);
 
