@@ -39,6 +39,8 @@ public class Photographer : ModNPC
             Direction = -1,
         });
 
+        NPCID.Sets.NPCPortraits.Add(Type, NPCID.Sets.PrioritizedPortrait().Default(NPCID.Sets.BasicPortrait($"{Texture}_Portrait")));
+        
         profile = new Profiles.StackedNPCProfile(new Profiles.DefaultNPCProfile(Texture, -1));
     }
 
