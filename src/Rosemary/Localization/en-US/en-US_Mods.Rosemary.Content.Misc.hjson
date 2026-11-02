@@ -77,17 +77,20 @@ ConspiratorialWallItem: {
 Photographer: {
 	DisplayName: Photographer
 	Name.0: Iris
-	Entry: The Photographer travels across the world in search of the perfect photos to add to their collection. They sell misprints and old cameras to make a living.
+	Entry: The Photographer travels across the world in search of the perfect photos to add to their collection, selling misprints and old cameras to get by.
 
 	Chat: {
-		First: Oh hello there traveller, I don't believe we've met before, name's {NPCFirstName_Rosemary/Photographer}.
+		First: Oh! Hey there, I'm not sure if we've met before..? Well, um, I'm a photographer. I'm sort of new around here; the scenery really captivated me though, haha. Oh! I almost forgot... You can call me {NPCFirstName_Rosemary/Photographer}!
 
 		Generic: {
-			0: Howdy traveller, find any good photo spots?
-			1: Oh! Traveller, how've you been?
-			2: Hey traveller, would any of the townies here be interested in a photoshoot? Free of charge of course.
-			3: This island gives me the best photo opportunities!
-			4: Happy to be back to this island, helps get my mind off of my failed polaroid lifts back home.
+			0: Take a look at these pictures I got! ... If you want to, of course.
+			1: ... Oh, didn't, um, see you there. Need more lens wipes again?
+			2: I wonder... would any of your friends be interested in a photoshoot..?
+			3: This whole island is soo pretty... You really need to stop and take in the scenery sometimes.
+			4: You know, um, back home... Well, there was nothing interesting to look at! I really can't appreciate this place enough.
+			5: There are some really powerful tricks in photography; no one really tells you about them... So I don't really know them either.
+			6: Wait wait wait shh... Sorry, I really couldn't miss that. Anyways, hi!
+			7: Call me weird for this but... I like making these camera filters, when in reality, I don't actually... Use them... I prefer authenticity!
 		}
 
 		Forest: {
