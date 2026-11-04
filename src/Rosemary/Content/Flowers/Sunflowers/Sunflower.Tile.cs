@@ -235,6 +235,8 @@ public sealed class SunflowerTile : ModTile
         AddMapEntry(new Color(226, 196, 49), Lang.GetItemName(ItemID.Sunflower));
 
         RegisterItemDrop(ItemID.None);
+
+        AdjTiles = [TileID.Sunflower];
     }
 
     public override ushort GetMapOption(int i, int j)
