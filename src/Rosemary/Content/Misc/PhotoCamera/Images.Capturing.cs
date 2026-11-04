@@ -119,6 +119,26 @@ public static partial class Images
         return frame;
     }
 
+    public static Rectangle[] GetOuterSectors()
+    {
+        var device = Graphics.Device;
+        var viewport = device.Viewport.Bounds;
+
+        var frame = GetCaptureArea();
+
+        return
+        [
+            // Left
+            new Rectangle(0, frame.Y, frame.X, frame.Height),
+            // Right
+            new Rectangle(frame.Right, frame.Y, viewport.Width - frame.Right, frame.Height),
+            // Up (spans whole width)
+            new Rectangle(0, 0, viewport.Width, frame.Y),
+            // Down (spans whole width)
+            new Rectangle(0, frame.Bottom, viewport.Width, viewport.Height - frame.Bottom),
+        ];
+    }
+
     public static Vector2 GetCapturePosition()
     {
         using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);

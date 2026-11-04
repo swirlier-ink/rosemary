@@ -3,8 +3,10 @@ using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
 using Rosemary.Core;
 using System;
+using MonoMod.Cil;
 using Terraria;
 using Terraria.GameContent;
+using Terraria.GameContent.Drawing;
 using Terraria.ID;
 
 namespace Rosemary.Content.Misc;
@@ -42,6 +44,82 @@ public static partial class Images
         // but I imagine it'd be more difficult to manage a scissor rectangle between Pre/PostDraw;
         // additionally makes drawing the NPC multiple times more annoying.
         On_Main.DrawNPCDirect += DrawNPCDirect_Exclusions;
+
+        On_Main.DrawLensFlare += DrawLensFlare_Exclusions;
+        IL_NextHorizonRenderer.DrawLensFlare += DrawLensFlare_Center;
+    }
+
+    private static bool drawingCameraFlare;
+
+    private static void DrawLensFlare_Center(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        var screenCenterIndex = VariableIndex.Invalid;
+
+        c.GotoNext(
+            MoveType.After,
+            i => i.MatchCall<Main>($"get_{nameof(Main.ScreenSize)}"),
+            i => i.MatchCall(typeof(Utils), nameof(Utils.ToVector2)),
+            i => i.MatchLdcR4(2f),
+            i => i.MatchCall<Vector2>("op_Division"),
+            i => i.MatchStloc(out screenCenterIndex)
+        );
+
+        c.EmitLdloca(screenCenterIndex);
+        c.EmitDelegate(
+            static (ref Vector2 center) =>
+            {
+                if (drawingCameraFlare)
+                {
+                    center = GetCaptureArea().Center();
+                }
+            }
+        );
+    }
+
+    private static void DrawLensFlare_Exclusions(On_Main.orig_DrawLensFlare orig)
+    {
+        if (!Main.ShouldDrawSurfaceBackground()
+         || !Main.HorizonHelper.SunVisibilityEnabled
+         || !CaptureRequested)
+        {
+            orig();
+
+            return;
+        }
+
+        var device = Graphics.Device;
+        var state = Main.LatestSurfaceBackgroundBeginner.rasterizerState;
+
+        var sectors = GetOuterSectors();
+
+        foreach (var rect in sectors)
+        {
+            using var _ = device.ScissorScope(rect, true, state);
+
+            orig();
+        }
+
+        var frame = GetCaptureArea();
+
+        var sunPosition = Main.LastCelestialBodyPosition * new Vector2(Main.screenWidth, Main.screenHeight);
+
+        var sunSize = MathF.Pow(MathF.Abs(((float)Main.time / 54000f * 2f) - 1f), 2f);
+        sunSize = 1.2f - (sunSize * 0.4f);
+        sunSize *= 2f;
+
+        var sunBounds = Utils.CenteredRectangle(sunPosition, TextureAssets.Sun.Value.Size() * sunSize);
+
+        if (!frame.Intersects(sunBounds))
+        {
+            return;
+        }
+
+        using var __ = device.ScissorScope(frame, true, state);
+        using var ___ = drawingCameraFlare.Override(true);
+
+        orig();
     }
 
     private static void DrawNPCDirect_Exclusions(On_Main.orig_DrawNPCDirect orig, Main self, SpriteBatch sb, NPC npc, bool behindTiles, Vector2 screenPos)
@@ -80,19 +158,8 @@ public static partial class Images
         }
 
         var device = self.GraphicsDevice;
-        var viewport = device.Viewport.Bounds;
 
-        var sectors = new[]
-        {
-            // Left
-            new Rectangle(0, frame.Y, frame.X, frame.Height),
-            // Right
-            new Rectangle(frame.Right, frame.Y, viewport.Width - frame.Right, frame.Height),
-            // Up (spans whole width)
-            new Rectangle(0, 0, viewport.Width, frame.Y),
-            // Down (spans whole width)
-            new Rectangle(0, frame.Bottom, viewport.Width, viewport.Height - frame.Bottom),
-        };
+        var sectors = GetOuterSectors();
 
         var npcScreen = npcBounds;
         npcScreen.X -= (int)Main.screenPosition.X;
@@ -114,22 +181,16 @@ public static partial class Images
 
             var state = ss.RasterizerState;
 
-            var prior = state.ScissorTestEnable;
-            state.ScissorTestEnable = true;
-
-            var priorRect = device.ScissorRectangle;
-            device.ScissorRectangle = Rectangle.Intersect(priorRect, sector);
-
-            sb.Begin(ss with { RasterizerState = state });
+            using (device.ScissorScope(sector, true, state))
             {
-                orig(self, sb, npc, behindTiles, screenPos);
+                sb.Begin(in ss);
+                {
+                    orig(self, sb, npc, behindTiles, screenPos);
+                }
+                sb.End();
             }
-            sb.End();
 
-            device.ScissorRectangle = priorRect;
-            state.ScissorTestEnable = prior;
-
-            sb.Begin(ss with { RasterizerState = state });
+            sb.Begin(in ss);
         }
     }
 
