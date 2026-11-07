@@ -26,20 +26,6 @@ public sealed class PolaroidItem : ModItem
 
     public override string LocalizationCategory => "Content.Misc";
 
-    public override bool CanStack(Item source)
-    {
-        if (source.ModItem is not PolaroidItem polaroid)
-        {
-            return false;
-        }
-
-        return ImageIdentifier == polaroid.ImageIdentifier
-            && !Original
-            && !polaroid.Original;
-    }
-
-    public override bool CanResearch() => false;
-
     public override void Load()
     {
         if (Main.dedServ)
@@ -242,6 +228,11 @@ public sealed class PolaroidItem : ModItem
         orig(self, info, rare, diff, x, y);
     }
 
+    public override void SetStaticDefaults()
+    {
+        ContentSamples.CreativeHelper.ShouldRemoveFromList(Item);
+    }
+
     public override void SetDefaults()
     {
         Item.width = 40;
@@ -263,6 +254,20 @@ public sealed class PolaroidItem : ModItem
 
         Age = 0;
     }
+
+    public override bool CanStack(Item source)
+    {
+        if (source.ModItem is not PolaroidItem polaroid)
+        {
+            return false;
+        }
+
+        return ImageIdentifier == polaroid.ImageIdentifier
+            && !Original
+            && !polaroid.Original;
+    }
+
+    public override bool CanResearch() => false;
 
     public bool ShowTooltip = true;
 
