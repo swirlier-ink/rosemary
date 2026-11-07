@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Terraria;
 using Terraria.Audio;
-using Terraria.DataStructures;
 using Terraria.Enums;
 using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
@@ -24,6 +23,8 @@ public sealed class Photographer : ModNPC
     public sealed class EmoteBubble : ModEmoteBubble
     {
         public override string Texture => Assets.Misc.Camera.Photographer_Emote.KEY;
+
+        public override LocalizedText Command => LangPhotographer.EmoteBubble.Command.GetText();
 
         public override void SetStaticDefaults()
         {
