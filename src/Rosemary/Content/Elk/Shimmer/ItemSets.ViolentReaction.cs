@@ -1,13 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoMod.Cil;
+using ReLogic.Utilities;
 using Rosemary.Common;
 using Rosemary.Content.Misc;
 using Rosemary.Core;
 using System;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using ReLogic.Utilities;
 using Terraria;
 using Terraria.Audio;
 using Terraria.DataStructures;
@@ -18,6 +18,7 @@ using Terraria.Graphics.CameraModifiers;
 using Terraria.Graphics.Light;
 using Terraria.ID;
 using Terraria.Localization;
+using Terraria.ModLoader;
 
 namespace Rosemary.Content.Elk;
 
@@ -26,6 +27,8 @@ public static partial class ElkShimmerItemSets
     [OnLoad]
     private static void Load_ViolentShimmerReaction()
     {
+        using var _ = ModLoader.LoadingSubText("Shimmer crystallization...");
+
         On_WorldItem.UpdateShimmer += UpdateShimmer_ViolentShimmerReaction;
         IL_WorldItem.MoveInWorld += MoveInWorld_ViolentShimmerReaction;
 
@@ -57,6 +60,8 @@ public static partial class ElkShimmerItemSets
         static void Inner()
         {
 #endif
+            using var _ = ModLoader.LoadingSubText("Shimmer lighting...");
+
             On_LiquidRenderer.GetShimmerGlitterColor += GetShimmerGlitterColor_DarkenSurface;
             {
                 IL_Main.oldDrawWater += _ => { };

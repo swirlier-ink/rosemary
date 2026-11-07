@@ -1,5 +1,4 @@
-﻿using FullSerializer.Internal;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoMod.Cil;
 using Rosemary.Common;
@@ -22,6 +21,8 @@ public sealed class SunflowerTile : ModTile
 
     public override void Load()
     {
+        using var _ = ModLoader.LoadingSubText("Sunflowers...");
+
         IL_TileDrawing.DrawRisingVineStrip += DrawRisingVineStrip_DrawSunflowerHead;
         On_WorldFile.SetOngoingToTemps += SetOngoingToTemps_ResetSunflowerRotation;
     }
@@ -205,7 +206,9 @@ public sealed class SunflowerTile : ModTile
         TileID.Sets.BreakableWhenPlacing[Type] = false;
         TileID.Sets.CanBeClearedDuringGeneration[Type] = false;
         TileID.Sets.SpawnsNatureFlies[Type] = true;
+        TileID.Sets.GetsDestroyedForMeteors[Type] = true;
         TileID.Sets.SlowlyDiesInWater[Type] = true;
+        TileID.Sets.AttractsStormLightning[Type] = true;
 
         // Vanilla sunflowers reduce evil biome counts, should tall
         // sunflowers reduce them by less to compensate for their height?

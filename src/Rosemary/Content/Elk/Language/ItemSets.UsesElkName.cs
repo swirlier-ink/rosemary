@@ -24,6 +24,8 @@ public static partial class ElkLangItemSets
     [OnLoad]
     private static void Load_UsesElkName()
     {
+        using var _ = ModLoader.LoadingSubText("Item names...");
+
         IL_Main.MouseText_DrawItemTooltip += MouseText_DrawItemTooltip_UsesElkName;
         IL_Main.GUIHotbarDrawInner += GUIHotbarDrawInner_UsesElkName;
         IL_Main.DrawMouseOver += DrawMouseOver_UsesElkName;

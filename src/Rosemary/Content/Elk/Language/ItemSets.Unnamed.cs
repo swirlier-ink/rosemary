@@ -1,4 +1,5 @@
-﻿using Rosemary.Common.IO;
+﻿using Rosemary.Common;
+using Rosemary.Common.IO;
 using System.Collections.Generic;
 using System.IO;
 using Terraria;
@@ -18,6 +19,8 @@ public static partial class ElkLangItemSets
     [OnLoad]
     private static void Load_Unnamed()
     {
+        using var _ = ModLoader.LoadingSubText("Item names...?");
+
         LoadNames();
     }
 

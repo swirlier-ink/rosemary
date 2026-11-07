@@ -1,19 +1,9 @@
-﻿using FullSerializer.Internal;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using MonoMod.Cil;
+﻿using MonoMod.Cil;
 using Rosemary.Common;
-using System;
-using System.Collections.Generic;
 using Terraria;
-using Terraria.DataStructures;
-using Terraria.Enums;
-using Terraria.GameContent.Drawing;
 using Terraria.GameContent.Generation;
 using Terraria.ID;
-using Terraria.IO;
 using Terraria.ModLoader;
-using Terraria.ObjectData;
 using Terraria.WorldBuilding;
 
 namespace Rosemary.Content.Flowers;
@@ -23,6 +13,8 @@ public static class SunflowerWorldGen
     [OnLoad]
     private static void Load()
     {
+        using var _ = ModLoader.LoadingSubText("Sunflower generation...");
+
         WorldGen.ModifyPass((PassLegacy)WorldGen.VanillaGenPasses[GenPassNameID.SpreadingGrassOnSurfaceSunflowersEvilsOnSurfaceAndLavaCleanup], UseModifiedSunflowers);
         WorldGen.ModifyPass((PassLegacy)WorldGen.VanillaGenPasses[GenPassNameID.SunflowersPart2], UseModifiedSunflowers);
 

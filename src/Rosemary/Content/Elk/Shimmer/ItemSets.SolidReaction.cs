@@ -1,9 +1,10 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using MonoMod.Cil;
 using Rosemary.Common;
+using System;
 using Terraria;
 using Terraria.ID;
+using Terraria.ModLoader;
 
 namespace Rosemary.Content.Elk;
 
@@ -12,6 +13,8 @@ public static partial class ElkShimmerItemSets
     [OnLoad]
     private static void Load_SolidShimmerReaction()
     {
+        using var _ = ModLoader.LoadingSubText("Shimmer collision...");
+
         On_WorldItem.ApplyMovement += ApplyMovement_ShimmerWalk;
 
         IL_WorldItem.UpdateItem += _ => { };

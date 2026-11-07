@@ -117,6 +117,8 @@ public sealed class DinosaurExtendoGrip : ModItem
 
     public override void Load()
     {
+        using var _ = ModLoader.LoadingSubText("Dinosaur claw...");
+
         IL_Main.DrawMouseOver += DrawMouseOver_DisplayHeldItemTooltip;
 
         On_Main.DrawMouseOver += DrawMouseOver_HideItemTooltips;
