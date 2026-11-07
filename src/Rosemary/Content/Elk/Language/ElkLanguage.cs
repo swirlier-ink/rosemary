@@ -141,94 +141,22 @@ public static class ElkLanguage
         sb.DrawPhrase(phrase, position, color, scale, origin);
     }
 
-    [OnLoad]
-    private static void Load()
+    private sealed class SimpleElkTooltip(ElkPhrase phrase) : ITooltipProvider
     {
-        IL_Main.MouseTextInner += MouseTextInner_MousePhrase;
+        public Vector2 GetSize()
+        {
+            return phrase.Measure(1f);
+        }
 
-        MonoModHooks.Add(
-            typeof(Main).GetMethod(
-                nameof(Main.MouseTextInner),
-                BindingFlags.Instance | BindingFlags.NonPublic
-            ),
-            MouseTextInner_MousePhrase_Reset
-        );
+        public void Draw(SpriteBatch sb, Vector2 topLeft)
+        {
+            sb.DrawPhraseWithOutline(phrase, topLeft + new Vector2(6f, 8f), Color.White, Color.Black, 1f, Vector2.Zero);
+        }
     }
 
-    // TODO: Generalize to some custom tooltip provider API
-    public static ElkPhrase? MousePhrase;
-
-    private static void MouseTextInner_MousePhrase_Reset(Action<Main, Main.MouseTextCache> orig, Main self, Main.MouseTextCache info)
+    extension(Main)
     {
-        orig(self, info);
-
-        MousePhrase = null;
-    }
-
-    private static void MouseTextInner_MousePhrase(ILContext il)
-    {
-        var c = new ILCursor(il);
-
-        var bigXIndex = VariableIndex.Invalid;
-        var bigYIndex = VariableIndex.Invalid;
-
-        var jumpDrawStringTarget = c.DefineLabel();
-
-        c.GotoNext(
-            MoveType.After,
-            i => i.MatchCall(typeof(ChatManager), nameof(ChatManager.GetStringSize))
-        );
-
-        c.EmitDelegate(
-            static (Vector2 originalSize) =>
-            {
-                if (MousePhrase is not { } phrase)
-                {
-                    return originalSize;
-                }
-
-                return phrase.Measure(1f);
-            }
-        );
-
-        c.GotoNext(
-            i => i.MatchLdfld<Main.MouseTextCache>(nameof(Main.MouseTextCache.buffTooltip)),
-            i => i.MatchLdloca(out bigXIndex),
-            i => i.MatchLdloca(out bigYIndex)
-        );
-
-        c.GotoNext(
-            MoveType.After,
-            i => i.MatchCall(typeof(ChatManager), nameof(ChatManager.DrawColorCodedStringWithShadow))
-        );
-
-        c.MarkLabel(jumpDrawStringTarget);
-
-        c.GotoPrev(
-            MoveType.Before,
-            i => i.MatchLdsfld<Main>(nameof(Main.spriteBatch))
-        );
-
-        c.MoveAfterLabels();
-
-        c.EmitLdloc(bigXIndex);
-        c.EmitLdloc(bigYIndex);
-
-        c.EmitDelegate(
-            static (int x, int y) =>
-            {
-                if (MousePhrase is null)
-                {
-                    return false;
-                }
-
-                Main.spriteBatch.DrawPhraseWithOutline(MousePhrase, new Vector2(x + 6f, y + 8f), Color.White, Color.Black, 1f, Vector2.Zero);
-
-                return true;
-            }
-        );
-
-        c.EmitBrtrue(jumpDrawStringTarget);
+        public static void SetElkTooltip(ElkPhrase phrase) => Main.SetCustomTooltip(new SimpleElkTooltip(phrase));
     }
 }
 

@@ -180,7 +180,8 @@ internal static class ModBestiaryInfo
                 }
 
                 Main.instance.MouseText(string.Empty);
-                ElkLanguage.MousePhrase = ModImpl.ELK_NAME;
+
+                Main.SetElkTooltip(ModImpl.ELK_NAME);
             }
         }
     }

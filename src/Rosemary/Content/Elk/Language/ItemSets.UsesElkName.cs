@@ -28,15 +28,6 @@ public static partial class ElkLangItemSets
         IL_Main.GUIHotbarDrawInner += GUIHotbarDrawInner_UsesElkName;
         IL_Main.DrawMouseOver += DrawMouseOver_UsesElkName;
 
-        MonoModHooks.Add(
-            typeof(Main).GetMethod(
-                nameof(Main.MouseTextInner),
-                BindingFlags.Instance | BindingFlags.NonPublic
-            ),
-            MouseTextInner_UsesElkName_Reset
-        );
-        IL_Main.MouseTextInner += MouseTextInner_UsesElkName;
-
         On_PopupText.NewText_PopupTextContext_Item_Vector2_int_bool_bool += NewText_UsesElkName_UpdatePopupTextItems;
         On_PopupText.ResetText += ResetText_UsesElkName;
 
@@ -54,8 +45,6 @@ public static partial class ElkLangItemSets
 
     private const float elk_name_tooltip_scale = 1f;
     private const float elk_name_popup_scale = 1f;
-
-    private static Item? worldHoverItem;
 
     private static Item?[] popupTextItems = new Item?[PopupText.popupText.Length];
 
@@ -743,83 +732,6 @@ public static partial class ElkLangItemSets
         return index;
     }
 
-    private static void MouseTextInner_UsesElkName(ILContext il)
-    {
-        var c = new ILCursor(il);
-
-        var bigXIndex = VariableIndex.Invalid;
-        var bigYIndex = VariableIndex.Invalid;
-
-        var jumpDrawStringTarget = c.DefineLabel();
-
-        c.GotoNext(
-            MoveType.After,
-            i => i.MatchCall(typeof(ChatManager), nameof(ChatManager.GetStringSize))
-        );
-
-        c.EmitDelegate(
-            static (Vector2 originalSize) =>
-            {
-                var item = worldHoverItem;
-
-                if (item is null || ItemID.Sets.UsesElkName[item.type] is not { } phrase)
-                {
-                    return originalSize;
-                }
-
-                return phrase.MeasureWithStack(elk_name_tooltip_scale, item.stack);
-            }
-        );
-
-        c.GotoNext(
-            i => i.MatchLdfld<Main.MouseTextCache>(nameof(Main.MouseTextCache.buffTooltip)),
-            i => i.MatchLdloca(out bigXIndex),
-            i => i.MatchLdloca(out bigYIndex)
-        );
-
-        c.GotoNext(
-            MoveType.After,
-            i => i.MatchCall(typeof(ChatManager), nameof(ChatManager.DrawColorCodedStringWithShadow))
-        );
-
-        c.MarkLabel(jumpDrawStringTarget);
-
-        c.GotoPrev(
-            MoveType.Before,
-            i => i.MatchLdsfld<Main>(nameof(Main.spriteBatch))
-        );
-
-        c.MoveAfterLabels();
-
-        c.EmitLdloc(bigXIndex);
-        c.EmitLdloc(bigYIndex);
-
-        c.EmitDelegate(
-            static (int x, int y) =>
-            {
-                var item = worldHoverItem;
-
-                if (item is null || usesElkName[item.type] is not { } phrase)
-                {
-                    return false;
-                }
-
-                Main.spriteBatch.DrawItemNamePhrase(phrase, item, new Vector2(x + 6f, y + 8f));
-
-                return true;
-            }
-        );
-
-        c.EmitBrtrue(jumpDrawStringTarget);
-    }
-
-    private static void MouseTextInner_UsesElkName_Reset(Action<Main, Main.MouseTextCache> orig, Main self, Main.MouseTextCache info)
-    {
-        orig(self, info);
-
-        worldHoverItem = null;
-    }
-
     private static void DrawMouseOver_UsesElkName(ILContext il)
     {
         var c = new ILCursor(il);
@@ -846,7 +758,12 @@ public static partial class ElkLangItemSets
         c.EmitDelegate(
             static (int i) =>
             {
-                worldHoverItem = Main.item[i].inner;
+                var item = Main.item[i].inner;
+
+                if (ItemID.Sets.UsesElkName[item.type] is not null)
+                {
+                    Main.SetCustomTooltip(new ElkItemNameTooltip(item));
+                }
             }
         );
     }
@@ -955,7 +872,12 @@ public static partial class ElkLangItemSets
         c.EmitDelegate(
             static (int index) =>
             {
-                worldHoverItem = Main.LocalPlayer.inventory[index];
+                var item = Main.LocalPlayer.inventory[index];
+
+                if (ItemID.Sets.UsesElkName[item.type] is not null)
+                {
+                    Main.SetCustomTooltip(new ElkItemNameTooltip(item));
+                }
             }
         );
     }
@@ -1043,6 +965,29 @@ public static partial class ElkLangItemSets
         position.X -= 6f;
 
         sb.DrawItemNamePhrase(phrase, item, position);
+    }
+
+    private sealed class ElkItemNameTooltip(Item item) : ITooltipProvider
+    {
+        public Vector2 GetSize()
+        {
+            if (ItemID.Sets.UsesElkName[item.type] is not { } phrase)
+            {
+                // Should not happen
+                return Vector2.Zero;
+            }
+
+            return phrase.MeasureWithStack(elk_name_tooltip_scale, item.stack);
+        }
+        public void Draw(SpriteBatch sb, Vector2 topLeft)
+        {
+            if (usesElkName[item.type] is not { } phrase)
+            {
+                return;
+            }
+
+            Main.spriteBatch.DrawItemNamePhrase(phrase, item, topLeft + new Vector2(6f, 8f));
+        }
     }
 
     private static void DrawItemNamePhrase(
