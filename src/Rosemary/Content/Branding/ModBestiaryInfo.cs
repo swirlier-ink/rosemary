@@ -179,8 +179,6 @@ internal static class ModBestiaryInfo
                     return;
                 }
 
-                Main.instance.MouseText(string.Empty);
-
                 Main.SetElkTooltip(ModImpl.ELK_NAME);
             }
         }

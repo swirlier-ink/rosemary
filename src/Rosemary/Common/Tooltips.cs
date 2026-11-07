@@ -20,6 +20,8 @@ public static class TooltipRenderer
 {
     public static void SetTooltip(ITooltipProvider p)
     {
+        Main.instance.MouseText(string.Empty);
+
         tooltip = p;
     }
 
