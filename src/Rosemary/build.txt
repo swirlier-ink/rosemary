@@ -1,4 +1,4 @@
-﻿displayName = ROSEMARY
+﻿displayName = ROSEMARY✦✦
 author = SWIRLIER-INK
 version = 1.0.0
 side = Both
