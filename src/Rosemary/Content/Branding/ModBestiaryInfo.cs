@@ -19,6 +19,25 @@ internal static class ModBestiaryInfo
     {
         IL_UIBestiaryEntryInfoPage.AddInfoToList += AddInfoToList_CacheElementProviders;
         On_UIBestiaryEntryInfoPage.AddInfoToList += AddInfoToList_Displace;
+
+        On_UIBestiaryFilteringOptionsGrid.ShowButtonName += ShowButtonName_Tooltip;
+    }
+
+    private static void ShowButtonName_Tooltip(On_UIBestiaryFilteringOptionsGrid.orig_ShowButtonName orig, UIBestiaryFilteringOptionsGrid self, UIElement element, IBestiaryEntryFilter number)
+    {
+        if (number is not Filters.ByInfoElement { _element: RosemarySourceBestiaryInfoElement })
+        {
+            orig(self, element, number);
+
+            return;
+        }
+
+        if (!element.IsMouseHovering)
+        {
+            return;
+        }
+
+        Main.SetElkTooltip(ModImpl.ELK_NAME);
     }
 
     private static readonly Dictionary<int, IBestiaryInfoElement> providers = [];
