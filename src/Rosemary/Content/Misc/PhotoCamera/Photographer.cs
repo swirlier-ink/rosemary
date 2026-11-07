@@ -4,6 +4,7 @@ using Rosemary.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MonoMod.Cil;
 using Terraria;
 using Terraria.Audio;
 using Terraria.Enums;
@@ -38,7 +39,53 @@ public sealed class Photographer : ModNPC
     public override string Texture => Assets.Misc.Camera.Photographer.KEY;
     
     private static Profiles.StackedNPCProfile? profile;
-    
+
+    public override void Load()
+    {
+        IL_NPC.AI_007_TownEntities += AI_007_TownEntities_Fearless;
+    }
+
+    private static void AI_007_TownEntities_Fearless(ILContext il)
+    {
+        var c = new ILCursor(il);
+
+        var npcIndex = ParameterIndex.Invalid;
+        var weatherFlagIndex = VariableIndex.Invalid;
+
+        c.GotoNext(
+            MoveType.Before,
+            i => i.MatchCall<Main>($"get_{nameof(Main.masterMode)}")
+        );
+
+        c.FindNext(
+            out _,
+            i => i.MatchLdarg(out npcIndex));
+
+        c.GotoPrev(
+            MoveType.Before,
+            i => i.MatchLdcR4(1f)
+        );
+
+        c.MoveAfterLabels();
+
+        c.FindPrev(
+            out _,
+            i => i.MatchStloc(out weatherFlagIndex)
+        );
+
+        c.EmitLdarg(npcIndex);
+        c.EmitLdloca(weatherFlagIndex);
+        c.EmitDelegate(
+            static (NPC npc, ref bool flag) =>
+            {
+                if (npc.type == ModContent.NPCType<Photographer>())
+                {
+                    flag = false;
+                }
+            }
+        );
+    }
+
     public override void SetStaticDefaults()
     {
         Main.npcFrameCount[Type] = 29;
@@ -291,15 +338,10 @@ public sealed class Photographer : ModNPC
             return;
         }
 
-        var (i, j) = NPC.Bottom.ToTileCoordinates();
-        NPC.AI_007_FindGoodRestingSpot(i, j, out var floorX, out var floorY);
-
         if (!beingTalkedTo
          && NPC.velocity.Y == 0f
          && AnimationState == 0f
-         && Rand.NextBool(400)
-            // NPC should only take "risky" photos ?
-         && !NPC.AI_007_TownEntities_IsInAGoodRestingSpot(i, j, floorX, floorY))
+         && Rand.NextBool(450))
         {
             UseCamera();
         }
@@ -324,8 +366,6 @@ public sealed class Photographer : ModNPC
     {
         NPC.frame.Width = NPC.width + 4;
         NPC.frame.X = NPC.frame.Width * (NPC.spriteDirection == 1).ToInt();
-
-        const int photo_frames = 7;
 
         var startingFrame = Main.npcFrameCount[Type] - 1 - 7;
 
