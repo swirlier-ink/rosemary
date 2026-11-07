@@ -1,6 +1,7 @@
 ﻿using log4net;
 using log4net.Appender;
 using log4net.Config;
+using log4net.Core;
 using log4net.Layout;
 using System;
 using System.IO;
@@ -51,13 +52,13 @@ file class Program
 
         layout.ActivateOptions();
 
-        BasicConfigurator.Configure(
-            new ConsoleAppender
-            {
-                Name = "ConsoleAppender",
-                Layout = layout,
-            }
-        );
+        var appender = new ConsoleAppender
+        {
+            Name = "ConsoleAppender",
+            Layout = layout,
+        };
+
+        BasicConfigurator.Configure(appender);
 
         var file = args[0];
 
@@ -91,6 +92,8 @@ file class Program
             }
         }
         logger.Info($"Forwarding to: {file} with arguments: {string.Join(' ', arguments)}");
+
+        appender.Threshold = Level.Off;
 
         var entryPointInfo = assembly.EntryPoint;
         entryPointInfo?.Invoke(null, [arguments]);
