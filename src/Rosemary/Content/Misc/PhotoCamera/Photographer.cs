@@ -159,14 +159,18 @@ public class Photographer : ModNPC
             return;
         }
 
-        for (var i = 0; i < (NPC.life > 0 ? 1 : 5); i++)
-        {
-            Dust.NewDust(NPC.position, NPC.width, NPC.height, DustID.Blood);
-        }
-        
         if (NPC.life > 0)
         {
+            for (var i = 0; i < (float)hit.Damage / NPC.lifeMax * 100f; i++)
+            {
+                Dust.NewDust(NPC.position, NPC.width, NPC.height, DustID.Blood, hit.HitDirection, -1f);
+            }
             return;
+        }
+
+        for (var i = 0; i < 50; i++)
+        {
+            Dust.NewDust(NPC.position, NPC.width, NPC.height, DustID.Blood, 2.5f * hit.HitDirection, -2.5f);
         }
 
         for (var i = 0; i < 3; i++)
