@@ -1,11 +1,12 @@
-﻿using System;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Terraria;
 using Terraria.Audio;
+using Terraria.DataStructures;
 using Terraria.Enums;
 using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
@@ -216,9 +217,19 @@ public sealed class Photographer : ModNPC
         set => NPC.ai[1] = value;
     }
 
+    // TODO: Move to particle for both this, and the item variant
+    private float flashTimer;
+
+    private Vector2 flashPosition;
+
     // ReSharper disable CompareOfFloatsByEqualityOperator
     public override void AI()
     {
+        if (flashTimer > 0)
+        {
+            flashTimer--;
+        }
+
         var beingTalkedTo = false;
 
         foreach (var player in Main.ActivePlayers)
@@ -264,6 +275,11 @@ public sealed class Photographer : ModNPC
             if (AnimationTimer == 70)
             {
                 SoundEngine.PlaySound(Assets.Misc.Camera.Shoot.Asset, NPC.Center);
+
+                flashTimer = 45f;
+
+                flashPosition = NPC.position + new Vector2(0, NPC.gfxOffY);
+                flashPosition += new Vector2(NPC.spriteDirection == 1 ? (NPC.width - 4) : (8), 14);
             }
 
             return;
@@ -332,8 +348,9 @@ public sealed class Photographer : ModNPC
 
         NPC.frame.Y = height * frame;
     }
+    // ReSharper restore CompareOfFloatsByEqualityOperator
 
-    public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
+    public override bool PreDraw(SpriteBatch sb, Vector2 screenPos, Color drawColor)
     {
         var texture = TextureAssets.Npc[Type].Value;
         var position = NPC.Center - screenPos + new Vector2(0, NPC.gfxOffY);
@@ -342,16 +359,50 @@ public sealed class Photographer : ModNPC
         
         Main.EntitySpriteDraw(texture, position, NPC.frame, drawColor, NPC.rotation, origin, NPC.scale, effects);
 
-        if (AnimationState != 235f)
+        if (flashTimer <= 0f)
         {
             return false;
         }
 
+        var flashTexture = TextureAssets.Extra[ExtrasID.NinetyEight].Value;
 
+        var scale = Utils.Remap(flashTimer, 0f, 45f, 0f, 1f);
+        scale = MathF.Pow(scale, 4f);
+
+        var color = Color.White * scale;
+        color.A = 0;
+
+        var size = new Vector2(24f, 75) / flashTexture.Size();
+        size *= scale;
+
+        sb.Draw(
+            flashTexture,
+            flashPosition - screenPos,
+            null,
+            color,
+            0f,
+            flashTexture.Size() * 0.5f,
+            size,
+            SpriteEffects.None,
+            0f
+        );
+
+        size *= 0.75f;
+
+        sb.Draw(
+            flashTexture,
+            flashPosition - screenPos,
+            null,
+            color,
+            MathF.PiOver2,
+            flashTexture.Size() * 0.5f,
+            size,
+            SpriteEffects.None,
+            0f
+        );
 
         return false;
     }
-    // ReSharper restore CompareOfFloatsByEqualityOperator
 
     public override void AddShops()
     {
