@@ -1,12 +1,15 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
+using System.Collections.Generic;
+using System.Linq;
 using Terraria;
+using Terraria.Audio;
 using Terraria.Enums;
 using Terraria.GameContent;
 using Terraria.GameContent.Bestiary;
+using Terraria.GameContent.UI;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
@@ -15,8 +18,19 @@ using LangPhotographer = Rosemary.Core.LocalizationReferences.Mods.Rosemary.Cont
 namespace Rosemary.Content.Misc;
 
 // TODO: dialogue, spawn condition, shop, ...
-public class Photographer : ModNPC
+public sealed class Photographer : ModNPC
 {
+    public sealed class EmoteBubble : ModEmoteBubble
+    {
+        public override string Texture => Assets.Misc.Camera.Photographer_Emote.KEY;
+
+        public override void SetStaticDefaults()
+        {
+            // Add NPC emotes to "Town" category.
+            AddToCategory(EmoteID.Category.Town);
+        }
+    }
+
     public override string LocalizationCategory => "Content.Misc";
 
     public override string Texture => Assets.Misc.Camera.Photographer.KEY;
@@ -25,10 +39,10 @@ public class Photographer : ModNPC
     
     public override void SetStaticDefaults()
     {
-        Main.npcFrameCount[Type] = 25;
+        Main.npcFrameCount[Type] = 29;
 
-        NPCID.Sets.ExtraFramesCount[Type] = 9;
-        NPCID.Sets.AttackFrameCount[Type] = 4;
+        NPCID.Sets.ExtraFramesCount[Type] = 13;
+        NPCID.Sets.AttackFrameCount[Type] = 0;
         NPCID.Sets.ActsLikeTownNPC[Type] = true;
         NPCID.Sets.NoTownNPCHappiness[Type] = true;
         NPCID.Sets.SpawnsWithCustomName[Type] = true;
@@ -38,6 +52,8 @@ public class Photographer : ModNPC
             Velocity = 1f,
             Direction = -1,
         });
+
+        NPCID.Sets.FaceEmote[Type] = ModContent.EmoteBubbleType<EmoteBubble>();
 
         NPCID.Sets.NPCPortraits.Add(Type, NPCID.Sets.PrioritizedPortrait().Default(NPCID.Sets.BasicPortrait($"{Texture}_Portrait")));
         
@@ -188,25 +204,154 @@ public class Photographer : ModNPC
         }
     }
 
+    public float AnimationState
+    {
+        get => NPC.ai[0];
+        set => NPC.ai[0] = value;
+    }
+
+    public float AnimationTimer
+    {
+        get => NPC.ai[1];
+        set => NPC.ai[1] = value;
+    }
+
+    // ReSharper disable CompareOfFloatsByEqualityOperator
+    public override void AI()
+    {
+        var beingTalkedTo = false;
+
+        foreach (var player in Main.ActivePlayers)
+        {
+            if (player.talkNPC == NPC.whoAmI)
+            {
+                beingTalkedTo = true;
+            }
+        }
+
+        if (AnimationState == 235f)
+        {
+            if (NPC.velocity.X != 0f)
+            {
+                NPC.netUpdate = true;
+            }
+
+            if (MathF.Abs(NPC.velocity.X) >= 0.1f)
+            {
+                NPC.velocity.X -= 0.1f * MathF.Sign(NPC.velocity.X);
+
+                return;
+            }
+
+            if (AnimationTimer < 0)
+            {
+                AnimationTimer++;
+                if (AnimationTimer == 0)
+                {
+                    AnimationTimer = Rand.Next(100, 400);
+                }
+
+                return;
+            }
+
+            AnimationTimer--;
+
+            if (AnimationTimer <= 0)
+            {
+                AnimationState = 0f;
+            }
+
+            if (AnimationTimer == 70)
+            {
+                SoundEngine.PlaySound(Assets.Misc.Camera.Shoot.Asset, NPC.Center);
+            }
+
+            return;
+        }
+
+        if (Main.netMode == NetmodeID.MultiplayerClient)
+        {
+            return;
+        }
+
+        var (i, j) = NPC.Bottom.ToTileCoordinates();
+        NPC.AI_007_FindGoodRestingSpot(i, j, out var floorX, out var floorY);
+
+        if (!beingTalkedTo
+         && NPC.velocity.Y == 0f
+         && AnimationState == 0f
+         && Rand.NextBool(400)
+            // NPC should only take "risky" photos ?
+         && !NPC.AI_007_TownEntities_IsInAGoodRestingSpot(i, j, floorX, floorY))
+        {
+            UseCamera();
+        }
+
+        return;
+
+        void UseCamera()
+        {
+            // Arbitrary value, should be unused by vanilla NPCs
+            AnimationState = 235f;
+
+            AnimationTimer = -40;
+
+            NPC.velocity.X = 0;
+            NPC.localAI[3] = 0f;
+
+            NPC.netUpdate = true;
+        }
+    }
+
     public override void FindFrame(int frameHeight)
     {
-        base.FindFrame(frameHeight);
+        NPC.frame.Width = NPC.width + 4;
+        NPC.frame.X = NPC.frame.Width * (NPC.spriteDirection == 1).ToInt();
 
-        NPC.frame.Width = NPC.width;
-        NPC.frame.X = NPC.width * (NPC.spriteDirection == 1).ToInt();
+        const int photo_frames = 7;
+
+        var startingFrame = Main.npcFrameCount[Type] - 1 - 7;
+
+        if (AnimationState != 235f)
+        {
+            return;
+        }
+
+        var frame = 0;
+
+        if (AnimationTimer <= 0)
+        {
+            frame = startingFrame + (int)Utils.Remap(AnimationTimer, -40, 0, 0, 3);
+        }
+        else
+        {
+            frame = startingFrame + (int)Utils.Remap(AnimationTimer, 40, 0, 3, 7);
+        }
+
+        var height = TextureAssets.Npc[Type].Value.Height / Main.npcFrameCount[Type];
+
+        NPC.frame.Y = height * frame;
     }
 
     public override bool PreDraw(SpriteBatch spriteBatch, Vector2 screenPos, Color drawColor)
     {
         var texture = TextureAssets.Npc[Type].Value;
-        var position = NPC.Center - screenPos + new Vector2(0, NPC.gfxOffY + 2);
+        var position = NPC.Center - screenPos + new Vector2(0, NPC.gfxOffY);
         var origin = new Vector2(NPC.frame.Width, NPC.height) / 2f;
         var effects = NPC.spriteDirection == 1 ? SpriteEffects.FlipHorizontally : SpriteEffects.None;
         
         Main.EntitySpriteDraw(texture, position, NPC.frame, drawColor, NPC.rotation, origin, NPC.scale, effects);
-        
+
+        if (AnimationState != 235f)
+        {
+            return false;
+        }
+
+
+
         return false;
     }
+    // ReSharper restore CompareOfFloatsByEqualityOperator
 
     public override void AddShops()
     {

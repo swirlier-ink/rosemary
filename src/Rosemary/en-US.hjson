@@ -8,5 +8,7 @@ Mods: {
 				Tooltip: ""
 			}
 		}
+
+		Emotes.EmoteBubble.Command: emotebubble
 	}
 }
