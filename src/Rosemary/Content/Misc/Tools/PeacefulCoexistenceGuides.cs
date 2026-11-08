@@ -38,7 +38,7 @@ file sealed class PeacefulCoexistenceGuides : GlobalItem
             item.consumable = true;
             item.useStyle = ItemUseStyleID.HoldUp;
             item.useTime = 30;
-            item.UseSound = SoundID.Item4;
+            item.UseSound = SoundID.Item92;
             item.useAnimation = 30;
 
             return;
