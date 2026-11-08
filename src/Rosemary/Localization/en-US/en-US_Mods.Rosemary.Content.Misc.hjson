@@ -114,3 +114,13 @@ Photographer: {
 		}
 	}
 }
+
+CritterCompanionship: {
+	On: Critter companionship on
+	Off: Critter companionship off
+}
+
+EnvironmentalPreservation: {
+	On: Environmental preservation on
+	Off: Environmental preservation off
+}
