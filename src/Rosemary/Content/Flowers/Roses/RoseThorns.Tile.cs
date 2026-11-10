@@ -79,12 +79,6 @@ public sealed class RoseThorn : ModTile
 
     public override void RandomUpdate(int i, int j, bool underground)
     {
-        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
-        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
-        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
-        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
-        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
-        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
         if (underground
          || !Rand.NextBool(5))
         {
