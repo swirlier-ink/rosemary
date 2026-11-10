@@ -361,6 +361,21 @@ public sealed class SunflowerTile : ModTile
         num = fail ? 1 : 3;
     }
 
+    public override bool CreateDust(int i, int j, ref int type)
+    {
+        var tile = Framing.GetTileSafely(i, j);
+        var above = Framing.GetTileSafely(i, j - 1);
+
+        var bud = tile.TileFrameY == 18 * 2 && !(above.HasTile && above.TileType == tile.TileType);
+
+        if (tile.TileFrameY == 0 || bud)
+        {
+            type = DustID.Sunflower;
+        }
+
+        return true;
+    }
+
     public override IEnumerable<Item> GetItemDrops(int i, int j)
     {
         var tile = Framing.GetTileSafely(i, j);
