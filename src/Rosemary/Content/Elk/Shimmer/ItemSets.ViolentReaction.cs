@@ -22,7 +22,7 @@ using Terraria.ModLoader;
 
 namespace Rosemary.Content.Elk;
 
-public static partial class ElkShimmerItemSets
+partial class ElkShimmerItemSets
 {
     [OnLoad]
     private static void Load_ViolentShimmerReaction()

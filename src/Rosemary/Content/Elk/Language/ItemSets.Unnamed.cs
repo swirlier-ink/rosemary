@@ -10,7 +10,7 @@ using Terraria.ModLoader.IO;
 namespace Rosemary.Content.Elk;
 
 // Should be noted that this will NOT work with elklang named items, as they've already been "named."
-public static partial class ElkLangItemSets
+partial class ElkLangItemSets
 {
     public static string NamedItemsPath => Path.Combine(RosemaryIO.SavePath, "item_names.rsmry");
 

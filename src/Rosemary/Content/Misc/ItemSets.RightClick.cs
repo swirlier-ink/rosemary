@@ -9,7 +9,7 @@ using Terraria.UI;
 
 namespace Rosemary.Content.Misc;
 
-public static partial class MiscItemSets
+partial class MiscItemSets
 {
     [OnLoad]
     private static void Load_HasRightClickSound()

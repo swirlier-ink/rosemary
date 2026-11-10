@@ -19,7 +19,7 @@ using Terraria.UI.Chat;
 
 namespace Rosemary.Content.Elk;
 
-public static partial class ElkLangItemSets
+partial class ElkLangItemSets
 {
     [OnLoad]
     private static void Load_UsesElkName()
