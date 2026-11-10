@@ -6,8 +6,38 @@ using Terraria.GameContent.Drawing;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.Utilities;
+using static Terraria.ModLoader.Default.LegacyUnloadedTilesSystem;
 
 namespace Rosemary.Content.Flowers;
+
+public sealed class RoseDust : ModDust
+{
+    public override string Texture => Assets.Flowers.Roses.RoseDust.KEY;
+
+    public override void OnSpawn(Dust dust)
+    {
+        dust.frame = new Rectangle(0, Main.rand.Next(3) * 12, 12, 12);
+    }
+
+    public override bool Update(Dust dust)
+    {
+        dust.velocity.X += Main.WindForVisuals * 0.043f;
+        dust.velocity.Y += 0.065f;
+
+        dust.position += dust.velocity;
+
+        dust.rotation += dust.velocity.X * 0.1f;
+
+        dust.scale *= 0.98f;
+
+        if (dust.scale < 0.05f)
+        {
+            dust.active = false;
+        }
+
+        return false;
+    }
+}
 
 public sealed class RoseThorn : ModTile
 {
@@ -29,7 +59,7 @@ public sealed class RoseThorn : ModTile
 
         TileID.Sets.IgnoredByGrowingSaplings[Type] = true;
 
-        TileID.Sets.SpawnsNatureFlies[Type] = true;
+        // TileID.Sets.SpawnsNatureFlies[Type] = true;
 
         TileID.Sets.ChecksForMerge[Type] = true;
         Main.tileMerge[Type][TileID.Grass] = true;
@@ -49,6 +79,12 @@ public sealed class RoseThorn : ModTile
 
     public override void RandomUpdate(int i, int j, bool underground)
     {
+        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
+        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
+        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
+        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
+        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
+        WorldGen.GrowSpike(i, j, Type, TileID.Grass);
         if (underground
          || !Rand.NextBool(5))
         {
@@ -68,6 +104,27 @@ public sealed class RoseThorn : ModTile
     public override void NumDust(int i, int j, bool fail, ref int num)
     {
         num = fail ? 1 : 3;
+    }
+
+    public override bool CreateDust(int i, int j, ref int type)
+    {
+        var rand = new FastRandom(i * j);
+
+        if (rand.Next(5) != 0)
+        {
+            return true;
+        }
+
+        var position = new Point(i, j).ToWorldCoordinates();
+
+        var offset = Rand.NextSquare(-10f, 10f);
+
+        var velocity = Vector2.Normalize(offset) * Rand.Next(0.3f, 2.1f);
+        velocity -= Vector2.UnitY * 0.6f;
+
+        Dust.NewDustPerfect(position + offset, ModContent.DustType<RoseDust>(), velocity);
+
+        return true;
     }
 
     public override void SpecialDraw(int i, int j, SpriteBatch sb)
@@ -91,12 +148,9 @@ public sealed class RoseThorn : ModTile
 
         var origin = frame.Size() * 0.5f;
 
-        var color = Lighting.GetColor(i, j);
-
-        if (tile.IsTileFullbright)
-        {
-            color = Color.White;
-        }
+        var tileLight = Lighting.GetColor(i, j);
+        TileDrawing.Instance.DrawAnimatedTile_AdjustForVisionChangers(i, j, tile, tile.TileType, tile.TileFrameX, tile.TileFrameY, ref tileLight, Rand.NextBool(4));
+        tileLight = TileDrawing.Instance.DrawTiles_GetLightOverride(j, i, tile, tile.TileType, tile.TileFrameX, tile.TileFrameY, tileLight);
 
         var effects = SpriteEffects.None;
 
@@ -109,6 +163,25 @@ public sealed class RoseThorn : ModTile
             effects |= SpriteEffects.FlipVertically;
         }
 
-        sb.Draw(texture, position, frame, color, 0f, origin, 1f, effects, 0f);
+        var rotation = TileDrawing.Instance.GetWindCycle(i, j, TileDrawing.Instance._grassWindCounter);
+
+        if (!WallID.Sets.AllowsWind[tile.WallType])
+        {
+            rotation = 0f;
+        }
+        if (!TileDrawing.Instance.InAPlaceWithWind(i, j, 1, 1))
+        {
+            rotation = 0f;
+        }
+
+        TileDrawing.Instance.GetWindGridPush2Axis(i, j, 20, 0.35f, out var pushX, out var pushY);
+
+        rotation += pushX + pushY;
+
+        rotation *= 0.1f;
+
+        sb.Draw(texture, position, frame, tileLight, rotation, origin, 1f, effects, 0f);
+
+        TileDrawing.EmitNatureFlies(i, j, 450);
     }
 }

@@ -1,4 +1,6 @@
-﻿using Terraria;
+﻿using Microsoft.Xna.Framework;
+using System;
+using Terraria;
 using Terraria.GameContent.Drawing;
 using Terraria.ID;
 
@@ -10,7 +12,6 @@ public static class TileExtensions
 
     extension(Tile tile)
     {
-
         public bool HasSolidTile => tile.HasTile && Main.tileBlockLight[tile.type] && Main.tileSolid[tile.type] && tile.Slope.Block && (!tile.IsTileInvisible || ShowInvisibleTiles);
 
         public bool HasSolidWall => tile.HasWall && !Main.wallLight[tile.WallType] && !WallID.Sets.Transparent[tile.WallType] && (!tile.IsWallInvisible || ShowInvisibleTiles);
@@ -61,6 +62,42 @@ public static class TileDrawingExtensions
     extension(TileDrawing)
     {
         public static TileDrawing Instance => Main.instance.TilesRenderer;
+
+        public static void EmitNatureFlies(int i, int j, int chance = 600)
+        {
+            if (!TileDrawing.Instance._isActiveAndNotPaused || Rand.NextBool(4))
+            {
+                return;
+            }
+
+            var lerpValue = Utils.GetLerpValue(0.08f, 0.18f, Math.Abs(Main.WindForVisuals), clamped: true);
+            lerpValue += 0.3f;
+
+            if (Rand.Next(1f) >= lerpValue)
+            {
+                return;
+            }
+
+            var flag2 = Rand.NextBool(chance);
+
+            if (!flag2)
+            {
+                TileDrawing.Instance._windGrid.GetWindTime(i, j, 8, out var windTimeLeft, out _, out _);
+                flag2 = windTimeLeft > 0 && Rand.NextBool(48);
+            }
+
+            if (flag2)
+            {
+                ParticleOrchestrator.RequestParticleSpawn(
+                    clientOnly: true,
+                    ParticleOrchestraType.NatureFly,
+                    new ParticleOrchestraSettings
+                    {
+                        PositionInWorld = new Point(i, j).ToWorldCoordinates(new Vector2(8, 0)),
+                    }
+                );
+            }
+        }
     }
 }
 

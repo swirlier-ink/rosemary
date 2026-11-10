@@ -270,43 +270,12 @@ public sealed class SunflowerTile : ModTile
             return false;
         }
 
-        // For whatever reason TileDrawing.EmitParticles doesn't work correctly here?
-        // No matter though, since a bit of custom logic is preferable
+        // --For whatever reason TileDrawing.EmitParticles doesn't work correctly here?
+        // --No matter though, since a bit of custom logic is preferable
 
         var tile = Framing.GetTileSafely(i, j);
 
-        if (tile.TileFrameY != 0)
-        {
-            return false;
-        }
-
-        var lerpValue = Utils.GetLerpValue(0.08f, 0.18f, Math.Abs(Main.WindForVisuals), clamped: true);
-        lerpValue += 0.3f;
-
-        if (Rand.Next(1f) >= lerpValue)
-        {
-            return false;
-        }
-
-        var flag2 = Rand.Next(400) == 0; // 600
-
-        if (!flag2)
-        {
-            TileDrawing.Instance._windGrid.GetWindTime(i, j, 8, out var windTimeLeft, out _, out _);
-            flag2 = windTimeLeft > 0 && Rand.Next(48) == 0;
-        }
-
-        if (flag2)
-        {
-            ParticleOrchestrator.RequestParticleSpawn(
-                clientOnly: true,
-                ParticleOrchestraType.NatureFly,
-                new ParticleOrchestraSettings
-                {
-                    PositionInWorld = new Point(i, j).ToWorldCoordinates(new Vector2(8, 0)),
-                }
-            );
-        }
+        TileDrawing.EmitNatureFlies(i, j, tile.TileFrameY == 0 ? 400 : 1200);
 
         return false;
     }
