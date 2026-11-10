@@ -231,7 +231,7 @@ public sealed class SunflowerTile : ModTile
              )
             .Register();
 
-        DustType = DustID.Grass;
+        DustType = DustID.GrassBlades;
         HitSound = SoundID.Grass;
 
         AddMapEntry(new Color(54, 154, 54), Lang.GetItemName(ItemID.Sunflower));

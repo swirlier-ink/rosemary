@@ -64,7 +64,7 @@ public sealed class RoseThorn : ModTile
         TileID.Sets.ChecksForMerge[Type] = true;
         Main.tileMerge[Type][TileID.Grass] = true;
 
-        DustType = DustID.Grass;
+        DustType = DustID.GrassBlades;
         HitSound = SoundID.Grass;
 
         // AddMapEntry(new Color(54, 154, 54), Lang.GetItemName(ItemID.Sunflower));
