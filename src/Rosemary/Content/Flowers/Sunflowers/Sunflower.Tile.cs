@@ -387,6 +387,11 @@ public sealed class SunflowerTile : ModTile
         }
     }
 
+    public override void NumDust(int i, int j, bool fail, ref int num)
+    {
+        num = fail ? 1 : 3;
+    }
+
     public override IEnumerable<Item> GetItemDrops(int i, int j)
     {
         var tile = Framing.GetTileSafely(i, j);
