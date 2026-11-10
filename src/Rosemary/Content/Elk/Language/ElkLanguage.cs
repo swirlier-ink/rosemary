@@ -1,16 +1,11 @@
 ﻿using JetBrains.Annotations;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MonoMod.Cil;
 using Rosemary.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using Terraria;
-using Terraria.ID;
-using Terraria.ModLoader;
-using Terraria.UI.Chat;
 
 // ReSharper disable ConvertToExtensionBlock
 

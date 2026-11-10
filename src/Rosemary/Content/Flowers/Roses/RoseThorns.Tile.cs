@@ -6,7 +6,6 @@ using Terraria.GameContent.Drawing;
 using Terraria.ID;
 using Terraria.ModLoader;
 using Terraria.Utilities;
-using static Terraria.ModLoader.Default.LegacyUnloadedTilesSystem;
 
 namespace Rosemary.Content.Flowers;
 
