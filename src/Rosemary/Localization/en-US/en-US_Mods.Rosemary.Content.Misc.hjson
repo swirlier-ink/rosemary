@@ -125,3 +125,8 @@ EnvironmentalPreservation: {
 	High: Environmental Preservation High
 	Off: Environmental Preservation Off
 }
+
+EncumberingStone: {
+	On: Encumbered
+	Off: Uncumbered
+}

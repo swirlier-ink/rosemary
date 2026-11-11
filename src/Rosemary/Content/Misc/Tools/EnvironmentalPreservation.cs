@@ -1,16 +1,10 @@
-﻿using System;
-using System.Linq;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework;
+﻿using System.Linq;
 using Terraria;
-using Terraria.Audio;
-using Terraria.DataStructures;
-using Terraria.ID;
 using Terraria.ModLoader;
 
 namespace Rosemary.Content.Misc;
 
-public sealed class EnvironmentalPreservationToggle : BuilderToggle
+public sealed class EnvironmentalPreservationToggle : CommonBuilderToggle
 {
     public override string Texture => Assets.Misc.EnvironmentalPreservation.KEY;
 
@@ -65,28 +59,5 @@ public sealed class EnvironmentalPreservationToggle : BuilderToggle
             1 => Mods.Rosemary.Content.Misc.EnvironmentalPreservation.High.GetTextValue(),
             _ => Mods.Rosemary.Content.Misc.EnvironmentalPreservation.Off.GetTextValue(),
         };
-    }
-
-    public override bool Draw(SpriteBatch spriteBatch, ref BuilderToggleDrawParams drawParams)
-    {
-        drawParams.Color = Color.White;
-        drawParams.Frame = drawParams.Texture.Frame(NumberOfStates, 2, CurrentState);
-
-        return true;
-    }
-
-    public override bool DrawHover(SpriteBatch spriteBatch, ref BuilderToggleDrawParams drawParams)
-    {
-        drawParams.Frame = drawParams.Texture.Frame(NumberOfStates, 2, CurrentState, 1);
-        drawParams.Scale = 0.9f;
-
-        return true;
-    }
-
-    public override bool OnLeftClick(ref SoundStyle? sound)
-    {
-        sound = SoundID.Unlock;
-
-        return true;
     }
 }

@@ -1,4 +1,4 @@
-ItemName.Sunflower: Sunflower Bud
+﻿ItemName.Sunflower: Sunflower Bud
 
 ItemTooltip: {
 	DontHurtNatureBook:
@@ -16,5 +16,11 @@ ItemTooltip: {
 		Unlocks ability toggles to the left of the inventory
 		Prevents you from hurting critters when enabled
 		Prevents you from accidentally destroying the environment when enabled
+		'''
+	EncumberingStone:
+		'''
+		Unlocks an ability toggle to the left of the inventory
+		Prevents item pickups when locked
+		'You are over-encumbered'
 		'''
 }

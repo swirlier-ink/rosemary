@@ -1,14 +1,9 @@
-﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Terraria;
-using Terraria.Audio;
-using Terraria.DataStructures;
-using Terraria.ID;
+﻿using Terraria;
 using Terraria.ModLoader;
 
 namespace Rosemary.Content.Misc;
 
-public sealed class CritterCompanionshipToggle : BuilderToggle
+public sealed class CritterCompanionshipToggle : CommonBuilderToggle
 {
     public override string Texture => Assets.Misc.CritterCompanionship.KEY;
 
@@ -24,7 +19,7 @@ public sealed class CritterCompanionshipToggle : BuilderToggle
         self.Player.dontHurtCritters = ModContent.GetInstance<CritterCompanionshipToggle>().CurrentState == 0;
     }
 
-    // BuilderToggle.Position is not as powerful as I'd like
+    // BuilderToggle.OrderPosition is not as powerful as I'd like
     [ModSystemHooks.ResizeArrays]
     private static void ResizeArrays()
     {
@@ -53,28 +48,5 @@ public sealed class CritterCompanionshipToggle : BuilderToggle
             CurrentState == 0
                 ? Mods.Rosemary.Content.Misc.CritterCompanionship.On.GetTextValue()
                 : Mods.Rosemary.Content.Misc.CritterCompanionship.Off.GetTextValue();
-    }
-
-    public override bool Draw(SpriteBatch spriteBatch, ref BuilderToggleDrawParams drawParams)
-    {
-        drawParams.Color = Color.White;
-        drawParams.Frame = drawParams.Texture.Frame(2, 2, CurrentState);
-
-        return true;
-    }
-
-    public override bool DrawHover(SpriteBatch spriteBatch, ref BuilderToggleDrawParams drawParams)
-    {
-        drawParams.Frame = drawParams.Texture.Frame(2, 2, CurrentState, 1);
-        drawParams.Scale = 0.9f;
-
-        return true;
-    }
-
-    public override bool OnLeftClick(ref SoundStyle? sound)
-    {
-        sound = SoundID.Unlock;
-
-        return true;
     }
 }
