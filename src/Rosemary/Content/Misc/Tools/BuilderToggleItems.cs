@@ -42,7 +42,7 @@ public static class BuilderToggleExtensions
 {
     extension<T>(T) where T : BuilderToggle
     {
-        public static bool Active => ModContent.GetInstance<T>().Active();
+        public static bool IsActive => ModContent.GetInstance<T>().Active();
 
         public static int State => ModContent.GetInstance<T>().CurrentState;
     }
