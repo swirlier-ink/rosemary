@@ -66,6 +66,7 @@ public sealed class RoseThorn : ModTile
         DustType = DustID.GrassBlades;
         HitSound = SoundID.Grass;
 
+        // TODO
         // AddMapEntry(new Color(54, 154, 54), Lang.GetItemName(ItemID.Sunflower));
 
         RegisterItemDrop(ItemID.None);
@@ -156,24 +157,7 @@ public sealed class RoseThorn : ModTile
             effects |= SpriteEffects.FlipVertically;
         }
 
-        var rotation = TileDrawing.Instance.GetWindCycle(i, j, TileDrawing.Instance._grassWindCounter);
-
-        if (!WallID.Sets.AllowsWind[tile.WallType])
-        {
-            rotation = 0f;
-        }
-        if (!TileDrawing.Instance.InAPlaceWithWind(i, j, 1, 1))
-        {
-            rotation = 0f;
-        }
-
-        TileDrawing.Instance.GetWindGridPush2Axis(i, j, 20, 0.35f, out var pushX, out var pushY);
-
-        rotation += pushX + pushY;
-
-        rotation *= 0.1f;
-
-        sb.Draw(texture, position, frame, tileLight, rotation, origin, 1f, effects, 0f);
+        sb.Draw(texture, position, frame, tileLight, 0f, origin, 1f, effects, 0f);
 
         TileDrawing.EmitNatureFlies(i, j, 450);
     }
