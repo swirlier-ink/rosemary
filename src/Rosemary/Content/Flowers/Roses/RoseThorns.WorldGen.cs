@@ -27,7 +27,8 @@ public static class RoseThornsWorldGen
         }
 
         if (tile.HasTile
-         && tile.TileType != TileID.Plants)
+         && tile.TileType != TileID.Plants
+         && tile.TileType != TileID.Plants2)
         {
             return;
         }
