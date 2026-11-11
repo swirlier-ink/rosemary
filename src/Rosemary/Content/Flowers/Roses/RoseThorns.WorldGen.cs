@@ -13,7 +13,7 @@ public static class RoseThornsWorldGen
         if (!((!underground && Main.IsItDay()) || Main.remixWorld)
          || !Main.hardMode
          || type != TileID.Grass
-         || !Rand.NextBool(120))
+         || !Rand.NextBool(520))
         {
             return;
         }

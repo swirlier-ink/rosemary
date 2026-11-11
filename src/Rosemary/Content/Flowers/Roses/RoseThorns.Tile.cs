@@ -52,7 +52,7 @@ public sealed class RoseThorn : ModTile
         Main.tileLavaDeath[Type] = true;
         Main.tileBlockLight[Type] = true;
 
-        TileID.Sets.TileCutIgnore.IgnoreDontHurtNature[Type] = true;
+        TileID.Sets.TileCutIgnore.IgnoreDontHurtNature[Type] = false;
         TileID.Sets.GetsDestroyedForMeteors[Type] = true;
 
         TileID.Sets.TouchDamageDestroyTile[Type] = true;
@@ -81,7 +81,7 @@ public sealed class RoseThorn : ModTile
     public override void RandomUpdate(int i, int j, bool underground)
     {
         if (underground
-         || !Rand.NextBool(5))
+         || !Rand.NextBool(3))
         {
             return;
         }
@@ -105,7 +105,7 @@ public sealed class RoseThorn : ModTile
     {
         var rand = new FastRandom(i * j);
 
-        if (rand.Next(5) != 0)
+        if (rand.Next(4) != 0)
         {
             return true;
         }
