@@ -122,7 +122,6 @@ CritterCompanionship: {
 
 EnvironmentalPreservation: {
 	On: Environmental Preservation On
-	High: Environmental Preservation High
 	Off: Environmental Preservation Off
 }
 
