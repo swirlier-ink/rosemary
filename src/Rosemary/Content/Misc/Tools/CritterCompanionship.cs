@@ -7,8 +7,6 @@ public sealed class CritterCompanionshipToggle : CommonBuilderToggle
 {
     public override string Texture => Assets.Misc.CritterCompanionship.KEY;
 
-    public override string HoverTexture => Assets.Misc.CritterCompanionship.KEY;
-
     public override int NumberOfStates => 2;
 
     public override bool Active() => Main.LocalPlayer.UnlockedCritterCompanionship;

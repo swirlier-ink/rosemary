@@ -14,6 +14,8 @@ namespace Rosemary.Content.Misc;
 
 public abstract class CommonBuilderToggle : BuilderToggle
 {
+    public override string HoverTexture => Texture;
+
     public override bool Draw(SpriteBatch spriteBatch, ref BuilderToggleDrawParams drawParams)
     {
         drawParams.Color = Color.White;

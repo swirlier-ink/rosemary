@@ -10,8 +10,6 @@ public sealed class EnvironmentalPreservationToggle : CommonBuilderToggle
 {
     public override string Texture => Assets.Misc.EnvironmentalPreservation.KEY;
 
-    public override string HoverTexture => Assets.Misc.EnvironmentalPreservation.KEY;
-
     public override Position OrderPosition => new After(BlockSwap);
 
     public override int NumberOfStates => 3;

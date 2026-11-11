@@ -7,8 +7,6 @@ public sealed class EncumberingStoneToggle : CommonBuilderToggle
 {
     public override string Texture => Assets.Misc.EncumberingStone.KEY;
 
-    public override string HoverTexture => Assets.Misc.EncumberingStone.KEY;
-
     public override int NumberOfStates => 2;
 
     public override Position OrderPosition => new Before(BlockSwap);
