@@ -4,6 +4,7 @@ using Rosemary.Common;
 using Terraria;
 using Terraria.GameContent.Drawing;
 using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 using Terraria.Utilities;
 
@@ -66,8 +67,7 @@ public sealed class RoseThorn : ModTile
         DustType = DustID.GrassBlades;
         HitSound = SoundID.Grass;
 
-        // TODO
-        // AddMapEntry(new Color(54, 154, 54), Lang.GetItemName(ItemID.Sunflower));
+        AddMapEntry(new Color(30, 150, 72), Language.GetText("MapObject.Thorns"));
 
         RegisterItemDrop(ItemID.None);
     }
