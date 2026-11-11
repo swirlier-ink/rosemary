@@ -38,7 +38,17 @@ public abstract class CommonBuilderToggle : BuilderToggle
     }
 }
 
-file sealed class BuilderToggles : GlobalItem
+public static class BuilderToggleExtensions
+{
+    extension<T>(T) where T : BuilderToggle
+    {
+        public static bool Active => ModContent.GetInstance<T>().Active();
+
+        public static int State => ModContent.GetInstance<T>().CurrentState;
+    }
+}
+
+file sealed class BuilderToggleItems : GlobalItem
 {
     private static readonly int[] active_guides = [ItemID.DontHurtNatureBook, ItemID.DontHurtCrittersBook, ItemID.DontHurtComboBook];
     private static readonly int[] inactive_guides = [ItemID.DontHurtNatureBookInactive, ItemID.DontHurtCrittersBookInactive, ItemID.DontHurtComboBookInactive];
@@ -228,10 +238,10 @@ public static class TogglesPlayerExtensions
 {
     extension(Player player)
     {
-        public bool UnlockedEnvironmentalPreservation => player.GetModPlayer<BuilderToggles.TogglesPlayer>().UnlockedEnvironmentalPreservation;
+        public bool UnlockedEnvironmentalPreservation => player.GetModPlayer<BuilderToggleItems.TogglesPlayer>().UnlockedEnvironmentalPreservation;
 
-        public bool UnlockedCritterCompanionship => player.GetModPlayer<BuilderToggles.TogglesPlayer>().UnlockedCritterCompanionship;
+        public bool UnlockedCritterCompanionship => player.GetModPlayer<BuilderToggleItems.TogglesPlayer>().UnlockedCritterCompanionship;
 
-        public bool UnlockedEncumberingStone => player.GetModPlayer<BuilderToggles.TogglesPlayer>().UnlockedEncumberingStone;
+        public bool UnlockedEncumberingStone => player.GetModPlayer<BuilderToggleItems.TogglesPlayer>().UnlockedEncumberingStone;
     }
 }

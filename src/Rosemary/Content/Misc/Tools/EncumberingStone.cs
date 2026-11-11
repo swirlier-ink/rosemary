@@ -18,7 +18,7 @@ public sealed class EncumberingStoneToggle : CommonBuilderToggle
     [ModPlayerHooks.UpdateEquips]
     private static void UpdateEquips(ModPlayer self)
     {
-        self.Player.preventAllItemPickups = ModContent.GetInstance<EncumberingStoneToggle>().CurrentState == 0;
+        self.Player.preventAllItemPickups = EncumberingStoneToggle.IsActive && EncumberingStoneToggle.State == 0;
     }
 
     public override string DisplayValue()

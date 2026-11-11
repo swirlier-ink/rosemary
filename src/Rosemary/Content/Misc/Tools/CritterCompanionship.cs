@@ -16,7 +16,7 @@ public sealed class CritterCompanionshipToggle : CommonBuilderToggle
     [ModPlayerHooks.UpdateEquips]
     private static void UpdateEquips(ModPlayer self)
     {
-        self.Player.dontHurtCritters = ModContent.GetInstance<CritterCompanionshipToggle>().CurrentState == 0;
+        self.Player.dontHurtCritters = CritterCompanionshipToggle.IsActive && CritterCompanionshipToggle.State == 0;
     }
 
     // BuilderToggle.OrderPosition is not as powerful as I'd like
