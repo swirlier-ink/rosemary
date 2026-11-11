@@ -1,4 +1,4 @@
-DinosaurExtendoGrip: {
+﻿DinosaurExtendoGrip: {
 	DisplayName: Dino Grabber
 	Tooltip:
 		'''
@@ -116,11 +116,12 @@ Photographer: {
 }
 
 CritterCompanionship: {
-	On: Critter companionship on
-	Off: Critter companionship off
+	On: Critter Companionship On
+	Off: Critter Companionship Off
 }
 
 EnvironmentalPreservation: {
-	On: Environmental preservation on
-	Off: Environmental preservation off
+	On: Environmental Preservation On
+	High: Environmental Preservation High
+	Off: Environmental Preservation Off
 }
