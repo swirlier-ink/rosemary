@@ -118,7 +118,8 @@ file sealed class BuilderToggleItems : GlobalItem
         {
             ItemID.DontHurtNatureBook => modPlayer.UnlockedEnvironmentalPreservation,
             ItemID.DontHurtCrittersBook => modPlayer.UnlockedCritterCompanionship,
-            _ => modPlayer.UnlockedEnvironmentalPreservation && modPlayer.UnlockedCritterCompanionship,
+            ItemID.DontHurtComboBook => modPlayer.UnlockedEnvironmentalPreservation && modPlayer.UnlockedCritterCompanionship,
+            _ => modPlayer.UnlockedEncumberingStone,
         })
         {
             return false;
