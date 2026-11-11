@@ -48,6 +48,7 @@ public sealed class RoseThorn : ModTile
         Main.tileSolid[Type] = false;
         Main.tileCut[Type] = true;
         Main.tileNoFail[Type] = true;
+        Main.tileWaterDeath[Type] = true;
         Main.tileLavaDeath[Type] = true;
         Main.tileBlockLight[Type] = true;
 

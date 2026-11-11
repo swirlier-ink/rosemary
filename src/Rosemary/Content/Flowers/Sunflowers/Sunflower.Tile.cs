@@ -428,6 +428,8 @@ public sealed class SunflowerTile : ModTile
             tile.TileFrameX = (short)(18 * Rand.Next(5));
         }
 
+        above.ClearTile();
+
         above.TileType = tile.TileType;
         above.TileFrameY = 0;
         above.TileFrameX = (short)(18 * Rand.Next(5));

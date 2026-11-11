@@ -65,7 +65,7 @@ public static class TileDrawingExtensions
 
         public static void EmitNatureFlies(int i, int j, int chance = 600)
         {
-            if (!TileDrawing.Instance._isActiveAndNotPaused || Rand.NextBool(4))
+            if (!TileDrawing.Instance._isActiveAndNotPaused || !Rand.NextBool(4))
             {
                 return;
             }
