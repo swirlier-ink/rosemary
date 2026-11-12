@@ -80,7 +80,7 @@ public static class RoseThornsWorldGen
 
                     var size = TileFont.MeasureString(text[index].ToString());
 
-                    var start = new Point(i - (size.X / 2), j - size.Y - 1);
+                    var start = new Point(i - (size.X / 2), j - size.Y);
 
                     if (CheckArea(start, size) < 18)
                     {
