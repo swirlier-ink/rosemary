@@ -25,6 +25,16 @@ public sealed class SunflowerTile : ModTile
 
         IL_TileDrawing.DrawRisingVineStrip += DrawRisingVineStrip_DrawSunflowerHead;
         On_WorldFile.SetOngoingToTemps += SetOngoingToTemps_ResetSunflowerRotation;
+        On_WorldGen.GetTileTypeCountByCategory += GetTileTypeCountByCategory_Sunflowers;
+    }
+
+    private static int GetTileTypeCountByCategory_Sunflowers(On_WorldGen.orig_GetTileTypeCountByCategory orig, int[] tileTypeCounts, TileScanGroup group)
+    {
+        var ret = orig(tileTypeCounts, group);
+
+        ret -= tileTypeCounts[ModContent.TileType<SunflowerTile>()] * 5;
+
+        return ret;
     }
 
     private static void SetOngoingToTemps_ResetSunflowerRotation(On_WorldFile.orig_SetOngoingToTemps orig)
@@ -195,6 +205,7 @@ public sealed class SunflowerTile : ModTile
         Main.tileNoFail[Type] = true;
         Main.tileFrameImportant[Type] = true;
         Main.tileNoAttach[Type] = true;
+        Main.tileSolid[Type] = false;
 
         TileID.Sets.TileCutIgnore.Regrowth[Type] = true;
         TileID.Sets.ReplaceTileBreakUp[Type] = true;
@@ -234,8 +245,8 @@ public sealed class SunflowerTile : ModTile
         DustType = DustID.GrassBlades;
         HitSound = SoundID.Grass;
 
-        AddMapEntry(new Color(54, 154, 54), Lang.GetItemName(ItemID.Sunflower));
-        AddMapEntry(new Color(226, 196, 49), Lang.GetItemName(ItemID.Sunflower));
+        AddMapEntry(new Color(54, 154, 54), Mods.Rosemary.Content.Misc.Map.Sunflower.GetText());
+        AddMapEntry(new Color(226, 196, 49), Mods.Rosemary.Content.Misc.Map.Sunflower.GetText());
 
         RegisterItemDrop(ItemID.None);
 

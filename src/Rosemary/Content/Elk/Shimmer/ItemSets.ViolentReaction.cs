@@ -411,7 +411,7 @@ partial class ElkShimmerItemSets
     {
         using var _ = Item.newItemDisabled.Cache();
 
-        if (damageSource.CustomReason._mode == NetworkText.Mode.LocalizationKey
+        if (damageSource.CustomReason is { _mode: NetworkText.Mode.LocalizationKey}
          && death_keys_violent_shimmer_reaction.Contains(damageSource.CustomReason._text))
         {
             skipPlayerDrops = true;

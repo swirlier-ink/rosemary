@@ -1,4 +1,4 @@
-﻿DinosaurExtendoGrip: {
+DinosaurExtendoGrip: {
 	DisplayName: Dino Grabber
 	Tooltip:
 		'''
@@ -129,3 +129,6 @@ EncumberingStone: {
 	On: Encumbered
 	Off: Uncumbered
 }
+
+ZenithSeedThornsGeneration: Growing thorns
+Map.Sunflower: Sunflower

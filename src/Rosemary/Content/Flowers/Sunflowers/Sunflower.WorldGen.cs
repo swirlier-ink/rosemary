@@ -1,9 +1,11 @@
-﻿using MonoMod.Cil;
+﻿using System;
+using MonoMod.Cil;
 using Rosemary.Common;
 using Terraria;
 using Terraria.GameContent.Generation;
 using Terraria.ID;
 using Terraria.ModLoader;
+using Terraria.ObjectData;
 using Terraria.WorldBuilding;
 
 namespace Rosemary.Content.Flowers;
@@ -21,6 +23,30 @@ public static class SunflowerWorldGen
         On_WorldGenerator.GenerateWorld += GenerateWorld_TempSunflowers;
 
         IL_WorldGen.SpreadGrass += SpreadGrass_RosemarySunflowers;
+        On_WorldGen.TryConvertingOrKillingTreesAboveIfTheyWouldBecomeInvalid += TryConvertingOrKillingTreesAboveIfTheyWouldBecomeInvalid_BreakSunflowers;
+    }
+
+    private static bool TryConvertingOrKillingTreesAboveIfTheyWouldBecomeInvalid_BreakSunflowers(On_WorldGen.orig_TryConvertingOrKillingTreesAboveIfTheyWouldBecomeInvalid orig, int i, int j, int newFloorType)
+    {
+        var ret = orig(i, j, newFloorType);
+
+        var tile = Framing.GetTileSafely(i, j - 1);
+
+        if (!tile.HasTile || tile.TileType != ModContent.TileType<SunflowerTile>())
+        {
+            return ret;
+        }
+
+        var validTiles = TileObjectData.GetTileData(ModContent.TileType<SunflowerTile>(), 0, 0).AnchorValidTiles;
+
+        if (validTiles.Contains(newFloorType))
+        {
+            return ret;
+        }
+
+        WorldGen.KillTile(i, j - 1);
+
+        return true;
     }
 
     private static void SpreadGrass_RosemarySunflowers(ILContext il)
@@ -44,14 +70,15 @@ public static class SunflowerWorldGen
         var type = ModContent.TileType<SunflowerTile>();
 
         Main.tileCut[type] = false;
-        Main.tileSolid[type] = true;
 
-        var ret = orig(self);
-
-        Main.tileCut[type] = true;
-        Main.tileSolid[type] = false;
-
-        return ret;
+        try
+        {
+            return orig(self);
+        }
+        finally
+        {
+            Main.tileCut[type] = true;
+        }
     }
 
     private static void UseModifiedSunflowers(ILContext il)
