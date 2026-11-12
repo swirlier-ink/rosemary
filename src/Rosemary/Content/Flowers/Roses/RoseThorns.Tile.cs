@@ -60,6 +60,8 @@ public sealed class RoseThorn : ModTile
 
         TileID.Sets.IgnoredByGrowingSaplings[Type] = true;
 
+        // TileID.Sets.Conversion.Thorn[Type] = true;
+
         // TileID.Sets.SpawnsNatureFlies[Type] = true;
 
         TileID.Sets.ChecksForMerge[Type] = true;
