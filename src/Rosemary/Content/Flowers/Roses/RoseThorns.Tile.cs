@@ -141,7 +141,7 @@ public sealed class RoseThorn : ModTile
         position -= Main.screenPosition;
         position += (new Vector2(rand.NextFloat(), rand.NextFloat()) * 8).Round() * 2;
 
-        var frame = new Rectangle(36 * rand.Next(8), 90, 36, 36);
+        var frame = new Rectangle(36 * rand.Next(3), 90, 36, 36);
 
         var origin = frame.Size() * 0.5f;
 
