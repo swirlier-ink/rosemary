@@ -41,6 +41,8 @@ public sealed class RoseDust : ModDust
 
 public sealed class RoseThorn : ModTile
 {
+    private const int rose_chance = 4;
+
     public override string Texture => Assets.Flowers.Roses.RoseThornTile.KEY;
 
     public override void SetStaticDefaults()
@@ -107,7 +109,7 @@ public sealed class RoseThorn : ModTile
     {
         var rand = new FastRandom(i * j);
 
-        if (rand.Next(4) != 0)
+        if (rand.Next(rose_chance) != 0)
         {
             return true;
         }
@@ -130,7 +132,7 @@ public sealed class RoseThorn : ModTile
 
         var rand = new FastRandom(i * j);
 
-        if (rand.Next(5) != 0)
+        if (rand.Next(rose_chance) != 0)
         {
             return;
         }
@@ -141,7 +143,7 @@ public sealed class RoseThorn : ModTile
         position -= Main.screenPosition;
         position += (new Vector2(rand.NextFloat(), rand.NextFloat()) * 8).Round() * 2;
 
-        var frame = new Rectangle(36 * rand.Next(3), 90, 36, 36);
+        var frame = new Rectangle(36 * rand.Next(8), 90, 36, 36);
 
         var origin = frame.Size() * 0.5f;
 
@@ -162,6 +164,6 @@ public sealed class RoseThorn : ModTile
 
         sb.Draw(texture, position, frame, tileLight, 0f, origin, 1f, effects, 0f);
 
-        TileDrawing.EmitNatureFlies(i, j, 450);
+        TileDrawing.EmitNatureFlies(i, j, 550);
     }
 }
