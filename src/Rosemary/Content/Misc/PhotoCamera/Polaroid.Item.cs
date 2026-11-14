@@ -235,9 +235,6 @@ public sealed class PolaroidItem : ModItem
 
     public override void SetDefaults()
     {
-        Item.width = 40;
-        Item.height = 40;
-
         Item.value = 0;
 
         // Purely to prevent burning

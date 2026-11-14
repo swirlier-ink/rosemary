@@ -48,9 +48,6 @@ public sealed class BlurCameraFilter : ModItem, IPolaroidCameraFilter
 
     public override void SetDefaults()
     {
-        Item.width = 40;
-        Item.height = 40;
-
         Item.value = Item.buyPrice(gold: 1);
 
         // Purely to prevent burning

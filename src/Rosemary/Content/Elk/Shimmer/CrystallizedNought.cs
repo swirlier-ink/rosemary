@@ -141,8 +141,6 @@ public sealed class CrystallizedNought : ModItem
 
     public override void SetDefaults()
     {
-        Item.width = 14;
-        Item.height = 26;
         Item.maxStack = Item.CommonMaxStack;
 
         Item.rare = ItemRarityID.Purple;

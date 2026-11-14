@@ -154,9 +154,6 @@ public sealed class SiffrinHat : ModItem
 
     public override void SetDefaults()
     {
-        Item.width = 20;
-        Item.height = 20;
-
         Item.vanity = true;
 
         if (Main.dedServ)

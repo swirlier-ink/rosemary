@@ -33,9 +33,6 @@ public sealed class TestVerticalLangItem : ModItem
 
     public override void SetDefaults()
     {
-        Item.width = 40;
-        Item.height = 40;
-
         Item.useStyle = ItemUseStyleID.Swing;
         Item.useTime = 20;
         Item.useAnimation = 20;

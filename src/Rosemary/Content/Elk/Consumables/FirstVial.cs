@@ -40,8 +40,6 @@ public sealed class FirstVial : ModItem, IViolentShimmerReactant
 
     public override void SetDefaults()
     {
-        Item.width = 14;
-        Item.height = 26;
         Item.useStyle = ItemUseStyleID.DrinkLiquid;
         Item.useAnimation = 23;
         Item.useTime = 23;

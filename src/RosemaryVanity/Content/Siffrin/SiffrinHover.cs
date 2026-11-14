@@ -28,9 +28,6 @@ public sealed class SiffrinHover : ModItem
 
     public override void SetDefaults()
     {
-        Item.width = 32;
-        Item.height = 32;
-
         Item.mountType = ModContent.MountType<SiffrinHoverMount>();
     }
 
