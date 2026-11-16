@@ -11,6 +11,8 @@ namespace Rosemary.Common;
 
 public interface ITooltipProvider
 {
+    bool DrawPanel => true;
+
     Vector2 GetSize();
 
     void Draw(SpriteBatch sb, Vector2 topLeft);
@@ -28,27 +30,27 @@ public static class TooltipRenderer
     [OnLoad]
     private static void Load()
     {
-        IL_Main.MouseTextInner += MouseTextInner_MousePhrase;
+        IL_Main.MouseTextInner += MouseTextInner_CustomTooltip;
 
         MonoModHooks.Add(
             typeof(Main).GetMethod(
                 nameof(Main.MouseTextInner),
                 BindingFlags.Instance | BindingFlags.NonPublic
             ),
-            MouseTextInner_MousePhrase_Reset
+            MouseTextInner_CustomTooltip_Reset
         );
     }
 
     private static ITooltipProvider? tooltip;
 
-    private static void MouseTextInner_MousePhrase_Reset(Action<Main, Main.MouseTextCache> orig, Main self, Main.MouseTextCache info)
+    private static void MouseTextInner_CustomTooltip_Reset(Action<Main, Main.MouseTextCache> orig, Main self, Main.MouseTextCache info)
     {
         orig(self, info);
 
         tooltip = null;
     }
 
-    private static void MouseTextInner_MousePhrase(ILContext il)
+    private static void MouseTextInner_CustomTooltip(ILContext il)
     {
         var c = new ILCursor(il);
 
@@ -68,6 +70,15 @@ public static class TooltipRenderer
                 if (tooltip is null)
                 {
                     return originalSize;
+                }
+
+                var size = tooltip.GetSize();
+
+                if (tooltip.DrawPanel
+                 && Main.SettingsEnabled_OpaqueBoxBehindTooltips)
+                {
+                    size.X += 8 + 18;
+                    size.Y += 2 + 18;
                 }
 
                 return tooltip.GetSize();
@@ -105,7 +116,22 @@ public static class TooltipRenderer
                     return false;
                 }
 
-                tooltip.Draw(Main.spriteBatch, new Vector2(x, y));
+                var sb = Main.spriteBatch;
+
+                if (tooltip.DrawPanel
+                 && Main.SettingsEnabled_OpaqueBoxBehindTooltips)
+                {
+                    x += 8;
+                    y += 2;
+
+                    var color = new Color(23, 25, 81, 255) * 0.925f;
+
+                    var size = tooltip.GetSize();
+
+                    Utils.DrawInvBG(sb, new Rectangle(x - 14, y - 9, (int)size.X + 14 * 2, (int)size.Y + 9 + (9 / 2)), color);
+                }
+
+                tooltip.Draw(sb, new Vector2(x, y));
 
                 return true;
             }
