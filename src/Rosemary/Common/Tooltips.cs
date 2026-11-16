@@ -20,9 +20,10 @@ public interface ITooltipProvider
 
 public static class TooltipRenderer
 {
-    public static void SetTooltip(ITooltipProvider p)
+    private static void SetTooltip(ITooltipProvider p)
     {
         Main.instance.MouseText(string.Empty);
+        Main.ClearHoverItem();
 
         tooltip = p;
     }
@@ -143,5 +144,10 @@ public static class TooltipRenderer
     extension(Main)
     {
         public static void SetCustomTooltip(ITooltipProvider p) => SetTooltip(p);
+
+        public static ITooltipProvider CustomTooltip
+        {
+            set => SetTooltip(value);
+        }
     }
 }
