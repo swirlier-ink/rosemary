@@ -1,7 +1,8 @@
 <Solution>
     <Folder Name="/daybreak-mod/">
         <File Path="daybreak-mod/src/DaybreakModuleAttribute.cs" />
-        <File Path="daybreak-mod/src/Module.props" />
+        <File Path="daybreak-mod/src/Module.props" />\
+        <Project Path="daybreak-mod/src/Daybreak.ChatTags.Owned.V1/Daybreak.ChatTags.Owned.V1.csproj" />
         <Project Path="daybreak-mod/src/Daybreak.ChatTags.V1/Daybreak.ChatTags.V1.csproj" />
         <Project Path="daybreak-mod/src/Daybreak.CodeAnalysis/Daybreak.CodeAnalysis.csproj" />
         <Project Path="daybreak-mod/src/Daybreak.Contracts.V1/Daybreak.Contracts.V1.csproj" />
