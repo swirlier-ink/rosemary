@@ -15,7 +15,6 @@ using Terraria.GameContent.Drawing;
 using Terraria.GameContent.Liquid;
 using Terraria.GameContent.Shaders;
 using Terraria.Graphics.CameraModifiers;
-using Terraria.Graphics.Light;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
@@ -37,9 +36,6 @@ partial class ElkShimmerItemSets
         On_Player.DropTombstone += DropTombstone_DisableDrops_ViolentShimmerReaction;
 
         On_LiquidRenderer.DrawShimmer += DrawShimmer_CrystallizationVisuals;
-
-        IL_TileLightScanner.ApplyLiquidLight += ApplyLiquidLight_DarkenShimmer;
-        IL_TileLightScanner.GetTileLight += _ => { };
     }
 
 #pragma warning disable CA2255
@@ -101,57 +97,20 @@ partial class ElkShimmerItemSets
         shimmerDarknessInterpolator = MathF.Saturate(shimmerDarknessInterpolator);
     }
 
-    private static void ApplyLiquidLight_DarkenShimmer(ILContext il)
+    [GlobalLiquidHooks.ModifyLight]
+    private static void ModifyLight(int i, int j, int type, ref float r, ref float g, ref float b)
     {
-        var c = new ILCursor(il);
-
-        var skipColorDimmingTarget = c.DefineLabel();
-
-        var colorIndex = ParameterIndex.Invalid;
-
-        c.GotoNext(
-            MoveType.After,
-            i => i.MatchRet()
-        );
-        c.GotoNext(
-            MoveType.After,
-            i => i.MatchRet()
-        );
-
-        c.GotoNext(
-            MoveType.Before,
-            i => i.MatchRet()
-        );
-
-        c.MoveAfterLabels();
-
-        c.FindPrev(
-            out _,
-            i => i.MatchLdarg(out colorIndex)
-        );
-
-        c.EmitLdarg(colorIndex);
-        c.EmitDelegate(DarkenShimmerColor);
-
-        c.MarkLabel(skipColorDimmingTarget);
-
-        c.GotoPrev(
-            MoveType.After,
-            i => i.MatchCall<Tile>(nameof(Tile.shimmer))
-        );
-
-        c.Next?.Operand = skipColorDimmingTarget;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void DarkenShimmerColor(ref Vector3 color)
-    {
-        if (shimmerDarknessInterpolator <= 0f)
+        if (shimmerDarknessInterpolator <= 0f
+         || type != LiquidID.Shimmer)
         {
             return;
         }
 
-        color *= MathF.Pow(GetDarkeningInterpolator(), 3f);
+        var value = MathF.Pow(GetDarkeningInterpolator(), 3f);
+
+        r *= value;
+        g *= value;
+        b *= value;
     }
 
     private static Color GetShimmerGlitterColor_DarkenSurface(On_LiquidRenderer.orig_GetShimmerGlitterColor orig, bool top, float worldPositionX, float worldPositionY)
