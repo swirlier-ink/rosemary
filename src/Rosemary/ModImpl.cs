@@ -14,7 +14,7 @@ using Rosemary.Content;
 
 namespace Rosemary;
 
-partial class ModImpl
+partial class ModImpl : IHasCustomAuthorMessage
 {
     public static readonly ElkPhrase ELK_NAME =
         ElkLanguage.NewPhrase
@@ -52,6 +52,8 @@ partial class ModImpl
     {
         PacketHandler.Handle(this, reader, whoAmI);
     }
+
+    string IHasCustomAuthorMessage.GetAuthorText() => AuthorText.GetAuthorTooltip(this, null);
 }
 
 /*
