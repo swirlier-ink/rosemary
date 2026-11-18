@@ -39,7 +39,7 @@ internal sealed class ModPanel
             Update_DisplaceList
         );
 
-        // Redo following DB's re-impl of ModPanels (keep this impl in the file for the aura factor tho)
+        /*
         MonoModHooks.Modify(
             typeof(UIModItem).GetMethod(
                 "DrawSelf",
@@ -47,6 +47,7 @@ internal sealed class ModPanel
             ),
             DrawSelf_HideErroneousVisuals
         );
+        */
 
         MonoModHooks.Modify(
             typeof(UIModItem).GetMethod(
@@ -570,5 +571,26 @@ internal sealed class ModPanel
 
             sb.Draw(buffer, this.Dimensions.TopLeft(), frame, Color.White);
         }
+    }
+}
+
+internal sealed class PanelStyle : ModPanelStyleExt
+{
+    public override bool PreDrawPanel(UIModItem element, SpriteBatch sb, ref bool drawDivider)
+    {
+        drawDivider = false;
+
+        return true;
+    }
+
+    public override bool PreDrawReloadRequiredText(UIModItem element)
+    {
+        return false;
+    }
+
+    public override void PostSetHoverColors(UIModItem element, bool hovered)
+    {
+        // Default colors are preferable when testing.
+        element.BackgroundColor = (hovered ? UICommon.DefaultUIBlueMouseOver : UICommon.DefaultUIBlue);
     }
 }

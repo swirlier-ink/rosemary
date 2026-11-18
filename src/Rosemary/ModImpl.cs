@@ -21,7 +21,7 @@ using Terraria.ModLoader.UI;
 
 namespace Rosemary;
 
-partial class ModImpl
+partial class ModImpl : IHasCustomAuthorMessage
 {
     public static readonly ElkPhrase ELK_NAME =
         ElkLanguage.NewPhrase
@@ -54,6 +54,7 @@ partial class ModImpl
 
         ModSourceBestiaryInfoElement = new ModBestiaryInfo.RosemarySourceBestiaryInfoElement(this, string.Empty);
 
+        /*
         MonoModHooks.Add(
             typeof(UIModItem).GetMethod(
                 "DrawSelf",
@@ -61,6 +62,7 @@ partial class ModImpl
             ),
             DrawSelf_AuthorTooltip
         );
+        */
     }
 
     private static void DrawSelf_AuthorTooltip(Action<UIModItem, SpriteBatch> orig, UIModItem self, SpriteBatch sb)
@@ -83,6 +85,13 @@ partial class ModImpl
     public override void HandlePacket(BinaryReader reader, int whoAmI)
     {
         PacketHandler.Handle(this, reader, whoAmI);
+    }
+
+    string IHasCustomAuthorMessage.GetAuthorText()
+    {
+        Main.SetCustomTooltip(new AuthorTooltip(this));
+
+        return null!;
     }
 }
 
