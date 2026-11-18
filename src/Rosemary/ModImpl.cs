@@ -1,20 +1,27 @@
 ﻿using log4net;
 using log4net.Appender;
 using log4net.Config;
+using log4net.Core;
 using log4net.Layout;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using Rosemary.Content;
 using Rosemary.Content.Elk;
 using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
-using log4net.Core;
-using Microsoft.Xna.Framework;
-using Rosemary.Content;
+using Rosemary.Common;
+using Rosemary.Content.Authorship;
+using Terraria;
+using Terraria.Localization;
+using Terraria.ModLoader;
+using Terraria.ModLoader.UI;
 
 namespace Rosemary;
 
-partial class ModImpl : IHasCustomAuthorMessage
+partial class ModImpl
 {
     public static readonly ElkPhrase ELK_NAME =
         ElkLanguage.NewPhrase
@@ -46,14 +53,37 @@ partial class ModImpl : IHasCustomAuthorMessage
         SmallModIcon = icon_small.Asset;
 
         ModSourceBestiaryInfoElement = new ModBestiaryInfo.RosemarySourceBestiaryInfoElement(this, string.Empty);
+
+        MonoModHooks.Add(
+            typeof(UIModItem).GetMethod(
+                "DrawSelf",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            ),
+            DrawSelf_AuthorTooltip
+        );
+    }
+
+    private static void DrawSelf_AuthorTooltip(Action<UIModItem, SpriteBatch> orig, UIModItem self, SpriteBatch sb)
+    {
+        orig(self, sb);
+
+        if (self._modName?.IsMouseHovering is not true
+         || self._tooltip != Language.GetTextValue("tModLoader.ModsByline", self._mod.properties.author)
+         || !ModLoader.TryGetMod(self._mod.Name, out var mod)
+         || mod is not ModImpl)
+        {
+            return;
+        }
+
+        self._tooltip = null;
+
+        Main.SetCustomTooltip(new AuthorTooltip(mod));
     }
 
     public override void HandlePacket(BinaryReader reader, int whoAmI)
     {
         PacketHandler.Handle(this, reader, whoAmI);
     }
-
-    string IHasCustomAuthorMessage.GetAuthorText() => AuthorText.GetAuthorTooltip(this, null);
 }
 
 /*
