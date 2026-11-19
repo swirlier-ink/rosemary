@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Rosemary.Common;
 using System;
+using System.Linq;
 using Terraria;
 using Terraria.GameContent;
 using Terraria.ModLoader;
@@ -63,6 +64,15 @@ public sealed class AuthorTooltip(Mod mod) : ITooltipProvider
 
     public Vector2 GetSize()
     {
+        var size = AuthorSize();
+
+        size.X += DedicationsWidth(mod.GetContent<AuthorTag>().Count()) + 8;
+
+        return size;
+    }
+
+    private Vector2 AuthorSize()
+    {
         var total = Vector2.Zero;
 
         var font = FontAssets.MouseText.Value;
@@ -86,16 +96,56 @@ public sealed class AuthorTooltip(Mod mod) : ITooltipProvider
         return total;
     }
 
+    private float DedicationsWidth(int num)
+    {
+        num = (int)(num / 0.75f);
+
+        var font = FontAssets.MouseText.Value;
+
+        var text = Mods.Rosemary.Dedications.GetTextValue();
+        var lines = text.Split('\n');
+;
+        var count = 0;
+
+        var curWidth = 0f;
+
+        var total = 0f;
+
+        foreach (var line in lines)
+        {
+            var size = ChatManager.GetStringSize(font, line, Vector2.One * 0.75f);
+
+            curWidth = MathF.Max(curWidth, size.X);
+
+            count++;
+
+            if (count >= num)
+            {
+                count = 0;
+
+                total += curWidth + 3;
+
+                curWidth = 0f;
+            }
+        }
+
+        total += curWidth;
+
+        return total;
+    }
+
     void ITooltipProvider.Draw(SpriteBatch sb, Vector2 topLeft)
     {
         var color = new Color(Main.mouseTextColor, Main.mouseTextColor, Main.mouseTextColor, byte.MaxValue);
 
         var font = FontAssets.MouseText.Value;
 
-        var totalSize = GetSize();
+        var authorSize = AuthorSize();
 
-        DrawStar();
-        DrawDivider();
+        var top = topLeft.Y;
+
+        DrawLabel(authorSize.X);
+        DrawDivider(authorSize.X);
 
         foreach (var authorTag in mod.GetContent<AuthorTag>())
         {
@@ -131,12 +181,79 @@ public sealed class AuthorTooltip(Mod mod) : ITooltipProvider
 
         topLeft.Y += 4;
 
-        DrawDivider();
-        DrawStar();
+        var bot = topLeft.Y;
+
+        DrawDivider(authorSize.X);
+        DrawLabel(authorSize.X);
+
+        topLeft.Y = top;
+
+        DrawDedications();
 
         return;
 
-        void DrawDivider()
+        void DrawDedications()
+        {
+            topLeft.X += authorSize.X + 8;
+
+            var num = mod.GetContent<AuthorTag>().Count();
+
+            var width = DedicationsWidth(num);
+
+            num = (int)(num / 0.75f);
+
+            DrawLabel(width, "✧");
+            DrawDivider(width);
+
+            var text = Mods.Rosemary.Dedications.GetTextValue();
+            var lines = text.Split('\n');
+
+            var position = topLeft;
+
+            var count = 0;
+
+            var curWidth = 0f;
+
+            foreach (var line in lines)
+            {
+                ChatManager.DrawColorCodedStringWithShadow(
+                    sb,
+                    font,
+                    line,
+                    position,
+                    color,
+                    Color.Black,
+                    0f,
+                    Vector2.Zero,
+                    Vector2.One * 0.75f
+                );
+
+                var size = ChatManager.GetStringSize(font, line, Vector2.One * 0.75f);
+
+                curWidth = MathF.Max(curWidth, size.X);
+
+                position.Y += size.Y;
+
+                count++;
+
+                if (count >= num)
+                {
+                    count = 0;
+
+                    position.Y = topLeft.Y;
+                    position.X += curWidth + 3;
+
+                    curWidth = 0f;
+                }
+            }
+
+            topLeft.Y = bot;
+
+            DrawDivider(width);
+            DrawLabel(width, "✧");
+        }
+
+        void DrawDivider(float width)
         {
             var texture = Main.Assets.Request<Texture2D>("Images/UI/CharCreation/Separator1").Value;
 
@@ -145,19 +262,17 @@ public sealed class AuthorTooltip(Mod mod) : ITooltipProvider
             var position = topLeft;
             position.Y -= 4;
 
-            Utils.DrawPanel(texture, 2, 0, sb, position, totalSize.X, divColor);
+            Utils.DrawPanel(texture, 2, 0, sb, position, width, divColor);
 
             topLeft.Y += 6;
         }
 
-        void DrawStar()
+        void DrawLabel(float width, string star = "✦")
         {
-            const string star = "✦";
-
             var size = ChatManager.GetStringSize(font, star, Vector2.One);
 
             var position = topLeft;
-            position.X += totalSize.X * 0.5f;
+            position.X += width * 0.5f;
 
             ChatManager.DrawColorCodedStringWithShadow(
                 sb,
