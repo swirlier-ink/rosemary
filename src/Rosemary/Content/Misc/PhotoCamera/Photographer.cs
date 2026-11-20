@@ -238,7 +238,7 @@ public sealed class Photographer : ModNPC
             Dust.NewDust(NPC.position, NPC.width, NPC.height, DustID.Blood, 2.5f * hit.HitDirection, -2.5f);
         }
 
-        for (var i = 0; i < 3; i++)
+        for (var i = 0; i < 4; i++)
         {
             var type = Mod.Find<ModGore>($"{Name}{i}").Type;
 
@@ -247,6 +247,7 @@ public sealed class Photographer : ModNPC
                 new(0, -20),
                 new(0, -4),
                 new(0, 4),
+                new(0, 5),
             ];
 
             Gore.NewGore(NPC.GetSource_Death(), NPC.Center + offset[i], NPC.velocity + Main.rand.NextVector2Circular(5, 5) + new Vector2(hit.HitDirection * 5, 0), type);
