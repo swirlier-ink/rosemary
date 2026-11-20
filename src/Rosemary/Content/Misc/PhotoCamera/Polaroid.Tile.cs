@@ -174,7 +174,6 @@ public sealed class PolaroidTileEntity : ModTileEntity
 
     private int HookPostPlaceMyPlayer_PlacePolaroid(int i, int j, int type, int style, int direction, int alternate)
     {
-        // TODO: CUSTOM PACKET
         var id = Generic_Hook_AfterPlacement(i, j, type, style, direction, alternate);
 
         var player = Main.LocalPlayer;

@@ -5,7 +5,7 @@ using Terraria.Graphics.Light;
 
 namespace Rosemary.Common;
 
-// TODO: Port over to Render Reprise's impl when it gets moved over.
+// TODO: Port over to Render Reprise's impl when it gets moved over. (???)
 internal static class FullBrightLightMap
 {
     private static readonly LightMap full_bright_light_map = new();
