@@ -103,7 +103,6 @@ partial class ModImpl : IHasCustomAuthorMessage
  * Currently, uses a personal branch of daybreak-mod/assembly-split (assembly-split/rosemary) to prevent loading issues.
  * TODO:
  * - Fix side effects caused by two "instances" of the project being active at once (see Common/Utilities/HotReloading.cs.)
- * - Fix issues with child project RosemaryVanity.
  */
 #if PROJECT_BUILD && DEBUG
 // ReSharper disable once ClassNeverInstantiated.Local

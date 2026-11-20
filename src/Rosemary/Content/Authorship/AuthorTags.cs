@@ -60,13 +60,17 @@ internal sealed class CharlotteTag : CommonAuthorTag
 
 public sealed class AuthorTooltip(Mod mod) : ITooltipProvider
 {
+    private const float dedications_scale = 0.75f;
+
+    private const float padding = 16f;
+
     bool ITooltipProvider.DrawPanel => true;
 
     public Vector2 GetSize()
     {
         var size = AuthorSize();
 
-        size.X += DedicationsWidth(mod.GetContent<AuthorTag>().Count()) + 8;
+        size.X += DedicationsWidth(mod.GetContent<AuthorTag>().Count()) + padding;
 
         return size;
     }
@@ -98,7 +102,7 @@ public sealed class AuthorTooltip(Mod mod) : ITooltipProvider
 
     private float DedicationsWidth(int num)
     {
-        num = (int)(num / 0.75f);
+        num = (int)(num / dedications_scale);
 
         var font = FontAssets.MouseText.Value;
 
@@ -113,7 +117,7 @@ public sealed class AuthorTooltip(Mod mod) : ITooltipProvider
 
         foreach (var line in lines)
         {
-            var size = ChatManager.GetStringSize(font, line, Vector2.One * 0.75f);
+            var size = ChatManager.GetStringSize(font, line, Vector2.One * dedications_scale);
 
             curWidth = MathF.Max(curWidth, size.X);
 
@@ -194,13 +198,13 @@ public sealed class AuthorTooltip(Mod mod) : ITooltipProvider
 
         void DrawDedications()
         {
-            topLeft.X += authorSize.X + 8;
+            topLeft.X += authorSize.X + padding;
 
             var num = mod.GetContent<AuthorTag>().Count();
 
             var width = DedicationsWidth(num);
 
-            num = (int)(num / 0.75f);
+            num = (int)(num / dedications_scale);
 
             DrawLabel(width, "✧");
             DrawDivider(width);
@@ -225,10 +229,10 @@ public sealed class AuthorTooltip(Mod mod) : ITooltipProvider
                     Color.Black,
                     0f,
                     Vector2.Zero,
-                    Vector2.One * 0.75f
+                    Vector2.One * dedications_scale
                 );
 
-                var size = ChatManager.GetStringSize(font, line, Vector2.One * 0.75f);
+                var size = ChatManager.GetStringSize(font, line, Vector2.One * dedications_scale);
 
                 curWidth = MathF.Max(curWidth, size.X);
 

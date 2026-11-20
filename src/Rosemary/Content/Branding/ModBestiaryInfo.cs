@@ -138,7 +138,6 @@ internal static class ModBestiaryInfo
             container.Append(displacedElement);
         }
 
-        // TODO: Insert util
         list._items.Insert(index, container);
         list._innerList.Append(container);
 
