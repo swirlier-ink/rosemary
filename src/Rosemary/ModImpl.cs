@@ -49,9 +49,6 @@ partial class ModImpl : IHasCustomAuthorMessage
 
     public override void Load()
     {
-        // TODO: yell at tomat to fix this
-        SmallModIcon = icon_small.Asset;
-
         ModSourceBestiaryInfoElement = new ModBestiaryInfo.RosemarySourceBestiaryInfoElement(this, string.Empty);
 
         /*
