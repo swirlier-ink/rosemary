@@ -136,3 +136,8 @@ WorldGen: {
 }
 
 Map.Sunflower: Sunflower
+
+GravelItem: {
+	DisplayName: Gravel
+	Tooltip: ""
+}
