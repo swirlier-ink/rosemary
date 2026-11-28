@@ -50,7 +50,6 @@ public class PolaroidCamera : ModItem, IPolaroidCamera
 
     public override void SetDefaults()
     {
-        Item.Size = new Vector2(32, 20);
 
         Item.value = Item.buyPrice(0, 10);
 
