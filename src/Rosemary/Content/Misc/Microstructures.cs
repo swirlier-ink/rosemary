@@ -150,10 +150,13 @@ file static class Microstructures
 
                 for (var y = j - Rand.Next(1, 3); y < j + 2; y++)
                 {
-                    var type = mossedUp && NearAir(i, j) ? TileID.BrownMoss : TileID.Stone;
-
                     WorldGen.KillTile(i, y);
-                    WorldGen.PlaceTile(i, y, type, true, true);
+
+                    WorldGen.PlaceTile(i, y, TileID.Stone, true, true);
+                    if (mossedUp && NearAir(i, j))
+                    {
+                        WorldGen.PlaceTile(i, y, TileID.BrownMoss, true, true);
+                    }
 
                     var tile = Framing.GetTileSafely(i, y);
 
@@ -186,10 +189,13 @@ file static class Microstructures
                         break;
                     }
 
-                    var type = mossedUp && NearAir(i, j) ? TileID.BrownMoss : TileID.Stone;
-
                     WorldGen.KillTile(x, y);
-                    WorldGen.PlaceTile(x, y, type, true, true);
+
+                    WorldGen.PlaceTile(x, y, TileID.Stone, true, true);
+                    if (mossedUp && NearAir(i, j))
+                    {
+                        WorldGen.PlaceTile(x, y, TileID.BrownMoss, true, true);
+                    }
 
                     var nX = x - i;
                     var nY = y - j;
@@ -227,10 +233,13 @@ file static class Microstructures
                 for (var x = i; x < i + 2; x++)
                 for (var y = j; y < j + 2; y++)
                 {
-                    var type = mossedUp && NearAir(i, j) ? TileID.BrownMoss : TileID.Stone;
-
                     WorldGen.KillTile(x, y);
-                    WorldGen.PlaceTile(x, y, type, true, true);
+
+                    WorldGen.PlaceTile(x, y, TileID.Stone, true, true);
+                    if (mossedUp && NearAir(i, j))
+                    {
+                        WorldGen.PlaceTile(x, y, TileID.BrownMoss, true, true);
+                    }
                 }
             }
         }
