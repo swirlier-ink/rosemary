@@ -143,29 +143,52 @@ public static partial class Images
     {
         using var _ = PlayerInput.ZoomScope(ZoomScaleType.Unscaled);
 
+        var player = Main.LocalPlayer;
+
         var worldPlayArea = WorldUtils.GetWorldPlayArea();
+        var screenPosition = Main.screenPosition;
+        var screenSize = new Vector2(Main.screenWidth, Main.screenHeight);
 
         var size = new Vector2(ScaledResolution) * 0.5f;
 
         var topLeft = size;
-        var bottomRight = new Vector2(Main.screenWidth, Main.screenHeight) - size;
+        var bottomRight = screenSize - size;
 
-        if (Main.screenPosition.X <= worldPlayArea.X)
+        var screenCenter = screenPosition + (screenSize * 0.5f);
+
+        screenPosition -= screenCenter;
+        screenPosition /= Main.GameZoomTarget;
+        screenPosition += screenCenter;
+
+        screenSize /= Main.GameZoomTarget;
+
+        // Zooming in seems to not play too nicely for whatever reason.
+        const float padding = 25f;
+
+        if (screenPosition.X - padding <= worldPlayArea.X)
         {
-            topLeft.X -= 999f;
+            var depth = screenCenter.X - player.Center.X;
+
+            topLeft.X -= depth;
         }
-        if (Main.screenPosition.Y <= worldPlayArea.Y)
+        
+        if (screenPosition.Y - padding <= worldPlayArea.Y)
         {
-            topLeft.Y -= 999f;
+            var depth = screenCenter.Y - player.Center.Y;
+
+            topLeft.Y -= depth;
         }
-        // TODO: Account for zoom nicely
-        if (Main.screenPosition.X + Main.screenWidth >= worldPlayArea.X + worldPlayArea.Width)
+        if (screenPosition.X + screenSize.X + padding >= worldPlayArea.X + worldPlayArea.Width)
         {
-            bottomRight.X += 999f;
+            var depth = player.Center.X - screenCenter.X;
+
+            bottomRight.X += depth;
         }
-        if (Main.screenPosition.Y + Main.screenHeight >= worldPlayArea.Y + worldPlayArea.Height)
+        if (screenPosition.Y + screenSize.Y + padding >= worldPlayArea.Y + worldPlayArea.Height)
         {
-            bottomRight.Y += 999f;
+            var depth = player.Center.Y - screenCenter.Y;
+
+            bottomRight.Y += depth;
         }
 
         var position = Vector2.Clamp(Main.MouseScreen, topLeft, bottomRight) - size;
