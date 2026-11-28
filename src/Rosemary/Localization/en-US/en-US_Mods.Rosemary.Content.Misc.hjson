@@ -130,5 +130,9 @@ EncumberingStone: {
 	Off: Uncumbered
 }
 
-ZenithSeedThornsGeneration: Growing thorns
+WorldGen: {
+	ZenithSeedThorns: Growing thorns
+	RockPatches: Throwing stones
+}
+
 Map.Sunflower: Sunflower

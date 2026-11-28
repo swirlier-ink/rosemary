@@ -20,7 +20,7 @@ public static class RoseThornsWorldGen
             return;
         }
 
-        progress.Message = Mods.Rosemary.Content.Misc.ZenithSeedThornsGeneration.GetTextValue();
+        progress.Message = Mods.Rosemary.Content.Misc.WorldGen.ZenithSeedThorns.GetTextValue();
 
         const string text = "GETFIXEDBOI";
 
@@ -56,13 +56,17 @@ public static class RoseThornsWorldGen
 
             for (var i = starting; i < starting + length; i++)
             {
-                for (var j = 10; j < Main.maxTilesY; j++)
-                {
-                    if (Math.Abs(j - lastY) > 60 && index > 0)
-                    {
-                        continue;
-                    }
+                var min = 10;
+                var max = Main.maxTilesY;
 
+                if (index > 0)
+                {
+                    min = lastY - 45;
+                    max = lastY + 45;
+                }
+
+                for (var j = min; j < max; j++)
+                {
                     if (!Rand.NextBool(4) && index == 0)
                     {
                         continue;
@@ -113,7 +117,7 @@ public static class RoseThornsWorldGen
 
             foreach (var point in pointsToPlaceLetters)
             {
-                progress.Set(((double)placed / count) + Utils.Remap(index, starting, starting + length, 0f, 1f / count));
+                progress.Set(((double)placed / count) + Utils.Remap(index, 0, pointsToPlaceLetters.Count, 0f, 1f / count));
 
                 GenerateLetter(point, text[index]);
 
